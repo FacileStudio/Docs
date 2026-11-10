@@ -25,3 +25,14 @@ echo "==> apps/client"
   bun run test
   bun run build
 )
+
+echo "==> e2e"
+if [ -n "${SKIP_E2E:-}" ]; then
+  echo "check: SKIP_E2E is set, skipping the browser run" >&2
+elif ! pg_isready -d "$TEST_DATABASE_URL" -q 2>/dev/null; then
+  echo "check: no Postgres, skipping the browser run (run: mise run db-up, then mise run e2e)" >&2
+elif [ -z "$(ls -d "${PLAYWRIGHT_BROWSERS_PATH:-$HOME/.cache/ms-playwright}"/chromium_headless_shell-* 2>/dev/null)" ]; then
+  echo "check: no Playwright Chromium, skipping the browser run (see docs/development.md#end-to-end)" >&2
+else
+  E2E_ADMIN_URL="$TEST_DATABASE_URL" sh scripts/e2e.sh
+fi

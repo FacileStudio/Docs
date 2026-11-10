@@ -29,3 +29,8 @@ run = "cd apps/api && cargo build --release --locked"
 [tasks.check]
 description = "Run the full quality gate"
 run = "sh ./scripts/check.sh"
+
+[tasks.e2e]
+description = "Run the browser end-to-end test against the real API (Postgres, headless Chromium)"
+depends = ["db-up"]
+run = "sh ./scripts/e2e.sh"
