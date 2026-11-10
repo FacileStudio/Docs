@@ -3,7 +3,9 @@
 	import { toast } from '@facile/muse';
 	import { onDestroy, untrack } from 'svelte';
 	import { openCollab, type CollabEvents } from '$lib/collab';
+	import { renderDiagram } from '$lib/diagrams';
 	import { MAX_BYTES, uploader } from '$lib/images';
+	import { EDITOR_COPY, browserLocale } from '$lib/locale';
 
 	let {
 		documentId,
@@ -22,6 +24,9 @@
 	const collab = untrack(() => openCollab(documentId, events));
 	const onimage = untrack(() => uploader(documentId));
 
+	const locale = browserLocale();
+	const copy = EDITOR_COPY[locale];
+
 	provider = collab.provider;
 
 	onDestroy(() => {
@@ -37,7 +42,9 @@
 	{user}
 	{editable}
 	{onimage}
+	{locale}
+	{renderDiagram}
 	maxImageBytes={MAX_BYTES}
-	onerror={(error) => toast.danger(error.message || 'L’image n’a pas pu être envoyée')}
-	placeholder="Écrivez, ou tapez / pour insérer un bloc"
+	onerror={(error) => toast.danger(error.message || copy.uploadFailed)}
+	placeholder={copy.placeholder}
 />

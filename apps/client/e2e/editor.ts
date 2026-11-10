@@ -31,6 +31,15 @@ export async function insertCallout(page: Page, text: string): Promise<void> {
 	await page.keyboard.type(text);
 }
 
+/** Pastes `markdown` as plain text, as the clipboard would; encre reads it as Facile Markdown. */
+export async function pasteMarkdown(page: Page, markdown: string): Promise<void> {
+	await editor(page).evaluate((target, text) => {
+		const data = new DataTransfer();
+		data.setData('text/plain', text);
+		target.dispatchEvent(new ClipboardEvent('paste', { clipboardData: data, bubbles: true, cancelable: true }));
+	}, markdown);
+}
+
 /** Pastes a small PNG drawn on a canvas into the editor, as the clipboard would. */
 export async function pasteImage(page: Page): Promise<void> {
 	await editor(page).evaluate(async (target) => {

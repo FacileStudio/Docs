@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { chromium, type Browser, type Page } from 'playwright-core';
-import { editor, imageLoaded, insertCallout, live, pasteImage, seesWithin, typeAtEnd } from './editor';
+import { editor, imageLoaded, insertCallout, live, pasteImage, pasteMarkdown, seesWithin, typeAtEnd } from './editor';
 import { startStack, type Person, type Stack } from './stack';
 
 let stack: Stack;
@@ -18,7 +18,7 @@ afterAll(async () => {
 });
 
 async function pageAs(who: Person | null, path: string): Promise<Page> {
-	const context = await browser.newContext({ acceptDownloads: true });
+	const context = await browser.newContext({ acceptDownloads: true, locale: 'fr-FR' });
 	if (who) await context.addCookies([{ name: 'session', value: stack.cookies[who], url: stack.base }]);
 	const page = await context.newPage();
 	await page.goto(`${stack.base}${path}`);
@@ -33,6 +33,31 @@ async function api<T>(path: string, init: { method?: string; body?: unknown } = 
 	});
 	if (!answer.ok) throw new Error(`${path}: ${answer.status} ${await answer.text()}`);
 	return (await answer.json()) as T;
+}
+
+const SCHEMA_2 = [
+	'````columns',
+	'```column title="Pour" tone="success"',
+	'Rapide',
+	'```',
+	'',
+	'```column title="Contre" tone="danger"',
+	'Long',
+	'```',
+	'````',
+	'',
+	'Statut [badge:success Livré]',
+	'',
+	'```mermaid',
+	'flowchart LR',
+	'  Alice --> Bob',
+	'```'
+].join('\n');
+
+async function schema2(page: Page, scope = page.locator('body')): Promise<void> {
+	await scope.locator('.encre-columns').getByText('Rapide').waitFor({ timeout: 5_000 });
+	await scope.locator('.encre-badge').getByText('Livré').waitFor({ timeout: 5_000 });
+	await scope.locator('.encre-diagram svg').first().waitFor({ timeout: 15_000 });
 }
 
 async function persisted(id: string, needles: string[]): Promise<string> {
@@ -61,6 +86,11 @@ test('two members write together, and the page survives a reload, a share, an ou
 	await bob.locator('[data-encre-node="callout"]').getByText('Attention au budget').waitFor({ timeout: 5_000 });
 
 	await alice.keyboard.press('Enter');
+	await pasteMarkdown(alice, SCHEMA_2);
+	await schema2(bob, editor(bob));
+
+	await alice.keyboard.press('Control+End');
+	await alice.keyboard.press('Enter');
 	await pasteImage(alice);
 	const src = await imageLoaded(alice);
 	expect(src).toMatch(/^\/api\/attachments\/[0-9a-f-]{36}$/);
@@ -72,7 +102,7 @@ test('two members write together, and the page survives a reload, a share, an ou
 	await editor(alice).getByText('et Bob répond').waitFor();
 	await alice.locator('[data-encre-node="callout"]').getByText('Attention au budget').waitFor();
 	await imageLoaded(alice);
-	await persisted(id, ['Bonjour', 'et Bob répond', 'Attention au budget', src]);
+	await persisted(id, ['Bonjour', 'et Bob répond', 'Attention au budget', src, '````columns', '[badge:success Livré]']);
 
 	const download = alice.waitForEvent('download');
 	await alice.getByRole('button', { name: 'Exporter' }).click();
@@ -87,12 +117,15 @@ test('two members write together, and the page survives a reload, a share, an ou
 	await visitor.getByRole('heading', { name: 'Plan partagé' }).waitFor();
 	await visitor.getByText('et Bob répond').waitFor();
 	await visitor.getByText('Attention au budget').waitFor();
+	await schema2(visitor);
 	expect(await imageLoaded(visitor, visitor.locator('main, body'))).toContain('?share=');
 	expect(await visitor.locator('meta[name="robots"]').getAttribute('content')).toContain('noindex');
 
 	const carol = await pageAs('carol', `/d/${id}`);
 	await carol.getByText('Document introuvable').waitFor({ timeout: 10_000 });
 	expect(await carol.locator('.ProseMirror').count()).toBe(0);
-	const denied = await fetch(`${stack.base}/api/documents/${id}`, { headers: { cookie: `session=${stack.cookies.carol}` } });
+	const denied = await fetch(`${stack.base}/api/documents/${id}`, {
+		headers: { cookie: `session=${stack.cookies.carol}` }
+	});
 	expect(denied.status).toBe(404);
 }, 180_000);

@@ -3,9 +3,12 @@
 	import { Document } from '@facile/encre';
 	import { EmptyState, Spinner, icons } from '@facile/muse';
 	import { backend } from '$lib/backend';
+	import { renderDiagram } from '$lib/diagrams';
+	import { browserLocale } from '$lib/locale';
 	import { outline } from '$lib/share';
 	import type { PublicPage } from '$lib/types';
 
+	const locale = browserLocale();
 	const token = $derived(page.params.token ?? '');
 	const childId = $derived(page.url.searchParams.get('doc') ?? undefined);
 
@@ -55,7 +58,7 @@
 				<a href="/s/{token}" class="text-fc-sm text-fc-fg-muted hover:text-fc-fg">← {root.title || 'Retour'}</a>
 			{/if}
 			<h1 class="text-3xl font-semibold text-fc-fg">{shown.title || 'Sans titre'}</h1>
-			<Document doc={shown.content} />
+			<Document doc={shown.content} {locale} {renderDiagram} />
 			{#if subtree.length}
 				<nav aria-label="Sous-pages" class="flex flex-col gap-1">
 					<h2 class="text-fc-xs font-semibold tracking-wide text-fc-fg-muted uppercase">Sous-pages</h2>
