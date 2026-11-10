@@ -2,6 +2,7 @@
 
 pub mod attachments;
 pub mod documents;
+pub mod rooms;
 pub mod search;
 pub mod share;
 pub mod spaces;

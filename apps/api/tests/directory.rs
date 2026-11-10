@@ -34,7 +34,7 @@ fn space(id: &str, subjects: &[(&str, &str)]) -> Space {
 #[tokio::test]
 async fn a_snapshot_replaces_spaces_and_members_once_per_version() {
     let Some(pool) = common::pool("docs_directory").await else { return };
-    let apply = SpacesApply::new(pool.clone());
+    let apply = SpacesApply::new(pool.clone(), api::modules::rooms::Hub::default());
     let base = time::OffsetDateTime::now_utc().unix_timestamp_nanos() as i64;
     assert!(
         apply.apply_snapshot(&snapshot(base, vec![space("a", &[("s1", "owner")]), space("b", &[])])).await.unwrap()

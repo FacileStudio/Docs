@@ -59,7 +59,7 @@ pub async fn apply(
     Path(raw): Path<String>,
     Json(body): Json<OpsRequest>,
 ) -> Result<Json<OpsAnswer>> {
-    ops::apply_stored(&state, who.user_id, id(&raw)?, &body.ops).await.map(Json)
+    ops::run(&state, who.user_id, id(&raw)?, &body.ops).await.map(Json)
 }
 
 pub async fn move_to(

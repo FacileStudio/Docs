@@ -2,6 +2,8 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use porte::session::Manager;
+
+use crate::modules::rooms::Hub;
 use sqlx::PgPool;
 
 /// What every handler shares.
@@ -15,4 +17,6 @@ pub struct AppState {
     pub issuer: Arc<str>,
     /// Where attachments live.
     pub data_dir: Arc<PathBuf>,
+    /// The open collaboration rooms.
+    pub hub: Hub,
 }

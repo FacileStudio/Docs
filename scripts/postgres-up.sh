@@ -9,7 +9,8 @@ true) echo "postgres is already running on 127.0.0.1:${port}" ;;
 false) docker start "$container" >/dev/null ;;
 *)
   docker run -d --name "$container" -e POSTGRES_PASSWORD=postgres -p "127.0.0.1:${port}:5432" \
-    -v docs_dev_pgdata:/var/lib/postgresql/data postgres:16-alpine >/dev/null
+    -v docs_dev_pgdata:/var/lib/postgresql/data postgres:16-alpine \
+    -c fsync=off -c synchronous_commit=off -c full_page_writes=off >/dev/null
   ;;
 esac
 

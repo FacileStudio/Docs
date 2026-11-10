@@ -9,8 +9,8 @@ use super::access::{self, Access};
 use super::content;
 use super::service::{answer, fetch};
 use super::types::Document;
-use super::write;
 use crate::extract::db;
+use crate::modules::rooms::Command;
 use crate::state::AppState;
 
 /// The most revisions one list answers.
@@ -63,10 +63,7 @@ pub async fn restore(state: &AppState, user_id: i64, id: Uuid, rev: Uuid) -> Res
     if fetch(state, id).await?.trashed_at.is_some() {
         return Err(Error::failed("the document is in the trash"));
     }
-    let prepared = load(state, id, rev).await?;
-    let mut tx = state.pool.begin().await.map_err(db)?;
-    write::save(&mut tx, id, &prepared, &[], Some(user_id)).await.map_err(db)?;
-    write::revision(&mut tx, id, Some(user_id), true).await.map_err(db)?;
-    tx.commit().await.map_err(db)?;
+    let prepared = Box::new(load(state, id, rev).await?);
+    state.hub.ask(state, id, |reply| Command::Replace(prepared.clone(), user_id, reply)).await?;
     answer(fetch(state, id).await?, have, false)
 }

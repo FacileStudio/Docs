@@ -2,7 +2,9 @@
 
 pub mod fixture;
 pub mod http;
+pub mod typing;
 pub mod upload;
+pub mod ysync;
 
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -47,12 +49,14 @@ pub fn data_dir() -> PathBuf {
 
 pub async fn app(pool: PgPool) -> App {
     let config = Config::from_vars(&Vars::from_pairs([("DATABASE_URL", "postgres://unused/x")])).unwrap();
-    let kits = Kits::new(&config, &pool).await.unwrap();
+    let hub = api::modules::rooms::Hub::default();
+    let kits = Kits::new(&config, &pool, &hub).await.unwrap();
     let state = AppState {
         pool: pool.clone(),
         sessions: kits.sessions.clone(),
         issuer: Arc::from(ISSUER),
         data_dir: Arc::new(data_dir()),
+        hub,
     };
     let router = api::router::build_router(state.clone(), &kits);
     App { router, state, kits, pool }

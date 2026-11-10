@@ -31,7 +31,7 @@ tower = { version = "0.5.3", features = ["util"] }
 tracing = "0.1.44"
 utoipa = "6.0.0"
 uuid = { version = "1.29.2", features = ["v4", "serde"] }
-yrs = "0.28.1"
+yrs = { version = "0.28.1", features = ["sync"] }
 
 [dev-dependencies]
 tronc = { git = "file:///home/yann/Code/Facile/tronc-rs", tag = "v0.3.0", features = ["testdb", "mcptest"] }

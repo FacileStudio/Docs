@@ -12,6 +12,7 @@ use tokio_util::sync::CancellationToken;
 
 use crate::auth::Kits;
 use crate::env::Config;
+use crate::modules::rooms::Hub;
 use crate::state::AppState;
 
 type BootError = Box<dyn std::error::Error + Send + Sync>;
@@ -46,13 +47,14 @@ pub async fn run() -> ExitCode {
     }
 }
 
-/// The shared state for `pool` under `config`.
-pub fn state(config: &Config, pool: PgPool, kits: &Kits) -> AppState {
+/// The shared state for `pool` under `config`, with the rooms of `hub`.
+pub fn state(config: &Config, pool: PgPool, kits: &Kits, hub: Hub) -> AppState {
     AppState {
         pool,
         sessions: kits.sessions.clone(),
         issuer: Arc::from(config.porte.issuer.as_str()),
         data_dir: Arc::new(PathBuf::from(&config.data_dir)),
+        hub,
     }
 }
 
@@ -78,9 +80,10 @@ async fn signal() {
 
 async fn serve(config: Config, pool: PgPool) -> Result<(), BootError> {
     tronc::migrate::run(&pool, &crate::MIGRATOR).await?;
-    let kits = Kits::new(&config, &pool).await?;
+    let hub = Hub::default();
+    let kits = Kits::new(&config, &pool, &hub).await?;
     let token = CancellationToken::new();
-    let state = state(&config, pool, &kits);
+    let state = state(&config, pool, &kits, hub.clone());
     spawn_loops(&kits, &state, &token);
     let mut http = tronc::http::Config::from_core(&config.core);
     http.security = crate::security::config(http.security, &tronc::spa::dir_from_env());
@@ -103,5 +106,6 @@ async fn serve(config: Config, pool: PgPool) -> Result<(), BootError> {
         result = server => result?,
         () = drained => tracing::warn!("docs: drain timed out"),
     }
+    hub.shutdown().await;
     Ok(())
 }

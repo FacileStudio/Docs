@@ -3,7 +3,7 @@ use axum::routing::get;
 use tronc::health::{self, Check};
 
 use crate::auth::{self, Kits};
-use crate::modules::{attachments, documents, search, share, spaces};
+use crate::modules::{attachments, documents, rooms, search, share, spaces};
 use crate::state::AppState;
 
 async fn api_not_found() -> tronc::Error {
@@ -16,6 +16,7 @@ fn protected(kits: &Kits) -> Router<AppState> {
         .merge(documents::routes())
         .merge(search::routes())
         .merge(share::routes())
+        .merge(rooms::routes())
         .route_layer(kits.sessions.require_auth())
 }
 

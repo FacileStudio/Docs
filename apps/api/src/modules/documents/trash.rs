@@ -17,14 +17,15 @@ macro_rules! subtree {
 /// `DELETE /documents/{id}`: moves the page and its subtree to the trash.
 pub async fn trash(state: &AppState, user_id: i64, id: Uuid) -> Result<()> {
     access::check(state, user_id, id, Access::Manager).await?;
-    sqlx::query(concat!(
+    let ids: Vec<Uuid> = sqlx::query_scalar(concat!(
         subtree!(),
-        "UPDATE documents SET trashed_at = now() WHERE id IN (SELECT id FROM sub) AND trashed_at IS NULL"
+        "UPDATE documents SET trashed_at = now() WHERE id IN (SELECT id FROM sub) AND trashed_at IS NULL RETURNING id"
     ))
     .bind(id)
-    .execute(&state.pool)
+    .fetch_all(&state.pool)
     .await
     .map_err(db)?;
+    state.hub.close(&ids).await;
     Ok(())
 }
 
@@ -35,13 +36,13 @@ pub async fn restore(state: &AppState, user_id: i64, id: Uuid) -> Result<Documen
     let row = fetch(state, id).await?;
     let Some(trashed_at) = row.trashed_at else { return Err(Error::failed("the document is not in the trash")) };
     let mut tx = state.pool.begin().await.map_err(db)?;
-    sqlx::query(concat!(
+    let ids: Vec<Uuid> = sqlx::query_scalar(concat!(
         subtree!(),
-        "UPDATE documents SET trashed_at = NULL WHERE id IN (SELECT id FROM sub) AND trashed_at = $2"
+        "UPDATE documents SET trashed_at = NULL WHERE id IN (SELECT id FROM sub) AND trashed_at = $2 RETURNING id"
     ))
     .bind(id)
     .bind(trashed_at)
-    .execute(&mut *tx)
+    .fetch_all(&mut *tx)
     .await
     .map_err(db)?;
     sqlx::query(
@@ -53,12 +54,22 @@ pub async fn restore(state: &AppState, user_id: i64, id: Uuid) -> Result<Documen
     .await
     .map_err(db)?;
     tx.commit().await.map_err(db)?;
+    state.hub.close(&ids).await;
     answer(fetch(state, id).await?, have, false)
 }
 
 /// `DELETE /documents/{id}/permanent`: deletes a trashed page and its subtree for good.
 pub async fn permanent(state: &AppState, user_id: i64, id: Uuid) -> Result<()> {
     access::check(state, user_id, id, Access::Manager).await?;
+    let ids: Vec<Uuid> = sqlx::query_scalar(concat!(subtree!(), "SELECT id FROM sub"))
+        .bind(id)
+        .fetch_all(&state.pool)
+        .await
+        .map_err(db)?;
+    if fetch(state, id).await?.trashed_at.is_none() {
+        return Err(Error::failed("only a document in the trash can be deleted"));
+    }
+    state.hub.close(&ids).await;
     let deleted = sqlx::query("DELETE FROM documents WHERE id = $1 AND trashed_at IS NOT NULL")
         .bind(id)
         .execute(&state.pool)
