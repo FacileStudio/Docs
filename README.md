@@ -99,6 +99,10 @@ scripts/     check.sh, version.sh, postgres-up.sh, postgres-down.sh, verify-depl
 | [Deployment](docs/deployment.md) | Docker Compose, Dokploy, Traefik routing, the first deploy |
 | [API](docs/api.md) | HTTP endpoints, the WebSocket protocol and the MCP tools |
 
+## License
+
+Docs is licensed under the [GNU Affero General Public License v3.0](LICENSE) (`AGPL-3.0-only`). A commercial licence is available from Facile Studio for use that cannot meet the AGPL's terms.
+
 ---
 
 Part of the [Facile Suite](https://facile.studio) — self-hosted tools for creative studios

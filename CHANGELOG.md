@@ -1,6 +1,12 @@
 # Changelog
 
-All notable changes to Docs. Versions are local tags until the owner pushes the repo.
+All notable changes to Docs. Versions follow SemVer.
+
+## [0.5.2] - 2026-11-10
+
+### Changed
+
+- Licensed under AGPL-3.0-only, like Capsule and Plume.
 
 ## [0.5.1] - 2026-11-10
 
