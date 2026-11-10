@@ -55,6 +55,8 @@ fn cases() -> Vec<Case> {
             Prep::None,
             201,
         ),
+        case("POST", "/api/documents/{id}/share", Some(|| json!({"children": true})), Need::Manager, Prep::None, 201),
+        case("GET", "/api/documents/{id}/share", None, Need::Manager, Prep::None, 200),
     ]
 }
 
