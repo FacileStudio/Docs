@@ -1,5 +1,7 @@
 # Docs
 
+[![ci](https://github.com/FacileStudio/Docs/actions/workflows/ci.yml/badge.svg)](https://github.com/FacileStudio/Docs/actions/workflows/ci.yml)
+
 Collaborative documents for the Facile suite: a tree of pages per space, edited together in
 real time, searchable, exportable to PDF, readable and writable by agents.
 
