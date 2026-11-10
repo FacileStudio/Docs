@@ -2,6 +2,48 @@
 
 All notable changes to Docs. Versions follow SemVer.
 
+## [0.6.0] - 2026-11-11
+
+### Schema 2
+
+- encre v0.9.0 in the API and the client (`tag = "v0.9.0"`, `github:FacileStudio/encre#v0.9.0`).
+  Pages may now hold encre schema 2: `==highlight==`, `[badge:<tone> text]` and `[status:<state>]`,
+  `mermaid`, `d2` and `dot` diagrams, `columns` of two to four `column`s, `stat.sub`, and GFM
+  alerts (`> [!NOTE]`) read as callouts
+- Every page created or rewritten (REST, MCP, room, revision restore, Outline import) stores
+  `schema_version = 2`. Schema 1 rows stay as they are until their next write: encre migrates
+  1 to 2 as the identity, and a test serves a schema 1 row unchanged
+- The Outline import now stores `schema_version` instead of the column default of 1
+- The editor and the share page get schema 2 from encre, with `locale` taken from the browser
+  (fr, en, es or de; French otherwise) and mermaid diagrams drawn by `mermaid`, imported only
+  when a mermaid diagram is shown, with `securityLevel: 'strict'`. d2 and dot show their source.
+  No syntax highlighter: code blocks stay encre's escaped text
+- MCP tool descriptions carry encre v0.9.0's short form (highlight, badges, status, alerts,
+  diagrams, columns) and the size and nesting limits
+
+### Security
+
+- Every markdown body the API parses is capped at `MARKDOWN_MAX_BYTES` (1 MiB by default) with
+  413 `resource_exhausted`: create from markdown, `import-openui` source, the summed markdown of
+  one `ops` request, each Outline page (the dry run already names oversized pages), and
+  `docs_create`, `docs_edit` and `docs_replace`. encre measured up to 0.6 s for a hostile 1 MiB
+- Markdown parsing runs on a blocking thread: creates and OpenUI imports through
+  `spawn_blocking`, and room transactions (ops, revision restores) with their validation too
+
+### Changed
+
+- Markdown past encre's nesting limits (64 levels in markdown, 48 in the tree, 8 callouts and
+  columns on one path) is 400 `invalid_argument`; on a create the message names the line and
+  column (`markdown at line 3, column 1: …`). A room update past them is reverted and closed
+  with 1008
+- A `patch` that matches too often reports the full count and lists the first 20 matches, then
+  `and N more`, in the ops answer and the MCP error
+
+### Fixed
+
+- A WebSocket close reason is cut to 123 bytes. A longer one (a validation path of a deeply
+  nested update) failed to send, so the client saw 1006 and reconnected instead of reading 1008
+
 ## [0.5.2] - 2026-11-10
 
 ### Changed
