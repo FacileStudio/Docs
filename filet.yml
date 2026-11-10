@@ -1,0 +1,61 @@
+# Docs' coding standard, enforced by filet.
+# https://github.com/FacileStudio/filet
+#
+#   filet check .     the rules
+#   filet roast .     the rules, with commentary
+#   filet docker .    the Dockerfile
+#
+# Forked from Capsule's filet.yml (the app fork source). The limits are
+# Capsule's, unchanged. What differs is the language list and the tree, because
+# Docs has a Rust API (plan section 2.1).
+
+kind: app
+
+ignore:
+  - node_modules
+  - vendor
+  - build
+  - dist
+  - testdata
+  - coverage
+  - target
+
+# Rust for the API, TypeScript and Svelte for the client, and the shell scripts
+# every suite app inherits.
+extensions: [.rs, .ts, .svelte, .sh]
+
+limits:
+  fileLines: 250
+  funcsPerFile: 8
+  funcLines: 30
+  funcStatements: 25
+  lineLength: 120
+  params: 5
+  returns: 3
+  nesting: 4
+  complexity: 10
+  structFields: 12
+  interfaceMethods: 4
+
+architecture:
+  # Capsule requires [apps/api, apps/client]. On main the client lives on the
+  # feat/client branch until the orchestrator merges it; the merge restores:
+  #   requiredDirs: [apps/api, apps/client]
+  requiredDirs: [apps/api]
+  # A module that owns HTTP declares it in router.rs (plan section 2.1).
+  requiredFiles:
+    "apps/api/src/modules/*": [mod.rs, router.rs]
+
+style:
+  banInlineComments: true
+  banTODO: true
+  requireDocComments: true
+  banGlobalMutable: true
+  banInit: true
+  banTrailingSpace: true
+
+disabled:
+  # rustfmt and prettier own line breaking; every survivor is a line no
+  # formatter could have wrapped.
+  - gen.line.long
+failOn: error

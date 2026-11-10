@@ -1,0 +1,48 @@
+[package]
+name = "api"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.98"
+publish = false
+
+[[bin]]
+name = "api"
+path = "src/main.rs"
+
+[dependencies]
+tronc = { git = "file:///home/yann/Code/Facile/tronc-rs", tag = "v0.3.0", features = ["http", "health", "spa", "migrate", "journal", "apiref", "mcp"] }
+porte = { git = "file:///home/yann/Code/Facile/porte-rs", tag = "v0.4.0", features = ["pg", "oidc", "directory", "spaces", "mcp"] }
+encre = { git = "file:///home/yann/Code/Facile/encre", tag = "v0.5.0", features = ["yjs", "pdf", "openui"] }
+async-trait = "0.1.92"
+axum = { version = "0.8.9", features = ["ws", "multipart", "macros"] }
+futures-util = { version = "0.3.34", default-features = false, features = ["std", "sink"] }
+http = "1.5.0"
+reqwest = { version = "0.13.5", default-features = false, features = ["rustls", "json"] }
+schemars = "1.2.3"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+sha2 = "0.11.1"
+sqlx = { version = "0.9.0", default-features = false, features = ["runtime-tokio", "tls-rustls", "postgres", "uuid", "time", "json", "migrate", "derive", "macros"] }
+thiserror = "2.0.21"
+time = { version = "0.3.55", features = ["serde", "formatting", "parsing", "serde-well-known"] }
+tokio = { version = "1.54.1", features = ["rt-multi-thread", "macros", "signal", "sync", "time", "net", "fs"] }
+tokio-util = "0.7.20"
+tower = { version = "0.5.3", features = ["util"] }
+tracing = "0.1.44"
+utoipa = "6.0.0"
+uuid = { version = "1.29.2", features = ["v4", "serde"] }
+yrs = "0.28.1"
+
+[dev-dependencies]
+tronc = { git = "file:///home/yann/Code/Facile/tronc-rs", tag = "v0.3.0", features = ["testdb", "mcptest"] }
+http-body-util = "0.1.5"
+tokio-tungstenite = "0.29.0"
+tower = { version = "0.5.3", features = ["util"] }
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true
+
+[profile.dev.package."*"]
+opt-level = 2
