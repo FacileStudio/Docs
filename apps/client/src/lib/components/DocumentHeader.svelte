@@ -5,18 +5,15 @@
 	import { shareIcon } from '$lib/brand';
 	import type { Connection } from '$lib/collab';
 	import { runExport, type ExportKind } from '$lib/export';
-	import type { Access } from '$lib/session.svelte';
 	import { tree } from '$lib/tree.svelte';
 	import type { DocumentRecord } from '$lib/types';
 	import IconChooser from './IconChooser.svelte';
 	import ShareDialog from './ShareDialog.svelte';
 
-	let {
-		doc = $bindable(),
-		access,
-		connection,
-		commonMark
-	}: { doc: DocumentRecord; access: Access; connection: Connection; commonMark: () => Promise<string> } = $props();
+	let { doc = $bindable(), connection }: { doc: DocumentRecord; connection: Connection } = $props();
+
+	const access = $derived(doc.access);
+	const locked = $derived(access === 'viewer' || doc.trashed_at !== null);
 
 	let title = $state('');
 	let sharing = $state(false);
@@ -30,7 +27,8 @@
 		{
 			live: { tone: 'success', label: 'En ligne', pulse: false },
 			connecting: { tone: 'warning', label: 'Reconnexion…', pulse: true },
-			offline: { tone: 'danger', label: 'Hors ligne : vos modifications partiront au retour du réseau', pulse: false }
+			offline: { tone: 'danger', label: 'Hors ligne : vos modifications partiront au retour du réseau', pulse: false },
+			stopped: { tone: 'danger', label: 'Déconnecté', pulse: false }
 		}[connection] as { tone: 'success' | 'warning' | 'danger'; label: string; pulse: boolean }
 	);
 
@@ -62,7 +60,7 @@
 	}
 
 	function exporting(kind: ExportKind) {
-		return () => runExport(doc.id, doc.title, kind, commonMark).catch(() => toast.danger('Export impossible'));
+		return () => runExport(doc.id, kind);
 	}
 
 	const exports = $derived([
@@ -75,13 +73,13 @@
 <header class="flex flex-col gap-3">
 	<div class="flex flex-wrap items-center justify-end gap-2">
 		<StatusDot tone={status.tone} label={status.label} pulse={status.pulse} class="mr-auto" />
-		{#if access === 'view'}<span class="text-fc-xs text-fc-fg-muted">Lecture seule</span>{/if}
+		{#if access === 'viewer'}<span class="text-fc-xs text-fc-fg-muted">Lecture seule</span>{/if}
 		<Button variant="ghost" size="sm" icon={icons.history} href="/d/{doc.id}/history">Historique</Button>
 		<Menu label="Exporter" items={exports} align="end">
 			{#snippet trigger()}<span class="flex items-center gap-2"><Icon icon={icons.download} size={16} />Exporter</span
 				>{/snippet}
 		</Menu>
-		{#if access === 'manage'}
+		{#if access === 'manager'}
 			<IconButton variant="ghost" aria-label="Partager" onclick={() => (sharing = true)}>
 				<Icon icon={shareIcon} size={18} />
 			</IconButton>
@@ -93,14 +91,14 @@
 		{/if}
 	</div>
 	<div class="flex items-center gap-2">
-		<IconChooser value={doc.icon} disabled={access === 'view'} onpick={(icon) => save({ icon })} />
+		<IconChooser value={doc.icon} disabled={locked} onpick={(icon) => save({ icon })} />
 		<input
 			class="bare min-w-0 flex-1 bg-transparent text-3xl font-semibold text-fc-fg outline-none
 				placeholder:text-fc-fg-muted"
 			aria-label="Titre du document"
 			placeholder="Sans titre"
 			maxlength="200"
-			readonly={access === 'view'}
+			readonly={locked}
 			bind:value={title}
 			onblur={commitTitle}
 			onkeydown={(event) => event.key === 'Enter' && (event.currentTarget as HTMLInputElement).blur()}

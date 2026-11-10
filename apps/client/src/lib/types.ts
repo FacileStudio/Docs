@@ -21,10 +21,15 @@ export interface TreeNode {
 	trashed_at?: string | null;
 }
 
+/** What the caller may do with a document: read, edit content and title, or also move, trash and share. */
+export type Access = 'viewer' | 'editor' | 'manager';
+
 /** A document as the API answers it. `content` or `markdown` depends on `?format=`. */
 export interface DocumentRecord extends TreeNode {
 	space_id: string | null;
 	schema_version: number;
+	version: number;
+	access: Access;
 	content?: EncreNode;
 	markdown?: string;
 	created_at: string;
@@ -35,8 +40,11 @@ export interface DocumentRecord extends TreeNode {
 export interface Revision {
 	id: string;
 	title: string;
+	schema_version: number;
+	content: EncreNode;
+	created_by: number | null;
+	author: string | null;
 	created_at: string;
-	created_by?: number | null;
 }
 
 /** One search result. `snippet` comes from `ts_headline` and marks hits with `<b>`. */
@@ -53,19 +61,32 @@ export interface Created {
 	url: string;
 }
 
-/** A child page listed by a share link that exposes its subtree. */
-export interface PublicChild {
+/** A shared page, as `GET /api/public/{token}` answers it. `children` is the live subtree, empty on a child page. */
+export interface PublicPage {
 	id: string;
 	title: string;
-	parent_id?: string | null;
-	icon?: string;
+	icon: string;
+	content: EncreNode;
+	children: TreeNode[];
 }
 
-/** A shared page, as `GET /api/public/{token}` answers it. */
-export interface PublicPage {
-	title: string;
-	content: EncreNode;
-	children?: PublicChild[];
+/** A live share link of a document, as `GET /api/documents/{id}/share` lists it. The token is never listed. */
+export interface ShareInfo {
+	id: string;
+	children: boolean;
+	created_at: string;
+}
+
+/** An agent action waiting for the owner's confirmation, as `GET /api/mcp/actions` lists it. */
+export interface PendingAction {
+	id: string;
+	kind: string;
+	target: string;
+	summary: string;
+	client_id: string;
+	created_at: string;
+	expires_at: string;
+	state: string;
 }
 
 /** The signed-in person, as `GET /api/auth/session` answers it. */

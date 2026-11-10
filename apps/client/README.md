@@ -34,29 +34,29 @@ bun run build        # static site in build/
 | Recent documents, new document, markdown import through `loadEncre` and `parseMarkdown` | `src/routes/+page.svelte`, `src/lib/import.ts` |
 | Document page: encre `Editor` over `y-websocket`, encre presence and carets, title and icon editing, connection state (live, reconnecting, offline), read-only editor for viewers and trashed pages | `src/routes/d/[id]/+page.svelte`, `src/lib/collab.ts`, `src/lib/components/CollabEditor.svelte`, `DocumentHeader.svelte` |
 | Image paste and drop, uploaded to the document's attachments, inserted with Tiptap's `setImage` | `src/lib/images.ts` |
-| Export menu: PDF and markdown from the API, CommonMark from encre-wasm in the browser | `src/lib/export.ts` |
-| Share dialog: create a link (with or without sub-pages), shown once, revoke | `src/lib/share.ts`, `ShareDialog.svelte` |
+| Export menu: PDF, Facile Markdown and CommonMark, all from the API | `src/lib/export.ts` |
+| Share dialog: create a link (with or without sub-pages), shown once; list and revoke live links | `src/lib/share.ts`, `ShareDialog.svelte` |
 | Search palette (⌘K), `ts_headline` snippets rendered without HTML | `Search.svelte`, `src/lib/snippet.ts` |
 | History with restore, trash with restore and permanent delete, settings (`SettingsLayout`, profile, preferences) | `src/routes/d/[id]/history`, `src/routes/trash`, `src/routes/settings/[[section]]` |
 | Public share page: encre `Document`, read-only, no app chrome, `noindex`, no cookie sent | `src/routes/s/[token]/+page.svelte` |
+| Agent confirmation page for `docs_replace` | `src/routes/pending/+page.svelte`, `src/lib/pending.ts` |
 
-Tests: `backend.test.ts`, `tree-order.test.ts`, `tree.svelte.test.ts` (moves against the mock), `share.test.ts`, `export.test.ts`, `helpers.test.ts`, and `components/CollabEditor.test.ts`, which mounts the encre editor on a stubbed `WebsocketProvider` and checks the room URL, that a Yjs update reaches the editor, the read-only mode and the teardown.
+Tests: `backend.test.ts`, `tree-order.test.ts`, `tree.svelte.test.ts` (moves against the mock), `share.test.ts`, `export.test.ts`, `pending.test.ts`, `helpers.test.ts` (close codes among them), and `components/CollabEditor.test.ts`, which mounts the encre editor on a stubbed `WebsocketProvider` and checks the room URL, that a Yjs update reaches the editor, the read-only mode and the teardown.
 
-## Contract gaps
+## Against the API contract
 
-The plan (section 8.3) is the contract. Where it says nothing, the client does the following, and the API should match it or say otherwise.
+The contract is `docs/api.md` at the repo root, as the API is built. The client follows it exactly:
 
-1. **`GET /api/auth/session`** is not in the plan. The client reads Capsule's shape: `{"user": {"email","name"?,"avatar_url"?} | null}`. Sign-in is `GET /api/auth/oidc`.
-2. **List shapes.** The plan writes bare arrays for `/documents`, `/search` and `/revisions`, and nothing for `/spaces`. The client accepts a bare array or a wrapper (`spaces`, `documents`, `results`, `revisions`), and reads spaces as `{"id","name","role"}` as in Feuilles 7.5.
-3. **`Document` has no field list.** The client expects `id, space_id, parent_id, position, title, icon, schema_version, content | markdown, created_at, updated_at, trashed_at`.
-4. **The caller's access is not in any answer.** The client derives it from the space role: personal and `admin`/`owner` manage, `member` edits, anything else views. No space role maps to a viewer, so the read-only editor shows only for an unknown role or a trashed page. An `access` field on `Document` would settle it.
-5. **No route lists the trash.** The client calls `GET /api/documents?space_id=&trashed=true`, the Feuilles convention.
-6. **Move body.** `parent_id` and `before` are both optional in the plan, so "absent" is ambiguous. The client always sends both: `parent_id: null` is the root, `before: null` is the end.
-7. **`POST /documents` needs a title.** A new page is created as "Sans titre".
-8. **No route lists share links.** A link can be revoked only from the dialog that created it, since its token is shown once.
-9. **Public children.** The client reads `children` as `[{"id","title","icon"?}]` and opens a child at `/s/{token}?doc={id}` through `GET /api/public/{token}/documents/{id}`. Grandchildren are reachable only if the API lists them.
-10. **Share and attachment URLs.** A share `url` may be a path or absolute; the client makes it absolute. Images in shared pages that point at `/api/attachments/{id}` get `?share={token}` appended.
-11. **No CommonMark route.** The portable export is rendered in the browser by encre-wasm.
+- **Access.** Every `Document` carries the caller's `access` (`viewer`, `editor`, `manager`); the document, header and history pages read it. Scope-wide actions (new page, drag in the tree, trash buttons) use `session.scopeAccess`, the role-to-access table of `docs/api.md`, since no document answers for a whole scope.
+- **Lists.** `/spaces` answers `{"spaces":[…]}`; `/documents`, `/search`, `/revisions` and `/documents/{id}/share` answer bare arrays.
+- **Trash.** `GET /api/documents?space_id=&trashed=true`.
+- **Move.** Both `parent_id` and `before` are always sent; `null` is the root and the end.
+- **Sharing.** The dialog lists the live links of a page (`GET /documents/{id}/share`, never the token) and revokes any of them. A new link's token is shown once.
+- **Public pages.** `children` is the whole live subtree as tree entries; the page indents it by `parent_id`. The API already appends `?share=<token>` to attachment images.
+- **Exports.** PDF, Facile Markdown and CommonMark all come from the API.
+- **WebSocket close codes.** 1001 and 1013 reconnect with y-websocket's backoff (1001 also reloads the page record, to catch a trash or restore). 1008 stops: the page reloads the record, shows "not found or no access" when it is gone, else reopens the room on a fresh `Y.Doc` and says the change was refused. 1009 and 1011 stop with an alert and a reload button. Cross-tab BroadcastChannel sync is off, so the server stays the only peer.
+- **Agent confirmations.** `/pending?action=<id>` lists the signed-in person's actions from `/api/mcp/actions` and confirms or dismisses one, with muse `ApprovalCard`.
+- **No `/docs` page.** `/docs` is the API reference served by the binary; client pages are `/`, `/d/{id}`, `/d/{id}/history`, `/s/{token}`, `/trash`, `/settings` and `/pending`.
 
 ## Library gaps
 

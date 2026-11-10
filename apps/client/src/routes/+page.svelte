@@ -11,7 +11,7 @@
 	let busy = $state(false);
 
 	const recent = $derived(tree.recent.slice(0, 20));
-	const edit = $derived(session.accessTo(session.spaceId) !== 'view');
+	const edit = $derived(session.scopeAccess(session.spaceId) !== 'viewer');
 
 	async function run(work: () => Promise<{ id: string }>) {
 		busy = true;

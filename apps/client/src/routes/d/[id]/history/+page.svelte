@@ -4,7 +4,6 @@
 	import { Button, Card, ConfirmModal, EmptyState, PageHeader, Spinner, icons, toast } from '@facile/muse';
 	import { backend } from '$lib/backend';
 	import { formatDate } from '$lib/format';
-	import { session } from '$lib/session.svelte';
 	import { tree } from '$lib/tree.svelte';
 	import type { DocumentRecord, Revision } from '$lib/types';
 
@@ -28,7 +27,7 @@
 			});
 	});
 
-	const canRestore = $derived(doc ? session.accessTo(doc.space_id) !== 'view' : false);
+	const canRestore = $derived(doc !== null && doc.access !== 'viewer' && !doc.trashed_at);
 
 	async function restore() {
 		const revision = pending;

@@ -44,7 +44,10 @@ async function open(editable: boolean) {
 			documentId: 'doc-1',
 			editable,
 			user: { name: 'Camille' },
-			onconnection: (state: string) => states.push(state)
+			events: {
+				onconnection: (state: string) => states.push(state),
+				onstop: () => undefined
+			}
 		}
 	});
 	flushSync();

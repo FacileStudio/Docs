@@ -2,30 +2,25 @@
 	import { Editor, type CollabUser } from '@facile/encre';
 	import { toast } from '@facile/muse';
 	import { onDestroy, untrack } from 'svelte';
-	import { openCollab, type Connection } from '$lib/collab';
+	import { openCollab, type CollabEvents } from '$lib/collab';
 	import { imageFiles, insertImages } from '$lib/images';
 
 	let {
 		documentId,
 		editable,
 		user,
-		onconnection
+		events
 	}: {
 		documentId: string;
 		editable: boolean;
 		user: CollabUser;
-		onconnection?: (state: Connection) => void;
+		events: CollabEvents;
 	} = $props();
 
-	const collab = untrack(() => openCollab(documentId, (state) => onconnection?.(state)));
+	const collab = untrack(() => openCollab(documentId, events));
 	let editor: ReturnType<typeof Editor> | undefined = $state();
 
 	onDestroy(() => collab.destroy());
-
-	/** The document as portable CommonMark, through encre-wasm. */
-	export function exportCommonMark(): Promise<string> {
-		return editor?.exportCommonMark() ?? Promise.resolve('');
-	}
 
 	async function takeImages(event: ClipboardEvent | DragEvent) {
 		const data = 'clipboardData' in event ? event.clipboardData : event.dataTransfer;

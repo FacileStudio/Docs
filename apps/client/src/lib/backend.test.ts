@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { ApiError, backend, list, request } from './backend';
+import { ApiError, backend, request } from './backend';
 
 function stub(response: Response | Error) {
 	const fetch = vi.fn(async () => {
@@ -42,17 +42,27 @@ describe('request', () => {
 		stub(Response.json({ error: { code: 'not_found', message: 'document not found' } }, { status: 404 }));
 		const error = await request('/documents/x').catch((e: unknown) => e);
 		expect(error).toBeInstanceOf(ApiError);
-		expect(error).toMatchObject({ status: 404, code: 'not_found', message: 'document not found' });
+		expect(error).toMatchObject({
+			status: 404,
+			code: 'not_found',
+			message: 'document not found'
+		});
 	});
 
 	it('maps the status to a code when the body is not the envelope', async () => {
 		stub(new Response('<html>', { status: 429, statusText: 'Too Many Requests' }));
-		await expect(request('/search?q=a')).rejects.toMatchObject({ status: 429, code: 'rate_limited' });
+		await expect(request('/search?q=a')).rejects.toMatchObject({
+			status: 429,
+			code: 'rate_limited'
+		});
 	});
 
 	it('reports a network failure as code network', async () => {
 		stub(new TypeError('Failed to fetch'));
-		await expect(request('/spaces')).rejects.toMatchObject({ status: 0, code: 'network' });
+		await expect(request('/spaces')).rejects.toMatchObject({
+			status: 0,
+			code: 'network'
+		});
 	});
 
 	it('answers undefined for 204', async () => {
@@ -64,13 +74,5 @@ describe('request', () => {
 		const fetch = stub(Response.json({ title: 't', content: { type: 'doc' } }));
 		await backend.publicPage('tok', 'child');
 		expect(sent(fetch)).toEqual(['/api/public/tok/documents/child', expect.objectContaining({ credentials: 'omit' })]);
-	});
-});
-
-describe('list', () => {
-	it('reads a bare array or a wrapped one', () => {
-		expect(list([1], 'spaces')).toEqual([1]);
-		expect(list({ spaces: [2] }, 'spaces')).toEqual([2]);
-		expect(list({ other: [3] }, 'spaces')).toEqual([]);
 	});
 });

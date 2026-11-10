@@ -1,5 +1,5 @@
-import type { EncreNode } from '@facile/encre';
 import { backend } from './backend';
+import type { TreeNode } from './types';
 
 /** A share link just created: its id, to revoke it, and its full URL, shown once. */
 export interface ShareLink {
@@ -18,13 +18,18 @@ export async function createShare(id: string, children: boolean, origin: string)
 	return { id: created.id, url: absoluteUrl(created.url, origin) };
 }
 
-/** The document with every attachment image carrying `?share=token`, so a visitor without a session can load it. */
-export function withShareToken(node: EncreNode, token: string): EncreNode {
-	const src = node.attrs?.src;
-	const attachment = node.type === 'image' && typeof src === 'string' && src.startsWith('/api/attachments/');
-	const attrs = attachment
-		? { ...node.attrs, src: `${src}${src.includes('?') ? '&' : '?'}share=${encodeURIComponent(token)}` }
-		: node.attrs;
-	const content = node.content?.map((child) => withShareToken(child, token));
-	return { ...node, ...(attrs ? { attrs } : {}), ...(content ? { content } : {}) };
+/** A shared subtree page with its depth under the shared page, for an indented list. */
+export interface Outlined {
+	node: TreeNode;
+	depth: number;
+}
+
+/** The shared subtree depth first, siblings by position, from the flat list `GET /public/{token}` answers. */
+export function outline(nodes: TreeNode[], rootId: string): Outlined[] {
+	const byParent = Map.groupBy(nodes, (node) => node.parent_id ?? '');
+	const walk = (parent: string, depth: number): Outlined[] =>
+		[...(byParent.get(parent) ?? [])]
+			.sort((a, b) => a.position - b.position)
+			.flatMap((node) => [{ node, depth }, ...walk(node.id, depth + 1)]);
+	return walk(rootId, 0);
 }

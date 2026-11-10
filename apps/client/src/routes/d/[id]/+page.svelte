@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { Alert, Button, EmptyState, Spinner, icons } from '@facile/muse';
+	import { Alert, Button, EmptyState, Spinner, icons, toast } from '@facile/muse';
 	import { ApiError, backend } from '$lib/backend';
-	import type { Connection } from '$lib/collab';
+	import type { CollabEvents, Connection, Stop } from '$lib/collab';
 	import CollabEditor from '$lib/components/CollabEditor.svelte';
 	import DocumentHeader from '$lib/components/DocumentHeader.svelte';
 	import { session } from '$lib/session.svelte';
@@ -14,19 +14,53 @@
 	let doc = $state<DocumentRecord | null>(null);
 	let missing = $state(false);
 	let connection = $state<Connection>('connecting');
-	let editor: CollabEditor | undefined = $state();
+	let stop = $state<Exclude<Stop, 'refused'> | null>(null);
+	let generation = $state(0);
+
+	const STOPPED: Record<Exclude<Stop, 'refused'>, string> = {
+		'too-large': 'Le document dépasse la taille maximale : vos dernières modifications n’ont pas été enregistrées.',
+		failed: 'Le document n’a pas pu être chargé sur le serveur.'
+	};
+
+	function load(wanted: string): Promise<void> {
+		return backend
+			.get(wanted)
+			.then((record) => {
+				if (wanted === id) doc = record;
+			})
+			.catch((error) => {
+				if (wanted === id) missing = error instanceof ApiError && error.status === 404;
+			});
+	}
 
 	$effect(() => {
 		const wanted = id;
 		doc = null;
 		missing = false;
-		backend
-			.get(wanted)
-			.then((record) => wanted === id && (doc = record))
-			.catch((error) => wanted === id && (missing = error instanceof ApiError && error.status === 404));
+		stop = null;
+		void load(wanted);
 	});
 
-	const access = $derived(doc ? session.accessTo(doc.space_id) : 'view');
+	function reopen() {
+		stop = null;
+		connection = 'connecting';
+		generation += 1;
+	}
+
+	async function refused() {
+		await load(id);
+		if (missing) return;
+		reopen();
+		toast.warning('Le document a refusé votre modification ; il a été rechargé.');
+	}
+
+	const events: CollabEvents = {
+		onconnection: (state) => (connection = state),
+		onstop: (why) => (why === 'refused' ? void refused() : (stop = why)),
+		onroomclose: () => void load(id)
+	};
+
+	const access = $derived(doc?.access ?? 'viewer');
 	const user = $derived({
 		name: session.user?.name || session.user?.email || 'Anonyme',
 		avatar: session.user?.avatar_url
@@ -56,23 +90,18 @@
 		{#if doc.trashed_at}
 			<Alert tone="warning">
 				Ce document est dans la corbeille.
-				{#if access === 'manage'}<Button size="sm" variant="secondary" onclick={restore}>Restaurer</Button>{/if}
+				{#if access === 'manager'}<Button size="sm" variant="secondary" onclick={restore}>Restaurer</Button>{/if}
 			</Alert>
 		{/if}
-		<DocumentHeader
-			bind:doc
-			{access}
-			{connection}
-			commonMark={() => editor?.exportCommonMark() ?? Promise.resolve('')}
-		/>
-		{#key doc.id}
-			<CollabEditor
-				bind:this={editor}
-				documentId={doc.id}
-				editable={access !== 'view' && !doc.trashed_at}
-				{user}
-				onconnection={(state) => (connection = state)}
-			/>
+		<DocumentHeader bind:doc {connection} />
+		{#if stop}
+			<Alert tone="danger">
+				{STOPPED[stop]}
+				<Button size="sm" variant="secondary" onclick={reopen}>Recharger</Button>
+			</Alert>
+		{/if}
+		{#key `${doc.id}:${generation}`}
+			<CollabEditor documentId={doc.id} editable={access !== 'viewer' && !doc.trashed_at} {user} {events} />
 		{/key}
 	{/if}
 </div>

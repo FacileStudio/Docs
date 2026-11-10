@@ -1,16 +1,16 @@
 import { backend } from './backend';
-import type { Role, SessionUser, Space } from './types';
-
-/** What the caller may do with a document. */
-export type Access = 'view' | 'edit' | 'manage';
+import type { Access, Role, SessionUser, Space } from './types';
 
 const SPACE_KEY = 'docs.space';
 
-/** The access a scope role grants (plan 7.4): personal is the owner's, `member` edits, `admin` and `owner` manage. */
-export function accessFor(role: Role | 'personal' | undefined): Access {
-	if (role === 'personal' || role === 'admin' || role === 'owner') return 'manage';
-	if (role === 'member') return 'edit';
-	return 'view';
+/**
+ * The access a scope role grants on its pages, as `docs/api.md` defines it: personal pages are their owner's,
+ * `member` edits, `admin` and `owner` manage. A page answers its own `access`; this is for scope-wide actions only.
+ */
+export function scopeAccess(role: Role | 'personal' | undefined): Access {
+	if (role === 'personal' || role === 'admin' || role === 'owner') return 'manager';
+	if (role === 'member') return 'editor';
+	return 'viewer';
 }
 
 function remembered(): string | null {
@@ -56,9 +56,9 @@ class Session {
 		remember(id);
 	}
 
-	accessTo(spaceId: string | null): Access {
-		if (spaceId === null) return accessFor('personal');
-		return accessFor(this.spaces.find((space) => space.id === spaceId)?.role);
+	scopeAccess(spaceId: string | null): Access {
+		if (spaceId === null) return scopeAccess('personal');
+		return scopeAccess(this.spaces.find((space) => space.id === spaceId)?.role);
 	}
 
 	async logout(): Promise<void> {

@@ -6,9 +6,9 @@
 	import TreeRow from './TreeRow.svelte';
 
 	const roots = $derived(tree.children(null));
-	const access = $derived(session.accessTo(session.spaceId));
-	const manage = $derived(access === 'manage');
-	const edit = $derived(access !== 'view');
+	const access = $derived(session.scopeAccess(session.spaceId));
+	const manage = $derived(access === 'manager');
+	const edit = $derived(access !== 'viewer');
 
 	let rootOver = $state(false);
 

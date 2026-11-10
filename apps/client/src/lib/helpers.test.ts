@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { connectionOf, socketBase } from './collab';
+import { connectionOf, socketBase, stopOf } from './collab';
 import { imageFiles } from './images';
 import { titleOf } from './import';
-import { accessFor } from './session.svelte';
+import { scopeAccess } from './session.svelte';
 import { snippetParts } from './snippet';
 
 describe('helpers', () => {
@@ -20,12 +20,21 @@ describe('helpers', () => {
 		expect(connectionOf('connected', true, false)).toBe('offline');
 	});
 
+	it('stops on refused, too large and failed rooms, and reconnects on the others', () => {
+		expect(stopOf(1008)).toBe('refused');
+		expect(stopOf(1009)).toBe('too-large');
+		expect(stopOf(1011)).toBe('failed');
+		expect(stopOf(1001)).toBeNull();
+		expect(stopOf(1013)).toBeNull();
+		expect(stopOf(1006)).toBeNull();
+	});
+
 	it('grants access by scope role', () => {
-		expect(accessFor('personal')).toBe('manage');
-		expect(accessFor('owner')).toBe('manage');
-		expect(accessFor('admin')).toBe('manage');
-		expect(accessFor('member')).toBe('edit');
-		expect(accessFor(undefined)).toBe('view');
+		expect(scopeAccess('personal')).toBe('manager');
+		expect(scopeAccess('owner')).toBe('manager');
+		expect(scopeAccess('admin')).toBe('manager');
+		expect(scopeAccess('member')).toBe('editor');
+		expect(scopeAccess(undefined)).toBe('viewer');
 	});
 
 	it('splits a ts_headline snippet without HTML', () => {

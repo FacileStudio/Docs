@@ -1,7 +1,8 @@
-import type { DocumentRecord, Revision, Space, TreeNode } from '../types.ts';
+import type { DocumentRecord, PendingAction, Revision, Space } from '../types.ts';
+import { actionRoutes } from './mock-actions.ts';
+import { body, fail, json, row, shareRoutes, type Handler, type MockShare } from './mock-share.ts';
 
 type Params = Record<string, string>;
-type Handler = (params: Params, url: URL, request: Request) => Promise<Response> | Response;
 
 /** The in-memory state behind the mock API, exposed so tests can seed and inspect it. */
 export interface MockState {
@@ -9,25 +10,14 @@ export interface MockState {
 	spaces: Space[];
 	documents: DocumentRecord[];
 	revisions: Record<string, Revision[]>;
-	shares: { id: string; token: string; document_id: string; children: boolean; revoked: boolean }[];
+	shares: MockShare[];
+	actions: PendingAction[];
 	calls: { method: string; path: string; csrf: boolean; body: unknown }[];
 }
 
-const json = (body: unknown, status = 200) =>
-	new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
-
-const fail = (status: number, code: string, message: string) => json({ error: { code, message } }, status);
-
 const EMPTY = { type: 'doc', content: [{ type: 'paragraph' }] };
 
-function row(doc: DocumentRecord): TreeNode {
-	const { id, parent_id, position, title, icon, updated_at, trashed_at } = doc;
-	return { id, parent_id, position, title, icon, updated_at, trashed_at };
-}
-
-const body = async (request: Request) => (request.headers.get('Content-Type')?.includes('json') ? request.json() : {});
-
-/** A mock of the plan 8.3 API for local UI work (`DOCS_MOCK=1 bun run dev`) and for tests. Never shipped. */
+/** A mock of the `docs/api.md` HTTP API for local UI work (`DOCS_MOCK=1 bun run dev`) and for tests. Never shipped. */
 export class MockApi {
 	state: MockState;
 	private counter = 0;
@@ -39,6 +29,7 @@ export class MockApi {
 			documents: [],
 			revisions: {},
 			shares: [],
+			actions: [],
 			calls: [],
 			...seed
 		};
@@ -100,6 +91,8 @@ export class MockApi {
 					title: input.title ?? '',
 					icon: '',
 					schema_version: 1,
+					version: 1,
+					access: 'manager',
 					content: input.content ?? structuredClone(EMPTY),
 					created_at: stamp,
 					updated_at: stamp,
@@ -155,14 +148,24 @@ export class MockApi {
 			this.withDoc((doc, params) => {
 				const revision = this.state.revisions[doc.id]?.find((r) => r.id === params.rev);
 				return revision
-					? json(Object.assign(doc, { title: revision.title, updated_at: this.now() }))
+					? json(
+							Object.assign(doc, {
+								title: revision.title,
+								updated_at: this.now()
+							})
+						)
 					: fail(404, 'not_found', 'revision not found');
 			})
 		],
 		[
 			'GET',
-			/^\/documents\/(?<id>[^/]+)\/export\.md$/,
-			this.withDoc((doc) => new Response(`# ${doc.title}\n`, { headers: { 'Content-Type': 'text/markdown' } }))
+			/^\/documents\/(?<id>[^/]+)\/export\.(md|commonmark)$/,
+			this.withDoc(
+				(doc) =>
+					new Response(`# ${doc.title}\n`, {
+						headers: { 'Content-Type': 'text/markdown' }
+					})
+			)
 		],
 		[
 			'POST',
@@ -182,46 +185,21 @@ export class MockApi {
 					(d) => d.space_id === space && !d.trashed_at && d.title.toLowerCase().includes(q)
 				);
 				return json(
-					hits.map((d) => ({ id: d.id, title: d.title, snippet: `<b>${d.title}</b>`, updated_at: d.updated_at }))
+					hits.map((d) => ({
+						id: d.id,
+						title: d.title,
+						snippet: `<b>${d.title}</b>`,
+						updated_at: d.updated_at
+					}))
 				);
 			}
 		],
-		[
-			'POST',
-			/^\/documents\/(?<id>[^/]+)\/share$/,
-			this.withDoc(async (doc, _p, request) => {
-				const share = {
-					id: this.next(),
-					token: `tok-${this.counter}`,
-					document_id: doc.id,
-					children: Boolean((await body(request)).children),
-					revoked: false
-				};
-				this.state.shares.push(share);
-				return json({ id: share.id, url: `/s/${share.token}` }, 201);
-			})
-		],
-		[
-			'DELETE',
-			/^\/share\/(?<id>[^/]+)$/,
-			(params) => {
-				const share = this.state.shares.find((s) => s.id === params.id);
-				if (!share) return fail(404, 'not_found', 'share not found');
-				share.revoked = true;
-				return new Response(null, { status: 204 });
-			}
-		],
-		[
-			'GET',
-			/^\/public\/(?<token>[^/]+)$/,
-			(params) => {
-				const share = this.state.shares.find((s) => s.token === params.token && !s.revoked);
-				const doc = share && this.find(share.document_id);
-				if (!share || !doc) return fail(404, 'not_found', 'share not found');
-				const children = share.children ? this.state.documents.filter((d) => d.parent_id === doc.id).map(row) : [];
-				return json({ title: doc.title, content: doc.content, children });
-			}
-		]
+		...shareRoutes(
+			() => this.state,
+			() => this.next(),
+			(id) => this.find(id)
+		),
+		...actionRoutes(() => this.state)
 	];
 
 	async handle(request: Request): Promise<Response> {

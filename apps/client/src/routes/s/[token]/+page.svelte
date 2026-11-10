@@ -3,7 +3,7 @@
 	import { Document } from '@facile/encre';
 	import { EmptyState, Spinner, icons } from '@facile/muse';
 	import { backend } from '$lib/backend';
-	import { withShareToken } from '$lib/share';
+	import { outline } from '$lib/share';
 	import type { PublicPage } from '$lib/types';
 
 	const token = $derived(page.params.token ?? '');
@@ -12,6 +12,8 @@
 	let root = $state<PublicPage | null>(null);
 	let shown = $state<PublicPage | null>(null);
 	let failed = $state(false);
+
+	const subtree = $derived(root ? outline(root.children, root.id) : []);
 
 	$effect(() => {
 		const wanted = token;
@@ -53,17 +55,19 @@
 				<a href="/s/{token}" class="text-fc-sm text-fc-fg-muted hover:text-fc-fg">← {root.title || 'Retour'}</a>
 			{/if}
 			<h1 class="text-3xl font-semibold text-fc-fg">{shown.title || 'Sans titre'}</h1>
-			<Document doc={withShareToken(shown.content, token)} />
-			{#if !childId && root?.children?.length}
+			<Document doc={shown.content} />
+			{#if subtree.length}
 				<nav aria-label="Sous-pages" class="flex flex-col gap-1">
 					<h2 class="text-fc-xs font-semibold tracking-wide text-fc-fg-muted uppercase">Sous-pages</h2>
-					{#each root.children as child (child.id)}
+					{#each subtree as { node, depth } (node.id)}
 						<a
-							href="/s/{token}?doc={child.id}"
-							class="rounded-fc-md px-3 py-2 text-fc-sm text-fc-fg hover:bg-fc-surface"
+							href="/s/{token}?doc={node.id}"
+							aria-current={node.id === childId ? 'page' : undefined}
+							style:padding-left="{0.75 + depth * 1.25}rem"
+							class="rounded-fc-md py-2 pr-3 text-fc-sm text-fc-fg hover:bg-fc-surface aria-[current=page]:bg-fc-surface"
 						>
-							{child.icon ?? ''}
-							{child.title || 'Sans titre'}
+							{node.icon}
+							{node.title || 'Sans titre'}
 						</a>
 					{/each}
 				</nav>

@@ -13,7 +13,7 @@
 		'Le document, ses sous-pages, ses versions et ses pièces jointes disparaissent. ' +
 		'Les liens de partage cessent de fonctionner. Rien ne peut être récupéré.';
 
-	const manage = $derived(session.accessTo(session.spaceId) === 'manage');
+	const manage = $derived(session.scopeAccess(session.spaceId) === 'manager');
 
 	$effect(() => {
 		const spaceId = session.spaceId;
