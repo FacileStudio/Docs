@@ -20,7 +20,7 @@ async fn upgrade(
     parts: Parts,
     upgrade: Result<WebSocketUpgrade, WebSocketUpgradeRejection>,
 ) -> tronc::Result<Response> {
-    state.sessions.check_origin(&parts).map_err(|e| tronc::Error::new(tronc::Code::PermissionDenied, e.message))?;
+    state.sessions.check_origin(&parts)?;
     let document = id(&raw)?;
     let have = access::check(&state, who.user_id, document, Access::Viewer).await?;
     let editor = have >= Access::Editor;

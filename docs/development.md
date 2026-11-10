@@ -8,7 +8,7 @@ How to run the API locally, test it, and pass the gate before a commit.
 - Docker, for Postgres 16, and `pg_isready` (psql 16 or later)
 - bun 1.4 for the client, `filet` 0.18 or later, `mise` and `lefthook`
 - Sibling checkouts of `tronc-rs`, `porte-rs` and `encre` under `~/Code/Facile` with their tags
-  (`v0.3.0`, `v0.4.0`, `v0.5.0`): until they are pushed, `Cargo.toml` reads them through
+  (`v0.3.0`, `v0.5.0`, `v0.5.0`): until they are pushed, `Cargo.toml` reads them through
   `file://` git URLs
 
 ## Setup

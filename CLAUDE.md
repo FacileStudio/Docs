@@ -6,7 +6,7 @@ in `apps/api`, SvelteKit client in `apps/client`, one container.
 ## Stack
 
 - **API** (`apps/api`): Rust 1.98 (edition 2024), axum 0.8, sqlx 0.9 on Postgres 16, yrs 0.28
-- **Libraries**: `tronc` (tronc-rs v0.3.0), `porte` (porte-rs v0.4.0), `encre` v0.5.0, all by git
+- **Libraries**: `tronc` (tronc-rs v0.3.0), `porte` (porte-rs v0.5.0), `encre` v0.5.0, all by git
   tag. Never copy their code here; report a gap instead
 - **Client** (`apps/client`): SvelteKit 2, Svelte 5 runes, Tailwind 4, `@facile/muse`, `@facile/encre`
 

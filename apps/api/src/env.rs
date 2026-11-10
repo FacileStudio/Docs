@@ -29,19 +29,7 @@ impl Config {
     pub fn from_vars(vars: &Vars) -> Result<Self, EnvError> {
         let core = Core::from_vars(vars, true)?;
         let text = |key: &str| vars.string(key, "").trim().to_owned();
-        let porte = porte::Config {
-            issuer: text("OIDC_ISSUER"),
-            client_id: text("OIDC_CLIENT_ID"),
-            client_secret: text("OIDC_CLIENT_SECRET"),
-            redirect_url: text("OIDC_REDIRECT_URL"),
-            success_url: text("OIDC_SUCCESS_URL"),
-            app_name: "Docs".to_owned(),
-            machine_audience: text("OIDC_MACHINE_AUDIENCE"),
-            scope_prefix: text("OIDC_SCOPE_PREFIX"),
-            cli_audience: text("OIDC_CLI_AUDIENCE"),
-            sso_only: true,
-            ..porte::Config::default()
-        };
+        let porte = porte::Config { app_name: "Docs".to_owned(), sso_only: true, ..porte::Config::from_vars(vars)? };
         let config = Config {
             porte,
             token_key: text("PORTE_TOKEN_KEY"),

@@ -105,7 +105,6 @@ fn mcp_options(config: &Config, kits: &Kits, state: &mut AppState) -> Result<Opt
     let Some(verifier) = kits.mcp.clone() else { return Ok(None) };
     let resource = config.mcp_resource.clone();
     state.confirmations = Some(crate::mcp::confirmations(state, &resource, config.mcp_state_key.as_bytes())?);
-    let verifier = Arc::new(crate::mcp::verifier::PorteVerifier(verifier));
     Ok(Some(tronc::mcp::Options::new("docs", resource, config.porte.issuer.clone(), verifier)))
 }
 

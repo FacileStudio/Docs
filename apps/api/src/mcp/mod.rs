@@ -4,7 +4,6 @@ pub mod format;
 mod read;
 mod replace;
 mod tools;
-pub mod verifier;
 mod write;
 
 use std::collections::HashMap;

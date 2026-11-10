@@ -112,7 +112,7 @@ dependencies = [
  "tokio-util",
  "tower",
  "tracing",
- "tronc 0.3.0",
+ "tronc",
  "utoipa",
  "uuid",
  "yrs",
@@ -3340,8 +3340,8 @@ dependencies = [
 
 [[package]]
 name = "porte"
-version = "0.4.0"
-source = "git+file:///home/yann/Code/Facile/porte-rs?tag=v0.4.0#340e128d40003fff4a03908165668883cef8535e"
+version = "0.5.0"
+source = "git+file:///home/yann/Code/Facile/porte-rs?tag=v0.5.0#98d997d37590dd5ac1ec6831b4b9d0220c1d9652"
 dependencies = [
  "aes-gcm",
  "async-trait",
@@ -3365,7 +3365,7 @@ dependencies = [
  "tokio-util",
  "tower",
  "tracing",
- "tronc 0.2.0",
+ "tronc",
  "url",
 ]
 
@@ -5331,26 +5331,6 @@ dependencies = [
  "tracing-core",
  "tracing-log",
  "tracing-serde",
-]
-
-[[package]]
-name = "tronc"
-version = "0.2.0"
-source = "git+file:///home/yann/Code/Facile/tronc-rs?tag=v0.2.0#bf23be08927c5035ada680d30aceb42309d7113e"
-dependencies = [
- "axum",
- "flate2",
- "futures-util",
- "getrandom 0.4.3",
- "http",
- "http-body-util",
- "ipnet",
- "serde",
- "serde_json",
- "thiserror 2.0.21",
- "tower",
- "tracing",
- "tracing-subscriber",
 ]
 
 [[package]]
