@@ -23,6 +23,8 @@ pub struct AppState {
     pub hub: Hub,
     /// The PDF compile slots.
     pub exports: Arc<Semaphore>,
+    /// The largest markdown body one request may ask the API to parse.
+    pub markdown_max: usize,
     /// The MCP confirmation flow, when `/mcp` is on.
     pub confirmations: Option<Confirmations>,
 }

@@ -48,6 +48,7 @@ async fn the_dry_run_reports_the_tree_and_what_it_cannot_convert_and_writes_noth
         token: "t".into(),
         space: roles.space.clone(),
         dry_run: true,
+        markdown_max: app.state.markdown_max,
     };
     let report = outline::run(&pool, &app.state.data_dir, &args).await.unwrap();
     assert!(
@@ -73,7 +74,8 @@ async fn an_import_keeps_parents_order_dates_authors_links_callouts_and_attachme
         .fetch_one(&pool)
         .await
         .unwrap();
-    let args = Args { url: outline(&email).await, token: "t".into(), space: roles.space.clone(), dry_run: false };
+    let url = outline(&email).await;
+    let args = Args { url, token: "t".into(), space: roles.space.clone(), dry_run: false, markdown_max: 1 << 20 };
     outline::run(&pool, &app.state.data_dir, &args).await.unwrap();
     let tree =
         app.call("GET", &format!("/api/documents?space_id={}", roles.space), Some(&roles.member), None).await.json();
@@ -100,12 +102,24 @@ async fn check_deploy(app: &common::App, roles: &common::fixture::Roles, deploy:
     assert!(md.contains("breaks.\\\nA second line"), "{md}");
     let src = md.split("![diagram](").nth(1).unwrap().split(')').next().unwrap().to_owned();
     assert_eq!(app.call("GET", &src, Some(&roles.member), None).await.bytes, common::upload::PNG);
-    let (created, author): (time::OffsetDateTime, Option<i64>) =
-        sqlx::query_as("SELECT created_at, created_by FROM documents WHERE id = $1::uuid")
+    let (created, author, schema): (time::OffsetDateTime, Option<i64>, i32) =
+        sqlx::query_as("SELECT created_at, created_by, schema_version FROM documents WHERE id = $1::uuid")
             .bind(deploy)
             .fetch_one(&app.pool)
             .await
             .unwrap();
     assert_eq!(created.unix_timestamp(), 1740909600);
     assert_eq!(author, Some(roles.owner.user_id));
+    assert_eq!(schema, encre::SCHEMA_VERSION as i32);
+}
+
+#[tokio::test]
+async fn a_page_over_the_markdown_cap_stops_even_the_dry_run_and_names_the_page() {
+    let Some(pool) = common::pool("docs_outline_cap").await else { return };
+    let app = common::app(pool.clone()).await;
+    let roles = common::fixture::roles(&app).await;
+    let url = outline("nobody@example.test").await;
+    let args = Args { url, token: "t".into(), space: roles.space.clone(), dry_run: true, markdown_max: 40 };
+    let error = outline::run(&pool, &app.state.data_dir, &args).await.unwrap_err().to_string();
+    assert!(error.contains("over MARKDOWN_MAX_BYTES") && error.contains("Deploy: the markdown is"), "{error}");
 }

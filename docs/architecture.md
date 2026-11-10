@@ -59,12 +59,24 @@ awareness protocol over `y-websocket`; no custom message exists.
    revision is written at most every ten minutes, and when the last member leaves after a change.
 5. `POST /ops`, MCP edits and revision restores run inside the room as one Yjs transaction
    (`encre::ops::apply_yjs` or `encre::yjs::write`) and persist before they answer, so open
-   editors see them live and other carets stay put.
+   editors see them live and other carets stay put. The transaction and its validation run on a
+   blocking thread (`spawn_blocking`) over a handle to the room's document, so parsing an
+   operation's markdown never stalls the async workers.
 6. A room unloads 60 seconds after its last member leaves. Trashing, restoring or deleting a
    page closes its room with 1001; clients reconnect to the new state. A directory snapshot that
    removes someone from a space closes their connections to that space's pages with 1008.
 
 Rooms are in memory, so the API runs exactly one replica.
+
+## Rendering in the client
+
+The editor (`CollabEditor`) and the public share page (`routes/s/[token]`) render schema 2 with
+encre's `Editor` and `Document`. Both take `locale` from the browser's languages among `fr`,
+`en`, `es` and `de`, French otherwise (`lib/locale.ts`); the rest of the client is French. Both
+take `renderDiagram` from `lib/diagrams.ts`, which imports `mermaid` on the first mermaid
+diagram shown, with `securityLevel: 'strict'`. A `d2` or `dot` diagram rejects, so encre shows
+its source. No `highlight` hook is passed: the client has no syntax highlighter, so code blocks
+stay encre's escaped text.
 
 ## Data model
 

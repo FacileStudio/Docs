@@ -74,7 +74,7 @@ async fn placement(state: &AppState, user_id: i64, request: &CreateRequest) -> R
 pub async fn create(state: &AppState, user_id: i64, request: CreateRequest) -> Result<Document> {
     let (space_id, have) = placement(state, user_id, &request).await?;
     let title = title(&request.title)?;
-    let node: Node = content::from_input(request.markdown.as_deref(), request.content)?;
+    let node: Node = content::from_input(request.markdown, request.content, state.markdown_max).await?;
     let Prepared { json, text, .. } = content::prepare(node)?;
     let row = sqlx::query_as::<_, DocumentRow>(concat!(
         "INSERT INTO documents (space_id, owner_id, parent_id, position, title, schema_version, content, text, \

@@ -15,7 +15,7 @@ impl Room {
             }
             Command::Message(conn, frame) => self.message(conn, &frame),
             Command::Leave(conn) => self.leave(conn).await,
-            Command::Ops(ops, user, reply) => _ = reply.send(Ok(self.ops(&ops, user).await)),
+            Command::Ops(ops, user, reply) => _ = reply.send(Ok(self.ops(ops, user).await)),
             Command::Replace(prepared, user, reply) => _ = reply.send(Ok(self.replace(&prepared, user).await)),
             Command::Evict(users) => self.evict(&users).await,
             Command::Shutdown(done) => {

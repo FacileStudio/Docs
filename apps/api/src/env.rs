@@ -2,6 +2,8 @@ use std::path::PathBuf;
 
 use tronc::env::{Core, EnvError, Vars};
 
+use crate::modules::documents::markdown::MARKDOWN_MAX_BYTES;
+
 /// Everything the binary reads from its environment.
 #[derive(Debug, Clone)]
 pub struct Config {
@@ -17,6 +19,8 @@ pub struct Config {
     pub mcp_resource: String,
     /// `MCP_STATE_KEY`: the HMAC key of the confirmation flow.
     pub mcp_state_key: String,
+    /// `MARKDOWN_MAX_BYTES`: the largest markdown body one request may ask the API to parse.
+    pub markdown_max: usize,
 }
 
 impl Config {
@@ -36,6 +40,7 @@ impl Config {
             data_dir: PathBuf::from(vars.string("DATA_DIR", "/data")),
             mcp_resource: text("MCP_RESOURCE"),
             mcp_state_key: text("MCP_STATE_KEY"),
+            markdown_max: markdown_max(vars)?,
             core,
         };
         config.check()?;
@@ -53,6 +58,14 @@ impl Config {
             return Err(EnvError("MCP_STATE_KEY is required with MCP_RESOURCE".to_owned()));
         }
         Ok(())
+    }
+}
+
+fn markdown_max(vars: &Vars) -> Result<usize, EnvError> {
+    let raw = vars.int("MARKDOWN_MAX_BYTES", MARKDOWN_MAX_BYTES as i64)?;
+    match usize::try_from(raw) {
+        Ok(max) if max > 0 => Ok(max),
+        _ => Err(EnvError(format!("MARKDOWN_MAX_BYTES must be a positive number of bytes, not {raw}"))),
     }
 }
 
@@ -79,9 +92,14 @@ mod tests {
     }
 
     #[test]
-    fn defaults_are_sso_only_with_data_under_slash_data() {
+    fn defaults_are_sso_only_with_data_under_slash_data_and_a_positive_markdown_cap() {
         let config = Config::from_vars(&vars(&[])).unwrap();
         assert!(config.porte.sso_only);
         assert_eq!(config.data_dir, PathBuf::from("/data"));
+        assert_eq!(config.markdown_max, 1 << 20);
+        let config = Config::from_vars(&vars(&[("MARKDOWN_MAX_BYTES", "4096")])).unwrap();
+        assert_eq!(config.markdown_max, 4096);
+        assert!(Config::from_vars(&vars(&[("MARKDOWN_MAX_BYTES", "0")])).is_err());
+        assert!(Config::from_vars(&vars(&[("MARKDOWN_MAX_BYTES", "lots")])).is_err());
     }
 }

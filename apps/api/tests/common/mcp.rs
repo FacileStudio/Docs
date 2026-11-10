@@ -32,8 +32,12 @@ pub struct Served {
 }
 
 pub async fn served(prefix: &str) -> Option<Served> {
+    served_with(prefix, &[]).await
+}
+
+pub async fn served_with(prefix: &str, vars: &[(&str, &str)]) -> Option<Served> {
     let pool = super::pool(prefix).await?;
-    let mut app = super::app(pool).await;
+    let mut app = super::app_with(pool, vars).await;
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let url = format!("http://{}/mcp", listener.local_addr().unwrap());
     app.state.confirmations = Some(api::mcp::confirmations(&app.state, &url, b"test-state-key").unwrap());
@@ -47,4 +51,10 @@ pub async fn served(prefix: &str) -> Option<Served> {
 
 pub fn args(value: Value) -> tronc::mcp::rmcp::model::JsonObject {
     serde_json::from_value(value).unwrap()
+}
+
+pub async fn refused(client: &tronc::mcptest::Client, tool: &str, input: Value) -> String {
+    let result = tronc::mcptest::call(client, tool, args(input)).await;
+    assert_eq!(result.is_error, Some(true), "{tool} should fail");
+    tronc::mcptest::text(&result)
 }

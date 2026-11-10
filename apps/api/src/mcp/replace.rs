@@ -6,7 +6,7 @@ use uuid::Uuid;
 use super::user;
 use crate::extract::id;
 use crate::modules::documents::access::{self, Access};
-use crate::modules::documents::{ops, service};
+use crate::modules::documents::{markdown, ops, service};
 use crate::state::AppState;
 
 /// The confirmation kind of `docs_replace`.
@@ -74,6 +74,7 @@ pub async fn replace(
         let outcome = confirmations.resume(&call, KIND).await?;
         return Ok(out(outcome.status, outcome.confirm_url).into());
     }
+    markdown::within(input.markdown.len(), state.markdown_max)?;
     let document = id(&input.document_id)?;
     access::check(&state, user(&call)?, document, Access::Editor).await?;
     let row = service::fetch(&state, document).await?;

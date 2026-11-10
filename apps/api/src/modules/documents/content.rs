@@ -2,6 +2,8 @@ use encre::Node;
 use serde_json::{Map, Value};
 use tronc::{Error, Result};
 
+use super::markdown;
+
 /// A document JSON larger than this refuses further writes.
 pub const MAX_CONTENT_BYTES: usize = 5 << 20;
 
@@ -21,21 +23,16 @@ pub fn empty() -> Node {
     Node::new("doc", Map::new(), vec![Node::new("paragraph", Map::new(), Vec::new())])
 }
 
-/// The document a create asks for: Facile Markdown, encre JSON, or neither for an empty page.
-pub fn from_input(markdown: Option<&str>, content: Option<Value>) -> Result<Node> {
+/// The document a create asks for: Facile Markdown of at most `max` bytes, encre JSON, or neither
+/// for an empty page.
+pub async fn from_input(markdown: Option<String>, content: Option<Value>, max: usize) -> Result<Node> {
     match (markdown, content) {
         (Some(_), Some(_)) => Err(Error::invalid("send markdown or content, not both")),
-        (Some(markdown), None) => from_markdown(markdown),
+        (Some(markdown), None) => markdown::parse(markdown, max).await,
         (None, Some(content)) => serde_json::from_value(content)
             .map_err(|error| Error::invalid(format!("content is not a document: {error}"))),
         (None, None) => Ok(empty()),
     }
-}
-
-/// Parses Facile Markdown; blank markdown is an empty page.
-pub fn from_markdown(markdown: &str) -> Result<Node> {
-    let node = encre::markdown::parse(markdown).map_err(|error| Error::invalid(format!("markdown: {error}")))?;
-    Ok(if node.content.is_empty() { empty() } else { node })
 }
 
 /// Gives every block an id, then [`measure`]s. Every API write goes through it.
@@ -68,6 +65,7 @@ pub fn load(content: &Value, schema_version: i32) -> Result<Node> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::modules::documents::markdown::from_markdown;
 
     #[test]
     fn blank_markdown_is_one_empty_paragraph() {
@@ -77,12 +75,12 @@ mod tests {
         assert!(prepared.node.content[0].id().is_some());
     }
 
-    #[test]
-    fn invalid_or_double_input_is_refused() {
+    #[tokio::test]
+    async fn invalid_or_double_input_is_refused() {
         let content = serde_json::json!({"type": "doc", "content": [{"type": "heading", "attrs": {"level": 9}}]});
-        let error = prepare(from_input(None, Some(content)).unwrap()).unwrap_err();
+        let error = prepare(from_input(None, Some(content), 64).await.unwrap()).unwrap_err();
         assert_eq!(error.code, tronc::Code::InvalidArgument);
-        assert!(from_input(Some("a"), Some(Value::Null)).is_err());
+        assert!(from_input(Some("a".into()), Some(Value::Null), 64).await.is_err());
         let prepared = prepare(from_markdown("# Title\n\nSome **bold** text.").unwrap()).unwrap();
         assert_eq!(encre::markdown::serialize(&prepared.node), "# Title\n\nSome **bold** text.");
         assert_eq!(load(&prepared.json, 1).unwrap(), prepared.node);

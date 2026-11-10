@@ -50,7 +50,13 @@ pub fn data_dir() -> PathBuf {
 }
 
 pub async fn app(pool: PgPool) -> App {
-    let config = Config::from_vars(&Vars::from_pairs([("DATABASE_URL", "postgres://unused/x")])).unwrap();
+    app_with(pool, &[]).await
+}
+
+pub async fn app_with(pool: PgPool, vars: &[(&str, &str)]) -> App {
+    let mut pairs = vec![("DATABASE_URL", "postgres://unused/x")];
+    pairs.extend_from_slice(vars);
+    let config = Config::from_vars(&Vars::from_pairs(pairs)).unwrap();
     let hub = api::modules::rooms::Hub::default();
     let kits = Kits::new(&config, &pool, &hub).await.unwrap();
     let state = AppState {
@@ -60,6 +66,7 @@ pub async fn app(pool: PgPool) -> App {
         data_dir: Arc::new(data_dir()),
         hub,
         exports: api::modules::export::pdf::slots(),
+        markdown_max: config.markdown_max,
         confirmations: None,
     };
     let router = api::router::build_router(state.clone(), &kits, None).unwrap();

@@ -27,13 +27,19 @@ path. Its pages live at `/d/{id}`, `/s/{token}`, `/trash`, `/settings` and `/pen
 
 ```json
 {"id": "uuid", "space_id": "string|null", "parent_id": "uuid|null", "position": 1.0,
- "title": "", "icon": "", "schema_version": 1, "version": 3,
+ "title": "", "icon": "", "schema_version": 2, "version": 3,
  "created_at": "RFC 3339", "updated_at": "RFC 3339", "trashed_at": "RFC 3339|null",
  "access": "viewer|editor|manager", "content": {"type": "doc", "content": []}}
 ```
 
 With `?format=markdown`, `markdown` (Facile Markdown) replaces `content`. `version` grows by one
 on every content change; `replace_all` checks it.
+
+`schema_version` is the encre schema the stored `content` was written in. Every page Docs creates
+or rewrites is stored at encre's current schema, 2 since encre v0.8.0 (highlight, badges and
+status dots, diagrams, columns, stat subtitles). A schema 1 row keeps its `content` and
+`schema_version` byte for byte until its next write; encre migrates 1 to 2 as the identity, so a
+schema 2 reader reads it as is.
 
 `TreeEntry`: `{"id","parent_id","position","title","icon","updated_at"}`, plus `trashed_at` in
 the trash listing.
@@ -79,7 +85,26 @@ the trash listing.
 A missing `space_id` means the caller's personal pages. `Op` is encre's JSON form, for example
 `{"op":"insert_after","block_id":"a1b2c3d4e5","markdown":"…"}`; see encre `spec/FORMAT.md`
 section 4. A stale `replace_all` is 412, any other refused operation 400 with a message that
-says how to narrow it. A move across spaces, or into the page's own subtree, is 400.
+says how to narrow it. A `patch` that does not match exactly `expect` times says how many it found
+(`patch expected 1 match, found 25: …`) and lists the first 20 with their block ids, then
+`and N more`. A move across spaces, or into the page's own subtree, is 400.
+
+### Markdown limits
+
+Every markdown body the API parses is refused with 413 `resource_exhausted` above
+`MARKDOWN_MAX_BYTES` (1 MiB by default), before anything is read or written: `markdown` on
+`POST /documents`, `source` on `POST /documents/import-openui`, the markdown of one `ops` request
+summed over its operations (a `patch` counts `replace` once per `expect`), each page of
+`api import-outline`, and the `markdown` of `docs_create`, `docs_edit` and `docs_replace`. encre
+measured up to 0.6 s of CPU for a hostile 1 MiB body; parsing runs on a blocking thread, off the
+request workers. JSON bodies are also capped at 1 MiB by tronc, so a larger cap only helps MCP
+(4 MiB) and the Outline import.
+
+Markdown that nests past encre's limits (`spec/FORMAT.md` rules 8 and 9 and section 2.6: more
+than 64 levels of blocks and spans, more than 48 in the document, more than 8 `callout`,
+`columns` and `column` on one path) is 400 `invalid_argument`. On a create the message places
+it: `markdown at line 3, column 1: …`. An operation answers encre's `OpError` message and changes
+nothing.
 
 ## Exports
 
@@ -127,12 +152,12 @@ or more per binary frame, document fragment `default` in the y-prosemirror layou
 | Close code | When |
 |---|---|
 | 1001 | the room closed: restart, trash, restore or delete; reconnect |
-| 1008 | an update broke the schema (it was reverted), a malformed frame, or access revoked |
+| 1008 | an update broke the schema or its nesting limits (it was reverted), a malformed frame, or access revoked |
 | 1009 | a frame over 2 MiB, or an update that takes the document over 5 MiB |
 | 1011 | the room could not load |
 | 1013 | the client could not keep up with broadcasts |
 
-A viewer's (or a trashed page's) updates are dropped; its awareness is relayed.
+A viewer's (or a trashed page's) updates are dropped; its awareness is relayed. A close reason is at most 123 bytes, cut on a character boundary.
 
 ## Agent actions (confirm page)
 
@@ -147,7 +172,9 @@ A viewer's (or a trashed page's) updates are dropped; its awareness is relayed.
 `POST /mcp` (root, outside CSRF), stateless Streamable HTTP through `tronc::mcp`, mounted when
 `MCP_RESOURCE` is set. Registre access tokens for that resource, scopes `docs.read` and
 `docs.write`; metadata at `/.well-known/oauth-protected-resource/mcp`. Never plan-gated. Every
-description embeds encre's Facile Markdown and operations short form (`src/mcp/format.rs`).
+description embeds encre's Facile Markdown and operations short form (`src/mcp/format.rs`, from
+encre v0.9.0 `docs/agents.md`: highlight, badges, status, GFM alerts, diagram fences, columns)
+and the limits above. A refusal reaches the agent as an `isError` result with the same message.
 
 | Tool | Scope | Arguments | Answer |
 |---|---|---|---|

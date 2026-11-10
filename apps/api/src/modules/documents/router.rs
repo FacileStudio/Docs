@@ -8,9 +8,9 @@ use tronc::json::Json;
 
 use super::handlers::{apply, create, list, move_to, patch, read, remove, restore};
 use super::revisions::{self, Revision};
-use super::service;
 use super::trash;
 use super::types::{CreateRequest, Document, OpenUiRequest};
+use super::{markdown, service};
 use crate::extract::id;
 use crate::state::AppState;
 
@@ -35,7 +35,12 @@ async fn import_openui(
     who: Identity,
     Json(body): Json<OpenUiRequest>,
 ) -> Result<(StatusCode, Json<Document>)> {
-    let doc = encre::openui::to_document(&body.source).map_err(|e| tronc::Error::invalid(format!("openui: {e}")))?;
+    markdown::within(body.source.len(), state.markdown_max)?;
+    let source = body.source;
+    let doc = tokio::task::spawn_blocking(move || encre::openui::to_document(&source))
+        .await
+        .map_err(|e| tronc::Error::internal("the openui parse did not finish", e))?
+        .map_err(|e| tronc::Error::invalid(format!("openui: {e}")))?;
     let content = serde_json::to_value(&doc).map_err(|e| tronc::Error::internal("openui document", e))?;
     let request = CreateRequest {
         title: body.title,

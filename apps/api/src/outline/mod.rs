@@ -9,6 +9,8 @@ use std::path::Path;
 
 use sqlx::PgPool;
 
+use crate::modules::documents::markdown::{MARKDOWN_MAX_BYTES, within};
+
 /// The parsed command line.
 #[derive(Debug, Default, PartialEq, Eq)]
 pub struct Args {
@@ -16,6 +18,8 @@ pub struct Args {
     pub token: String,
     pub space: String,
     pub dry_run: bool,
+    /// The largest page markdown the import parses: `MARKDOWN_MAX_BYTES`.
+    pub markdown_max: usize,
 }
 
 /// Usage, printed on a malformed command line.
@@ -28,7 +32,8 @@ pub fn parse(args: &[String]) -> Option<Result<Args, String>> {
     if first != "import-outline" {
         return None;
     }
-    let mut parsed = Args { token: std::env::var("OUTLINE_TOKEN").unwrap_or_default(), ..Args::default() };
+    let token = std::env::var("OUTLINE_TOKEN").unwrap_or_default();
+    let mut parsed = Args { token, markdown_max: MARKDOWN_MAX_BYTES, ..Args::default() };
     let mut iter = rest.iter();
     while let Some(flag) = iter.next() {
         let slot = match flag.as_str() {
@@ -63,13 +68,27 @@ pub fn report(plan: &plan::Plan) -> String {
     out
 }
 
+/// Refuses a plan holding a page over `max` bytes of markdown, naming every such page.
+pub fn check_sizes(plan: &plan::Plan, max: usize) -> Result<(), String> {
+    let over: Vec<String> = plan
+        .pages
+        .iter()
+        .filter_map(|page| within(page.markdown.len(), max).err().map(|e| format!("{}: {}", page.title, e.message)))
+        .collect();
+    match over.is_empty() {
+        true => Ok(()),
+        false => Err(format!("pages over MARKDOWN_MAX_BYTES, split them in Outline first:\n  {}", over.join("\n  "))),
+    }
+}
+
 /// Runs the import: prints the report, then writes unless `--dry-run`.
 pub async fn run(pool: &PgPool, data: &Path, args: &Args) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
     let client = client::Client { base: args.url.clone(), token: args.token.clone(), http: reqwest::Client::new() };
     let plan = plan::build(&client).await?;
+    check_sizes(&plan, args.markdown_max)?;
     let mut out = report(&plan);
     if !args.dry_run {
-        let count = write::write(pool, &client, data, &args.space, plan).await?;
+        let count = write::write(pool, &client, data, args, plan).await?;
         out.push_str(&format!("imported {count} pages into {}\n", args.space));
     }
     Ok(out)
@@ -87,7 +106,8 @@ mod tests {
     fn the_command_line_needs_url_token_and_space() {
         assert_eq!(parse(&argv(&["migrate", "up"])), None);
         let ok = parse(&argv(&["import-outline", "--url", "u", "--token", "t", "--space", "s", "--dry-run"]));
-        assert_eq!(ok, Some(Ok(Args { url: "u".into(), token: "t".into(), space: "s".into(), dry_run: true })));
+        let want = Args { url: "u".into(), token: "t".into(), space: "s".into(), dry_run: true, markdown_max: 1 << 20 };
+        assert_eq!(ok, Some(Ok(want)));
         assert!(parse(&argv(&["import-outline", "--url", "u"])).unwrap().is_err());
     }
 }

@@ -59,13 +59,14 @@ pub fn state(config: &Config, pool: PgPool, kits: &Kits, hub: Hub) -> AppState {
         data_dir: Arc::new(PathBuf::from(&config.data_dir)),
         hub,
         exports: crate::modules::export::pdf::slots(),
+        markdown_max: config.markdown_max,
         confirmations: None,
     }
 }
 
 async fn import(config: &Config, pool: &PgPool, parsed: Result<crate::outline::Args, String>) -> ExitCode {
     let args = match parsed {
-        Ok(args) => args,
+        Ok(args) => crate::outline::Args { markdown_max: config.markdown_max, ..args },
         Err(usage) => return fail(&usage),
     };
     if let Err(error) = tronc::migrate::run(pool, &crate::MIGRATOR).await {

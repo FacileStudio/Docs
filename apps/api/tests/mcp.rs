@@ -2,7 +2,7 @@ mod common;
 
 use std::sync::Arc;
 
-use common::mcp::{Served, args, served};
+use common::mcp::{Served, args, refused, served, served_with};
 use serde_json::{Value, json};
 use tronc::mcptest::{self, ClientOptions, ConfirmCase, Target, call, connect, decode};
 
@@ -79,4 +79,27 @@ async fn confirm_on_the_page(served: &Served, client: &tronc::mcptest::Client, i
     assert_eq!(done.json(), json!({"status": "done"}), "{}", done.text());
     let read: Value = decode(&call(client, "docs_read", args(json!({"document_id": id}))).await);
     assert_eq!(read["markdown"], json!("Replaced."));
+}
+
+#[tokio::test]
+async fn agents_get_the_patch_count_and_the_markdown_cap_on_every_write_tool() {
+    let Some(served) = served_with("docs_mcp_limits", &[("MARKDOWN_MAX_BYTES", "1024")]).await else { return };
+    let token = format!("{}|docs.read,docs.write", served.person.user_id);
+    let client = connect(&served.url, &token, ClientOptions::default()).await;
+    let big = "a".repeat(1025);
+    let cap = "over the 1024-byte limit";
+    assert!(refused(&client, "docs_create", json!({"title": "x", "markdown": big})).await.contains(cap));
+    let items = vec!["item"; 25].join("\n\n");
+    let created: Value = decode(&call(&client, "docs_create", args(json!({"title": "x", "markdown": items}))).await);
+    let id = created["id"].as_str().unwrap().to_owned();
+    let patch = json!({"document_id": id, "ops": [{"op": "patch", "find": "item", "replace": "thing"}]});
+    let message = refused(&client, "docs_edit", patch).await;
+    assert!(message.contains("found 25") && message.contains("and 5 more"), "{message}");
+    let append = json!({"document_id": id, "ops": [{"op": "append", "markdown": big}]});
+    assert!(refused(&client, "docs_edit", append).await.contains(cap));
+    let replace = json!({"document_id": id, "markdown": big, "expect_version": 1});
+    assert!(refused(&client, "docs_replace", replace).await.contains(cap));
+    let list = served.app.call("GET", "/api/mcp/actions", Some(&served.person), None).await.json();
+    assert_eq!(list, json!([]));
+    assert_eq!(version(&served.app, &id).await, 1);
 }

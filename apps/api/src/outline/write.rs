@@ -4,10 +4,12 @@ use sqlx::types::Json;
 use sqlx::{PgConnection, PgPool};
 use uuid::Uuid;
 
+use super::Args;
 use super::client::Client;
 use super::plan::{Page, Plan};
 use crate::modules::attachments::{files, sniff};
-use crate::modules::documents::content;
+use crate::modules::documents::content::{self, Prepared};
+use crate::modules::documents::markdown;
 
 type WriteError = Box<dyn std::error::Error + Send + Sync>;
 
@@ -32,11 +34,10 @@ async fn fetch_attachments(client: &Client, data: &Path, page: &mut Page) -> Res
     Ok(stored)
 }
 
-async fn insert(tx: &mut PgConnection, space: &str, page: &Page, stored: &[Stored]) -> Result<(), WriteError> {
-    let prepared = content::prepare(content::from_markdown(&page.markdown)?)?;
+async fn insert(tx: &mut PgConnection, space: &str, page: &Page, prepared: Prepared) -> Result<(), WriteError> {
     sqlx::query(
         "INSERT INTO documents (id, space_id, parent_id, position, title, icon, content, text, created_by, updated_by, \
-         created_at, updated_at) SELECT $1, $2, $3, $4, $5, $6, $7, $8, u.id, u.id, $10, $11 \
+         created_at, updated_at, schema_version) SELECT $1, $2, $3, $4, $5, $6, $7, $8, u.id, u.id, $10, $11, $12 \
          FROM (SELECT (SELECT id FROM porte_users WHERE lower(email) = lower($9)) AS id) u",
     )
     .bind(page.id)
@@ -50,9 +51,10 @@ async fn insert(tx: &mut PgConnection, space: &str, page: &Page, stored: &[Store
     .bind(&page.author)
     .bind(page.created_at)
     .bind(page.updated_at)
+    .bind(encre::SCHEMA_VERSION as i32)
     .execute(&mut *tx)
     .await?;
-    attachments(tx, page, stored).await
+    Ok(())
 }
 
 async fn attachments(tx: &mut PgConnection, page: &Page, stored: &[Stored]) -> Result<(), WriteError> {
@@ -72,8 +74,16 @@ async fn attachments(tx: &mut PgConnection, page: &Page, stored: &[Stored]) -> R
     Ok(())
 }
 
-/// Writes `plan` into `space` in one transaction: all of it, or nothing.
-pub async fn write(pool: &PgPool, client: &Client, data: &Path, space: &str, plan: Plan) -> Result<usize, WriteError> {
+async fn import_page(tx: &mut PgConnection, args: &Args, page: &Page, stored: &[Stored]) -> Result<(), WriteError> {
+    let node = markdown::parse(page.markdown.clone(), args.markdown_max).await;
+    let prepared = node.and_then(content::prepare).map_err(|e| format!("{}: {}", page.title, e.message))?;
+    insert(tx, &args.space, page, prepared).await?;
+    attachments(tx, page, stored).await
+}
+
+/// Writes `plan` into the space of `args` in one transaction: all of it, or nothing.
+pub async fn write(pool: &PgPool, client: &Client, data: &Path, args: &Args, plan: Plan) -> Result<usize, WriteError> {
+    let space = args.space.as_str();
     let known: bool =
         sqlx::query_scalar("SELECT EXISTS (SELECT 1 FROM spaces WHERE id = $1)").bind(space).fetch_one(pool).await?;
     if !known {
@@ -83,7 +93,7 @@ pub async fn write(pool: &PgPool, client: &Client, data: &Path, space: &str, pla
     let count = plan.pages.len();
     for mut page in plan.pages {
         let stored = fetch_attachments(client, data, &mut page).await?;
-        insert(&mut tx, space, &page, &stored).await?;
+        import_page(&mut tx, args, &page, &stored).await?;
     }
     tx.commit().await?;
     Ok(count)

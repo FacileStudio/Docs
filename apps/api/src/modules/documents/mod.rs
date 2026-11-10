@@ -3,6 +3,7 @@
 pub mod access;
 pub mod content;
 mod handlers;
+pub mod markdown;
 pub mod ops;
 pub mod purge;
 pub mod revisions;
