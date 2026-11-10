@@ -1,0 +1,23 @@
+[tools]
+node = "24.22.0"
+bun = "1.4.2"
+
+[tasks.install]
+description = "Install client dependencies"
+run = "bun install --frozen-lockfile"
+
+[tasks.dev]
+description = "Start the dev server, proxying /api to 127.0.0.1:4000"
+run = "bun run dev"
+
+[tasks.check]
+description = "svelte-check"
+run = "bun run check"
+
+[tasks.test]
+description = "vitest"
+run = "bun run test"
+
+[tasks.build]
+description = "Build the static client"
+run = "bun run build"
