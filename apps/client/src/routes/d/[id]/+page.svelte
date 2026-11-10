@@ -2,6 +2,7 @@
 	import { page } from '$app/state';
 	import { Alert, Button, EmptyState, Spinner, icons, toast } from '@facile/muse';
 	import { ApiError, backend } from '$lib/backend';
+	import type { AwarenessProvider } from '@facile/encre';
 	import type { CollabEvents, Connection, Stop } from '$lib/collab';
 	import CollabEditor from '$lib/components/CollabEditor.svelte';
 	import DocumentHeader from '$lib/components/DocumentHeader.svelte';
@@ -14,6 +15,7 @@
 	let doc = $state<DocumentRecord | null>(null);
 	let missing = $state(false);
 	let connection = $state<Connection>('connecting');
+	let provider = $state<AwarenessProvider>();
 	let stop = $state<Exclude<Stop, 'refused'> | null>(null);
 	let generation = $state(0);
 
@@ -93,7 +95,7 @@
 				{#if access === 'manager'}<Button size="sm" variant="secondary" onclick={restore}>Restaurer</Button>{/if}
 			</Alert>
 		{/if}
-		<DocumentHeader bind:doc {connection} />
+		<DocumentHeader bind:doc {connection} {provider} />
 		{#if stop}
 			<Alert tone="danger">
 				{STOPPED[stop]}
@@ -101,7 +103,13 @@
 			</Alert>
 		{/if}
 		{#key `${doc.id}:${generation}`}
-			<CollabEditor documentId={doc.id} editable={access !== 'viewer' && !doc.trashed_at} {user} {events} />
+			<CollabEditor
+				documentId={doc.id}
+				editable={access !== 'viewer' && !doc.trashed_at}
+				{user}
+				{events}
+				bind:provider
+			/>
 		{/key}
 	{/if}
 </div>

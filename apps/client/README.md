@@ -32,8 +32,8 @@ bun run build        # static site in build/
 | Layout: muse `SideBar` with `SpaceSwitcher` (hidden when there are no spaces), `UserMenu`, `MobileNav`, sign-in through `AuthScreen` | `src/routes/+layout.svelte` |
 | Document tree: drag to move (before, inside, after a row, or to the root), Alt+arrows to move with the keyboard, optimistic positions reverted on failure | `src/lib/tree.svelte.ts`, `src/lib/tree-order.ts`, `src/lib/components/Tree*.svelte` |
 | Recent documents, new document, markdown import through `loadEncre` and `parseMarkdown` | `src/routes/+page.svelte`, `src/lib/import.ts` |
-| Document page: encre `Editor` over `y-websocket`, encre presence and carets, title and icon editing, connection state (live, reconnecting, offline), read-only editor for viewers and trashed pages | `src/routes/d/[id]/+page.svelte`, `src/lib/collab.ts`, `src/lib/components/CollabEditor.svelte`, `DocumentHeader.svelte` |
-| Image paste and drop, uploaded to the document's attachments, inserted with Tiptap's `setImage` | `src/lib/images.ts` |
+| Document page: encre `Editor` over `y-websocket` with carets, encre `Presence` in the document header, title and icon editing, connection state (live, reconnecting, offline), read-only editor for viewers and trashed pages | `src/routes/d/[id]/+page.svelte`, `src/lib/collab.ts`, `src/lib/components/CollabEditor.svelte`, `DocumentHeader.svelte` |
+| Images: pasted, dropped or picked from the editor's Image command, uploaded through encre's `onimage` hook to the document's attachments | `src/lib/images.ts` |
 | Export menu: PDF, Facile Markdown and CommonMark, all from the API | `src/lib/export.ts` |
 | Share dialog: create a link (with or without sub-pages), shown once; list and revoke live links | `src/lib/share.ts`, `ShareDialog.svelte` |
 | Search palette (⌘K), `ts_headline` snippets rendered without HTML | `Search.svelte`, `src/lib/snippet.ts` |
@@ -60,7 +60,5 @@ The contract is `docs/api.md` at the repo root, as the API is built. The client 
 
 ## Library gaps
 
-- **encre**: `Editor` has no image upload hook. The client catches paste and drop in the capture phase around the editor, uploads, then calls `setImage` on `instance()`. An `onimage?: (file: File) => Promise<string>` prop would remove that.
-- **encre**: `Editor` always renders `Presence` above the toolbar when it has a provider, so the presence avatars sit there, not in the document header.
-- **encre dependency**: bun cannot install `git+file://…#v0.5.0`, so `package.json` reads `file:/home/yann/Code/Facile/encre` (at tag v0.5.0 when installed). bun then copies encre's own `node_modules`, a second `yjs`, `svelte` and muse among them; `vite.config.ts` dedupes every encre dependency so one copy of each runs. Switch the line to `github:FacileStudio/encre#v0.5.0` once encre is pushed; the Docker build cannot resolve the local path.
+- **encre dependency**: bun cannot install `git+file://…#v0.7.0`, so `package.json` reads `file:/home/yann/Code/Facile/encre`, which copies that checkout as it is: it must sit at tag v0.7.0 when you run `bun install`. bun then copies encre's own `node_modules`, a second `yjs`, `svelte` and muse among them; `vite.config.ts` dedupes every encre dependency so one copy of each runs. Switch the line to `github:FacileStudio/encre#v0.7.0` once encre is pushed; the Docker build cannot resolve the local path.
 - **muse**: `SideBar` takes no app content, so the document tree is a second panel beside the rail on desktop and a `Drawer` on phones. muse bundles no document or share glyph; `src/lib/brand.ts` registers them.

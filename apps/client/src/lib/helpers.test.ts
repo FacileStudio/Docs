@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { backend } from './backend';
 import { connectionOf, socketBase, stopOf } from './collab';
-import { imageFiles } from './images';
+import { uploader } from './images';
 import { titleOf } from './import';
 import { scopeAccess } from './session.svelte';
 import { snippetParts } from './snippet';
@@ -45,14 +46,12 @@ describe('helpers', () => {
 		]);
 	});
 
-	it('keeps only accepted image types', () => {
-		const files = [
-			new File(['a'], 'a.png', { type: 'image/png' }),
-			new File(['b'], 'b.svg', { type: 'image/svg+xml' })
-		];
-		const data = { files } as unknown as DataTransfer;
-		expect(imageFiles(data).map((f) => f.name)).toEqual(['a.png']);
-		expect(imageFiles(null)).toEqual([]);
+	it('uploads an image to the page and names it after the file', async () => {
+		const upload = vi.spyOn(backend, 'upload').mockResolvedValue({ id: 'a1', url: '/api/attachments/a1' });
+		const file = new File(['a'], 'Schéma v2.png', { type: 'image/png' });
+		await expect(uploader('d1')(file)).resolves.toEqual({ src: '/api/attachments/a1', alt: 'Schéma v2' });
+		expect(upload).toHaveBeenCalledWith('d1', file);
+		upload.mockRestore();
 	});
 
 	it('titles an imported file after its name', () => {

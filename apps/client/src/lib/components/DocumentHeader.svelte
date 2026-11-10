@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { Presence, type AwarenessProvider } from '@facile/encre';
 	import { Button, ConfirmModal, Icon, IconButton, Menu, StatusDot, icons, toast } from '@facile/muse';
 	import { backend } from '$lib/backend';
 	import { shareIcon } from '$lib/brand';
@@ -10,7 +11,11 @@
 	import IconChooser from './IconChooser.svelte';
 	import ShareDialog from './ShareDialog.svelte';
 
-	let { doc = $bindable(), connection }: { doc: DocumentRecord; connection: Connection } = $props();
+	let {
+		doc = $bindable(),
+		connection,
+		provider
+	}: { doc: DocumentRecord; connection: Connection; provider?: AwarenessProvider } = $props();
 
 	const access = $derived(doc.access);
 	const locked = $derived(access === 'viewer' || doc.trashed_at !== null);
@@ -72,7 +77,10 @@
 
 <header class="flex flex-col gap-3">
 	<div class="flex flex-wrap items-center justify-end gap-2">
-		<StatusDot tone={status.tone} label={status.label} pulse={status.pulse} class="mr-auto" />
+		<StatusDot tone={status.tone} label={status.label} pulse={status.pulse} />
+		<div class="mr-auto">
+			{#if provider}<Presence {provider} />{/if}
+		</div>
 		{#if access === 'viewer'}<span class="text-fc-xs text-fc-fg-muted">Lecture seule</span>{/if}
 		<Button variant="ghost" size="sm" icon={icons.history} href="/d/{doc.id}/history">Historique</Button>
 		<Menu label="Exporter" items={exports} align="end">

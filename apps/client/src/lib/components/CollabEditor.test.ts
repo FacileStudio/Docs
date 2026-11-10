@@ -64,7 +64,7 @@ describe('CollabEditor', () => {
 		const prose = target.querySelector('.ProseMirror');
 		expect(prose).not.toBeNull();
 		expect(prose?.getAttribute('contenteditable')).toBe('true');
-		expect(target.querySelector('[aria-label="Editing now"]')).not.toBeNull();
+		expect(target.querySelector('[aria-label="Editing now"]')).toBeNull();
 		const paragraph = new Y.XmlElement('paragraph');
 		paragraph.insert(0, [new Y.XmlText('Bonjour depuis le serveur')]);
 		opened[0].doc.getXmlFragment('default').insert(0, [paragraph]);
