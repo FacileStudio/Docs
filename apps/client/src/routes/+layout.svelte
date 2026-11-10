@@ -17,6 +17,7 @@
 	} from '@facile/muse';
 	import { backend } from '$lib/backend';
 	import { logoIcon } from '$lib/brand';
+	import { rememberReturn, takeReturn } from '$lib/return';
 	import { session } from '$lib/session.svelte';
 	import { restoreTheme, saveTheme } from '$lib/theme';
 	import { tree } from '$lib/tree.svelte';
@@ -37,6 +38,13 @@
 
 	$effect(() => {
 		if (!bare && !session.ready) void session.load();
+	});
+
+	$effect(() => {
+		if (bare || !session.ready) return;
+		if (!session.user) return rememberReturn(page.url);
+		const next = takeReturn();
+		if (next && next !== `${page.url.pathname}${page.url.search}`) void goto(next, { replaceState: true });
 	});
 
 	$effect(() => {

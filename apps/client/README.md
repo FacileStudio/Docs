@@ -55,7 +55,7 @@ The contract is `docs/api.md` at the repo root, as the API is built. The client 
 - **Public pages.** `children` is the whole live subtree as tree entries; the page indents it by `parent_id`. The API already appends `?share=<token>` to attachment images.
 - **Exports.** PDF, Facile Markdown and CommonMark all come from the API.
 - **WebSocket close codes.** 1001 and 1013 reconnect with y-websocket's backoff (1001 also reloads the page record, to catch a trash or restore). 1008 stops: the page reloads the record, shows "not found or no access" when it is gone, else reopens the room on a fresh `Y.Doc` and says the change was refused. 1009 and 1011 stop with an alert and a reload button. Cross-tab BroadcastChannel sync is off, so the server stays the only peer.
-- **Agent confirmations.** `/pending?action=<id>` lists the signed-in person's actions from `/api/mcp/actions` and confirms or dismisses one, with muse `ApprovalCard`.
+- **Agent confirmations.** `/pending?action=<id>` lists the signed-in person's actions from `/api/mcp/actions` and confirms or dismisses one, with muse `ApprovalCard`. Signing in from it returns to it: porte's `/auth/oidc` takes no return path, so `src/lib/return.ts` keeps the page in `sessionStorage` and the layout restores it once a session exists.
 - **No `/docs` page.** `/docs` is the API reference served by the binary; client pages are `/`, `/d/{id}`, `/d/{id}/history`, `/s/{token}`, `/trash`, `/settings` and `/pending`.
 
 ## Library gaps
