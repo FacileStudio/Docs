@@ -12,7 +12,7 @@ path = "src/main.rs"
 [dependencies]
 tronc = { git = "file:///home/yann/Code/Facile/tronc-rs", tag = "v0.3.0", features = ["http", "health", "spa", "migrate", "journal", "apiref", "mcp"] }
 porte = { git = "file:///home/yann/Code/Facile/porte-rs", tag = "v0.5.0", features = ["pg", "oidc", "directory", "spaces", "mcp"] }
-encre = { git = "file:///home/yann/Code/Facile/encre", tag = "v0.5.0", features = ["yjs", "pdf", "openui"] }
+encre = { git = "file:///home/yann/Code/Facile/encre", tag = "v0.7.0", features = ["yjs", "pdf", "openui"] }
 async-trait = "0.1.92"
 axum = { version = "0.8.9", features = ["ws", "multipart", "macros"] }
 futures-util = { version = "0.3.34", default-features = false, features = ["std", "sink"] }
