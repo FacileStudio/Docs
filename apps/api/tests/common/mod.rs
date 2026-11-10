@@ -2,6 +2,7 @@
 
 pub mod fixture;
 pub mod http;
+pub mod mcp;
 pub mod typing;
 pub mod upload;
 pub mod ysync;
@@ -57,8 +58,10 @@ pub async fn app(pool: PgPool) -> App {
         issuer: Arc::from(ISSUER),
         data_dir: Arc::new(data_dir()),
         hub,
+        exports: api::modules::export::pdf::slots(),
+        confirmations: None,
     };
-    let router = api::router::build_router(state.clone(), &kits);
+    let router = api::router::build_router(state.clone(), &kits, None).unwrap();
     App { router, state, kits, pool }
 }
 

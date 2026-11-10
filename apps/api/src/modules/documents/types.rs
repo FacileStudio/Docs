@@ -95,6 +95,17 @@ pub struct CreateRequest {
     pub content: Option<Value>,
 }
 
+/// `POST /documents/import-openui`: an OpenUI program saved as a page.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct OpenUiRequest {
+    pub source: String,
+    #[serde(default)]
+    pub title: String,
+    pub space_id: Option<String>,
+    pub parent_id: Option<Uuid>,
+}
+
 /// `PATCH /documents/{id}`.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]

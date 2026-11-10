@@ -8,8 +8,9 @@ use tronc::json::Json;
 
 use super::handlers::{apply, create, list, move_to, patch, read, remove, restore};
 use super::revisions::{self, Revision};
+use super::service;
 use super::trash;
-use super::types::Document;
+use super::types::{CreateRequest, Document, OpenUiRequest};
 use crate::extract::id;
 use crate::state::AppState;
 
@@ -29,11 +30,29 @@ async fn rollback(
     revisions::restore(&state, who.user_id, id(&raw)?, id(&rev)?).await.map(Json)
 }
 
+async fn import_openui(
+    State(state): State<AppState>,
+    who: Identity,
+    Json(body): Json<OpenUiRequest>,
+) -> Result<(StatusCode, Json<Document>)> {
+    let doc = encre::openui::to_document(&body.source).map_err(|e| tronc::Error::invalid(format!("openui: {e}")))?;
+    let content = serde_json::to_value(&doc).map_err(|e| tronc::Error::internal("openui document", e))?;
+    let request = CreateRequest {
+        title: body.title,
+        space_id: body.space_id,
+        parent_id: body.parent_id,
+        markdown: None,
+        content: Some(content),
+    };
+    Ok((StatusCode::CREATED, Json(service::create(&state, who.user_id, request).await?)))
+}
+
 /// The document routes, mounted under `/api` behind `require_auth`.
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/documents", get(list).post(create))
         .route("/documents/{id}", get(read).patch(patch).delete(remove))
+        .route("/documents/import-openui", post(import_openui))
         .route("/documents/{id}/ops", post(apply))
         .route("/documents/{id}/move", post(move_to))
         .route("/documents/{id}/restore", post(restore))

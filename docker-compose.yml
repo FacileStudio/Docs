@@ -1,0 +1,93 @@
+services:
+  docs-db:
+    container_name: docs-db
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: docs
+      POSTGRES_PASSWORD: docs-internal-db
+      POSTGRES_DB: docs
+    volumes:
+    - db_data:/var/lib/postgresql/data
+    expose:
+    - '5432'
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - pg_isready -U docs
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    deploy:
+      update_config:
+        order: start-first
+        parallelism: 1
+      restart_policy:
+        condition: any
+  docs-api:
+    container_name: docs-api
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: Dockerfile
+    expose:
+    - '4000'
+    networks:
+    - default
+    - dokploy-network
+    volumes:
+    - attachments:/data
+    labels:
+      traefik.enable: 'true'
+      traefik.docker.network: dokploy-network
+      traefik.http.routers.docs-web.rule: "Host(`docs-next.facile.studio`)"
+      traefik.http.routers.docs-web.entrypoints: web
+      traefik.http.routers.docs-web.middlewares: redirect-to-https@file
+      traefik.http.routers.docs-web.service: docs-api
+      traefik.http.routers.docs-secure.rule: "Host(`docs-next.facile.studio`)"
+      traefik.http.routers.docs-secure.entrypoints: websecure
+      traefik.http.routers.docs-secure.tls.certresolver: letsencrypt
+      traefik.http.routers.docs-secure.service: docs-api
+      traefik.http.services.docs-api.loadbalancer.server.port: "4000"
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgres://docs:docs-internal-db@docs-db:5432/docs?sslmode=disable}
+      PORT: '4000'
+      APP_ENV: ${APP_ENV:-production}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      TRUSTED_PROXIES: 'private,cloudflare'
+      DATA_DIR: /data
+      JOURNAL_URL: ${JOURNAL_URL:-}
+      JOURNAL_TOKEN: ${JOURNAL_TOKEN:-}
+      OIDC_ISSUER: ${OIDC_ISSUER:-}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}
+      PORTE_TOKEN_KEY: ${PORTE_TOKEN_KEY:-}
+      OIDC_REDIRECT_URL: ${OIDC_REDIRECT_URL:-}
+      OIDC_SUCCESS_URL: ${OIDC_SUCCESS_URL:-}
+      OIDC_CLI_AUDIENCE: ${OIDC_CLI_AUDIENCE:-}
+      MCP_RESOURCE: ${MCP_RESOURCE:-}
+      MCP_STATE_KEY: ${MCP_STATE_KEY:-}
+    healthcheck:
+      test: ["CMD", "/api", "healthcheck"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      docs-db:
+        condition: service_healthy
+    deploy:
+      replicas: 1
+      update_config:
+        order: stop-first
+        parallelism: 1
+      restart_policy:
+        condition: any
+volumes:
+  db_data:
+    name: docs_db_data
+  attachments:
+    name: docs_attachments
+networks:
+  dokploy-network:
+    external: true

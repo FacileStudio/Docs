@@ -27,37 +27,51 @@ struct Case {
     ok: u16,
 }
 
-fn cases() -> Vec<Case> {
-    let case = |method, path, body, need, prep, ok| Case { method, path, body, need, prep, ok };
+type Row = (&'static str, &'static str, Option<fn() -> Value>, Need, Prep, u16);
+
+fn case((method, path, body, need, prep, ok): Row) -> Case {
+    Case { method, path, body, need, prep, ok }
+}
+
+fn content_cases() -> Vec<Case> {
     vec![
-        case("GET", "/api/documents/{id}", None, Need::Viewer, Prep::None, 200),
-        case("GET", "/api/documents/{id}?format=markdown", None, Need::Viewer, Prep::None, 200),
-        case("PATCH", "/api/documents/{id}", Some(|| json!({"title": "Renamed"})), Need::Editor, Prep::None, 200),
-        case(
+        case(("GET", "/api/documents/{id}", None, Need::Viewer, Prep::None, 200)),
+        case(("GET", "/api/documents/{id}?format=markdown", None, Need::Viewer, Prep::None, 200)),
+        case(("PATCH", "/api/documents/{id}", Some(|| json!({"title": "Renamed"})), Need::Editor, Prep::None, 200)),
+        case((
             "POST",
             "/api/documents/{id}/ops",
             Some(|| json!({"ops": [{"op": "append", "markdown": "more"}]})),
             Need::Editor,
             Prep::None,
             200,
-        ),
-        case("POST", "/api/documents/{id}/move", Some(|| json!({})), Need::Manager, Prep::None, 200),
-        case("DELETE", "/api/documents/{id}", None, Need::Manager, Prep::None, 204),
-        case("POST", "/api/documents/{id}/restore", None, Need::Manager, Prep::Trashed, 200),
-        case("DELETE", "/api/documents/{id}/permanent", None, Need::Manager, Prep::Trashed, 204),
-        case("GET", "/api/documents/{id}/revisions", None, Need::Viewer, Prep::Revision, 200),
-        case("POST", "/api/documents/{id}/revisions/{rev}/restore", None, Need::Editor, Prep::Revision, 200),
-        case(
+        )),
+        case(("POST", "/api/documents/{id}/move", Some(|| json!({})), Need::Manager, Prep::None, 200)),
+        case(("DELETE", "/api/documents/{id}", None, Need::Manager, Prep::None, 204)),
+        case(("POST", "/api/documents/{id}/restore", None, Need::Manager, Prep::Trashed, 200)),
+    ]
+}
+
+fn cases() -> Vec<Case> {
+    let mut all = content_cases();
+    all.extend([
+        case(("DELETE", "/api/documents/{id}/permanent", None, Need::Manager, Prep::Trashed, 204)),
+        case(("GET", "/api/documents/{id}/revisions", None, Need::Viewer, Prep::Revision, 200)),
+        case(("POST", "/api/documents/{id}/revisions/{rev}/restore", None, Need::Editor, Prep::Revision, 200)),
+        case((
             "POST",
             "/api/documents",
             Some(|| json!({"title": "Child", "parent_id": "{id}"})),
             Need::Editor,
             Prep::None,
             201,
-        ),
-        case("POST", "/api/documents/{id}/share", Some(|| json!({"children": true})), Need::Manager, Prep::None, 201),
-        case("GET", "/api/documents/{id}/share", None, Need::Manager, Prep::None, 200),
-    ]
+        )),
+        case(("POST", "/api/documents/{id}/share", Some(|| json!({"children": true})), Need::Manager, Prep::None, 201)),
+        case(("GET", "/api/documents/{id}/share", None, Need::Manager, Prep::None, 200)),
+        case(("GET", "/api/documents/{id}/export.md", None, Need::Viewer, Prep::None, 200)),
+        case(("GET", "/api/documents/{id}/export.commonmark", None, Need::Viewer, Prep::None, 200)),
+    ]);
+    all
 }
 
 async fn prepared(app: &App, roles: &Roles, prep: Prep) -> (String, String) {

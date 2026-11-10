@@ -1,0 +1,48 @@
+# Docs — Configuration
+
+Every environment variable the API reads, from `apps/api/src/env.rs`, tronc's `env::Core` and
+porte's configuration. A missing required variable, or an inconsistent pair, exits 1 at boot.
+
+| Variable | Required | Default | What it does |
+|---|---|---|---|
+| `DATABASE_URL` | yes | — | Postgres connection string |
+| `PORT` | no | `8080` (tronc) | Listen port. The image sets `4000` |
+| `APP_ENV` | no | `development` | `development`, `staging` or `production` |
+| `LOG_LEVEL` | no | `info` | `debug`, `info`, `warn`, `error` |
+| `TRUSTED_PROXIES` | prod | — | `private,cloudflare` behind Traefik and Cloudflare |
+| `CORS_ALLOWED_ORIGINS` | no | — | Empty in production: the client is same-origin |
+| `CLIENT_DIR` | no | `./client` | The built SPA. The image sets `/client` |
+| `DATA_DIR` | no | `/data` | Attachments live under `DATA_DIR/attachments`. Mount a volume here |
+| `JOURNAL_URL`, `JOURNAL_TOKEN` | no | — | Ship logs to Journal when both are set |
+| `OIDC_ISSUER` | prod | — | `https://sso.facile.studio`. Turns sign-in, directory sync and deletions on. Production refuses to boot without it |
+| `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET` | with issuer | — | The Registre client |
+| `OIDC_REDIRECT_URL` | with issuer | — | `https://<host>/api/auth/oidc/callback` |
+| `OIDC_SUCCESS_URL` | with issuer | — | `https://<host>/` |
+| `OIDC_CLI_AUDIENCE` | no | — | Mounts `POST /api/auth/oidc/device/exchange` for that CLI client |
+| `OIDC_MACHINE_AUDIENCE`, `OIDC_SCOPE_PREFIX` | no | — | Accept Registre machine JWTs on the bearer path |
+| `PORTE_TOKEN_KEY` | prod | — | Seals stored OIDC tokens. Production refuses to boot without it |
+| `MCP_RESOURCE` | no | — | `https://<host>/mcp`. Its presence mounts `/mcp` |
+| `MCP_STATE_KEY` | with MCP | — | HMAC key of the confirmation flow; boot fails without it when MCP is on |
+| `OUTLINE_TOKEN` | no | — | `api import-outline` reads the Outline API token here when `--token` is absent |
+| `TEST_DATABASE_URL` | tests | — | Postgres the integration tests create their schemas in |
+| `APP_VERSION` | build | `dev` | Read at compile time; the Dockerfile stamps it from `apps/client/package.json` |
+
+`SSO_ONLY` is always true: the local password routes are never registered. tronc's `PORT`
+default is 8080, as in Go tronc; the image and `mise run dev` set 4000.
+
+## Fixed limits
+
+| Limit | Value | Where |
+|---|---|---|
+| Attachment size | 20 MiB | `modules/attachments/sniff.rs` |
+| Attachment types | PNG, JPEG, GIF, WebP, PDF, by magic number | same |
+| Document JSON | 5 MiB | `modules/documents/content.rs` |
+| WebSocket frame | 2 MiB, closed with 1009 | `modules/rooms/ws.rs` |
+| Room persist debounce, unload | 2 s, 60 s | `modules/rooms/room.rs` |
+| Revisions | one per 10 minutes of activity | `modules/documents/write.rs` |
+| Operations per request | 100 | `modules/documents/ops.rs` |
+| PDF compile | 30 s, 2 at once | `modules/export/pdf.rs` |
+| Public pages | 2 requests a second per IP, burst 30 | `modules/share/router.rs` |
+| Search hits | 50 | `modules/search/service.rs` |
+
+Back to the [documentation index](README.md).

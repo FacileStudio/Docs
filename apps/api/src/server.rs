@@ -37,9 +37,12 @@ pub async fn run() -> ExitCode {
         Ok(pool) => pool,
         Err(error) => return fail(&error),
     };
-    let args: Vec<String> = std::env::args().skip(1).collect();
-    if let Some(result) = tronc::migrate::command(&args, &pool, &crate::MIGRATOR).await {
+    let argv: Vec<String> = std::env::args().collect();
+    if let Some(result) = tronc::migrate::command(&argv, &pool, &crate::MIGRATOR).await {
         return result.map_or_else(|error| fail(&error), |()| ExitCode::SUCCESS);
+    }
+    if let Some(parsed) = crate::outline::parse(argv.get(1..).unwrap_or_default()) {
+        return import(&config, &pool, parsed).await;
     }
     match serve(config, pool).await {
         Ok(()) => ExitCode::SUCCESS,
@@ -55,6 +58,25 @@ pub fn state(config: &Config, pool: PgPool, kits: &Kits, hub: Hub) -> AppState {
         issuer: Arc::from(config.porte.issuer.as_str()),
         data_dir: Arc::new(PathBuf::from(&config.data_dir)),
         hub,
+        exports: crate::modules::export::pdf::slots(),
+        confirmations: None,
+    }
+}
+
+async fn import(config: &Config, pool: &PgPool, parsed: Result<crate::outline::Args, String>) -> ExitCode {
+    let args = match parsed {
+        Ok(args) => args,
+        Err(usage) => return fail(&usage),
+    };
+    if let Err(error) = tronc::migrate::run(pool, &crate::MIGRATOR).await {
+        return fail(&error);
+    }
+    match crate::outline::run(pool, &config.data_dir, &args).await {
+        Ok(report) => {
+            print!("{report}");
+            ExitCode::SUCCESS
+        }
+        Err(error) => fail(&error),
     }
 }
 
@@ -78,17 +100,26 @@ async fn signal() {
     }
 }
 
+fn mcp_options(config: &Config, kits: &Kits, state: &mut AppState) -> Result<Option<tronc::mcp::Options>, BootError> {
+    let Some(verifier) = kits.mcp.clone() else { return Ok(None) };
+    let resource = config.mcp_resource.clone();
+    state.confirmations = Some(crate::mcp::confirmations(state, &resource, config.mcp_state_key.as_bytes())?);
+    let verifier = Arc::new(crate::mcp::verifier::PorteVerifier(verifier));
+    Ok(Some(tronc::mcp::Options::new("docs", resource, config.porte.issuer.clone(), verifier)))
+}
+
 async fn serve(config: Config, pool: PgPool) -> Result<(), BootError> {
     tronc::migrate::run(&pool, &crate::MIGRATOR).await?;
     let hub = Hub::default();
     let kits = Kits::new(&config, &pool, &hub).await?;
     let token = CancellationToken::new();
-    let state = state(&config, pool, &kits, hub.clone());
+    let mut state = state(&config, pool, &kits, hub.clone());
+    let mcp = mcp_options(&config, &kits, &mut state)?;
     spawn_loops(&kits, &state, &token);
     let mut http = tronc::http::Config::from_core(&config.core);
     http.security = crate::security::config(http.security, &tronc::spa::dir_from_env());
     let layers = tronc::http::layers(http)?;
-    let app = crate::router::build_router(state, &kits).layer(layers);
+    let app = crate::router::build_router(state, &kits, mcp)?.layer(layers);
     let listener = tokio::net::TcpListener::bind(("0.0.0.0", config.core.port)).await?;
     tracing::info!(port = config.core.port, "docs: listening");
     let stop = token.clone();

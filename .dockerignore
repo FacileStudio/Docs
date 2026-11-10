@@ -1,0 +1,8 @@
+.git
+**/.git
+**/target
+**/node_modules
+**/.svelte-kit
+**/build
+**/.env
+.local

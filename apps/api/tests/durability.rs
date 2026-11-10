@@ -38,6 +38,20 @@ async fn start(database: &str, port: u16) -> Server {
     panic!("the api did not start");
 }
 
+impl Server {
+    fn kill(mut self) -> u16 {
+        self.child.kill().unwrap();
+        self.child.wait().unwrap();
+        self.port
+    }
+}
+
+async fn drop_database(url: &str) {
+    let admin = PgPool::connect(&tronc::testdb::url().unwrap()).await.unwrap();
+    let name = url.rsplit('/').next().unwrap().split('?').next().unwrap();
+    sqlx::query(sqlx::AssertSqlSafe(format!("DROP DATABASE {name} WITH (FORCE)"))).execute(&admin).await.unwrap();
+}
+
 async fn database() -> Option<(String, PgPool)> {
     let admin = tronc::testdb::url()?;
     let name = format!("docs_kill_{}", uuid::Uuid::new_v4().simple());
@@ -80,7 +94,7 @@ async fn page(port: u16, token: &str) -> String {
 #[tokio::test]
 async fn killing_the_process_loses_no_edit_the_client_holds_or_the_server_saved() {
     let Some((url, pool)) = database().await else { return };
-    let mut server = start(&url, free_port()).await;
+    let server = start(&url, free_port()).await;
     let token = session(&pool).await;
     let id = page(server.port, &token).await;
     let ws = |port: u16| format!("ws://127.0.0.1:{port}/api/documents/{id}/ws");
@@ -88,20 +102,17 @@ async fn killing_the_process_loses_no_edit_the_client_holds_or_the_server_saved(
     peer.connect(&ws(server.port), &token).await;
     peer.edit(|txn, f| type_into_first_paragraph(txn, f, 5, " unsaved")).await;
     tokio::time::sleep(Duration::from_secs(1)).await;
-    server.child.kill().unwrap();
-    server.child.wait().unwrap();
+    let server = start(&url, server.kill()).await;
     peer.disconnect();
-    let mut server = start(&url, server.port).await;
     peer.connect(&ws(server.port), &token).await;
     peer.edit(|txn, f| type_into_first_paragraph(txn, f, 100, " saved")).await;
     tokio::time::sleep(Duration::from_secs(3)).await;
-    server.child.kill().unwrap();
-    server.child.wait().unwrap();
-    let mut server = start(&url, server.port).await;
+    let server = start(&url, server.kill()).await;
     let mut fresh = Peer::new();
     fresh.connect(&ws(server.port), &token).await;
     let text = encre::markdown::plain_text(&read(&fresh.doc));
-    server.child.kill().unwrap();
-    server.child.wait().unwrap();
+    server.kill();
+    pool.close().await;
+    drop_database(&url).await;
     assert_eq!(text, "start unsaved saved");
 }

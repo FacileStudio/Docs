@@ -2,6 +2,8 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use porte::session::Manager;
+use tokio::sync::Semaphore;
+use tronc::mcp::Confirmations;
 
 use crate::modules::rooms::Hub;
 use sqlx::PgPool;
@@ -19,4 +21,8 @@ pub struct AppState {
     pub data_dir: Arc<PathBuf>,
     /// The open collaboration rooms.
     pub hub: Hub,
+    /// The PDF compile slots.
+    pub exports: Arc<Semaphore>,
+    /// The MCP confirmation flow, when `/mcp` is on.
+    pub confirmations: Option<Confirmations>,
 }
