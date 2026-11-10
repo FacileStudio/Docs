@@ -69,7 +69,7 @@ the trash listing.
 | `PATCH /documents/{id}` | `{"title"?,"icon"?}` (title ≤ 200, icon ≤ 32 characters) | `Document` | editor |
 | `POST /documents/{id}/ops` | `{"ops":[Op]}`, at most 100, all or nothing | `{"version","markdown"}` | editor |
 | `POST /documents/{id}/move` | `{"parent_id": uuid|null, "before": uuid|null}` | `Document`, `position` the midpoint of its new neighbours | manager |
-| `DELETE /documents/{id}` | | 204, the subtree goes to the trash | manager |
+| `DELETE /documents/{id}` | | 204, the subtree goes to the trash; purged after 30 days | manager |
 | `POST /documents/{id}/restore` | | `Document`; to the root when its parent stays trashed | manager |
 | `DELETE /documents/{id}/permanent` | | 204, only when trashed (else 412) | manager |
 | `GET /documents/{id}/revisions` | | `[{"id","title","schema_version","content","created_by","author","created_at"}]`, newest 50 | viewer |

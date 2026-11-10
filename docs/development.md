@@ -47,6 +47,7 @@ against Postgres through `tronc::testdb`, one schema per test prefix, kept betwe
 | `scopes.rs` | Lists, creates and search never cross a space; personal pages |
 | `documents.rs` | Markdown round trip, ops, trash, move, revisions, search snippets |
 | `directory.rs` | porte's spaces conformance suite, snapshot apply, GDPR erase |
+| `lifecycle.rs` | Retired and returning spaces, the empty-snapshot refusal, the 30-day purge |
 | `attachments.rs`, `share.rs` | Sniffing, SVG refusal, sandbox headers, sweep, links, rate limit |
 | `rooms.rs` | Two yrs peers converge after offline edits; schema-breaking update reverted with 1008; viewers; origin; 1009 |
 | `durability.rs` | Kills the real binary one second after an edit and proves nothing is lost |

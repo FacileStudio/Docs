@@ -1,6 +1,7 @@
 //! porte wiring: sessions, Registre sign-in, directory sync, deletions and MCP auth.
 
 mod deletions;
+mod retire;
 mod routes;
 mod spaces;
 mod store;

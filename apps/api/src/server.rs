@@ -82,6 +82,7 @@ async fn import(config: &Config, pool: &PgPool, parsed: Result<crate::outline::A
 
 fn spawn_loops(kits: &Kits, state: &AppState, token: &CancellationToken) {
     tokio::spawn(crate::modules::attachments::sweep::run(state.clone(), token.clone()));
+    tokio::spawn(crate::modules::documents::purge::run(state.clone(), token.clone()));
     if let Some(syncer) = kits.syncer.clone() {
         let token = token.clone();
         tokio::spawn(async move { syncer.run(token).await });

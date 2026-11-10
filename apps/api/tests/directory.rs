@@ -1,8 +1,9 @@
 mod common;
 
 use api::auth::{AppData, SpaceStore, SpacesApply};
+use common::directory::{snapshot, space};
 use common::fixture;
-use porte::directory::{Member, PersonDeleted, Snapshot, Space};
+use porte::directory::PersonDeleted;
 use serde_json::json;
 
 #[tokio::test]
@@ -19,18 +20,6 @@ async fn the_space_store_passes_porte_conformance() {
     assert!(result.is_ok(), "{:#?}", result.unwrap_err());
 }
 
-fn snapshot(version: i64, spaces: Vec<Space>) -> Snapshot {
-    Snapshot { version, spaces, ..Snapshot::default() }
-}
-
-fn space(id: &str, subjects: &[(&str, &str)]) -> Space {
-    let members = subjects
-        .iter()
-        .map(|(subject, role)| Member { subject: subject.to_string(), role: role.to_string(), ..Member::default() })
-        .collect();
-    Space { id: id.into(), name: format!("Space {id}"), members, ..Space::default() }
-}
-
 #[tokio::test]
 async fn a_snapshot_replaces_spaces_and_members_once_per_version() {
     let Some(pool) = common::pool("docs_directory").await else { return };
@@ -39,9 +28,12 @@ async fn a_snapshot_replaces_spaces_and_members_once_per_version() {
     assert!(
         apply.apply_snapshot(&snapshot(base, vec![space("a", &[("s1", "owner")]), space("b", &[])])).await.unwrap()
     );
-    assert!(!apply.apply_snapshot(&snapshot(base, vec![])).await.unwrap());
+    assert!(!apply.apply_snapshot(&snapshot(base, vec![space("x", &[])])).await.unwrap());
     assert!(apply.apply_snapshot(&snapshot(base + 1, vec![space("a", &[("s2", "member")])])).await.unwrap());
-    let spaces: Vec<String> = sqlx::query_scalar("SELECT id FROM spaces ORDER BY id").fetch_all(&pool).await.unwrap();
+    let spaces: Vec<String> = sqlx::query_scalar("SELECT id FROM spaces WHERE deleted_at IS NULL ORDER BY id")
+        .fetch_all(&pool)
+        .await
+        .unwrap();
     assert_eq!(spaces, ["a"]);
     let members: Vec<String> = sqlx::query_scalar("SELECT subject FROM space_members").fetch_all(&pool).await.unwrap();
     assert_eq!(members, ["s2"]);

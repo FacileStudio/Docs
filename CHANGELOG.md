@@ -19,6 +19,10 @@ All notable changes to Docs. Versions are local tags until the owner pushes the 
 ### Changed
 
 - encre moved from v0.4.0 to v0.5.0
+- A space missing from a directory snapshot is retired (`spaces.deleted_at`) instead of
+  deleted: its pages go to the trash, its members lose access and their sockets close, and a
+  returning space is undeleted. An empty snapshot while spaces exist is refused
+- Pages trashed more than 30 days ago are purged hourly
 
 ## [0.3.0] - 2026-11-10
 

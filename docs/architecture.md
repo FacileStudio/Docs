@@ -71,13 +71,19 @@ Rooms are in memory, so the API runs exactly one replica.
 | Table | Holds |
 |---|---|
 | `porte_*` | Accounts, identities, sessions (`0001_porte.sql`, porte's schema verbatim) |
-| `spaces`, `space_members` | Registre's directory, replaced by each snapshot |
+| `spaces`, `space_members` | Registre's directory, replaced by each snapshot; `deleted_at` marks a retired space |
 | `directory_state`, `deletion_state` | The snapshot version and the deletion cursor |
 | `documents` | The tree (`parent_id`, `position`), `content` JSONB, `text`, `ydoc`, `version`, `search` |
 | `document_revisions` | Snapshots of `content` |
 | `attachments` | Rows naming files under `DATA_DIR/attachments/<2 hex>/<sha256>` |
 | `share_links` | Hashed tokens, `children`, `revoked_at` |
 | `mcp_actions` | Pending confirmations of `docs_replace` |
+
+A space missing from a directory snapshot is never deleted: it gets `deleted_at`, loses its
+members (their sockets close) and its live pages go to the trash. A space that comes back is
+undeleted and its pages stay in the trash for a manager to restore. An empty snapshot while
+live spaces exist is refused and logged. Only the hourly purge, for pages trashed more than 30
+days ago, or a manager's explicit delete removes a page for good.
 
 A collection from Outline is a top-level page. A page and its subtree share one scope; a move
 across scopes is refused.

@@ -44,5 +44,6 @@ default is 8080, as in Go tronc; the image and `mise run dev` set 4000.
 | PDF compile | 30 s, 2 at once | `modules/export/pdf.rs` |
 | Public pages | 2 requests a second per IP, burst 30 | `modules/share/router.rs` |
 | Search hits | 50 | `modules/search/service.rs` |
+| Trash purge | pages trashed over 30 days ago, hourly | `modules/documents/purge.rs` |
 
 Back to the [documentation index](README.md).

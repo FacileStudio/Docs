@@ -33,6 +33,7 @@ impl Access {
 macro_rules! member_spaces {
     () => {
         "SELECT m.space_id, m.role FROM space_members m \
+         JOIN spaces live ON live.id = m.space_id AND live.deleted_at IS NULL \
          JOIN porte_identities i ON i.subject = m.subject AND i.provider = $2 WHERE i.user_id = $1"
     };
 }

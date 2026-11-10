@@ -144,3 +144,25 @@ async fn a_frame_over_two_mebibytes_closes_with_1009() {
     peer.pump(Duration::from_secs(2)).await;
     assert_eq!(peer.closed, Some(1009));
 }
+
+#[tokio::test]
+async fn a_space_removed_by_the_directory_closes_its_sockets_and_refuses_reconnects() {
+    let Some(pool) = common::pool("docs_rooms_retire").await else { return };
+    let app = common::app(pool.clone()).await;
+    let roles = fixture::roles(&app).await;
+    let id = fixture::id(&fixture::page(&app, &roles.member, Some(&roles.space), "shared").await);
+    let url = format!("{}/api/documents/{id}/ws", serve(&app).await);
+    let mut peer = Peer::new();
+    peer.connect(&url, &roles.member.token).await;
+    let apply = api::auth::SpacesApply::new(pool, app.state.hub.clone());
+    let version = time::OffsetDateTime::now_utc().unix_timestamp_nanos() as i64;
+    let other = porte::directory::Space { id: "elsewhere".into(), ..Default::default() };
+    let snapshot = porte::directory::Snapshot { version, spaces: vec![other], ..Default::default() };
+    assert!(apply.apply_snapshot(&snapshot).await.unwrap());
+    peer.pump(Duration::from_secs(1)).await;
+    assert!(peer.closed.is_some(), "the socket stayed open");
+    let mut request =
+        tokio_tungstenite::tungstenite::client::IntoClientRequest::into_client_request(url.as_str()).unwrap();
+    request.headers_mut().insert("authorization", format!("Bearer {}", roles.member.token).parse().unwrap());
+    assert!(tokio_tungstenite::connect_async(request).await.is_err());
+}

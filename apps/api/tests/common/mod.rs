@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+pub mod directory;
 pub mod fixture;
 pub mod http;
 pub mod mcp;
