@@ -60,5 +60,5 @@ The contract is `docs/api.md` at the repo root, as the API is built. The client 
 
 ## Library gaps
 
-- **encre dependency**: bun cannot install `git+file://…#v0.7.0`, so `package.json` reads `file:/home/yann/Code/Facile/encre`, which copies that checkout as it is: it must sit at tag v0.7.0 when you run `bun install`. bun then copies encre's own `node_modules`, a second `yjs`, `svelte` and muse among them; `vite.config.ts` dedupes every encre dependency so one copy of each runs. Switch the line to `github:FacileStudio/encre#v0.7.0` once encre is pushed; the Docker build cannot resolve the local path.
+- **encre dependency**: `package.json` reads `github:FacileStudio/encre#v0.7.0`. bun installs it flat beside the app's own packages, so one copy of `yjs`, `svelte` and muse runs without a Vite `dedupe`.
 - **muse**: `SideBar` takes no app content, so the document tree is a second panel beside the rail on desktop and a `Drawer` on phones. muse bundles no document or share glyph; `src/lib/brand.ts` registers them.

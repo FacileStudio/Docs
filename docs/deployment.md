@@ -46,22 +46,14 @@ Migrations run at boot, behind sqlx's lock. `0001_porte.sql` is porte's schema v
 `["CMD", "/api", "healthcheck"]`. After a deploy run `sh scripts/verify-deploy.sh
 docs-next.facile.studio` or the `deploy-verify` flow.
 
-## Before the first deploy
+## Bumping a library
 
-The three libraries are local tags only, read through `file://` URLs that no build server can
-reach. Once the owner pushes them, change these lines, then run `cargo update -p tronc -p porte
--p encre` and commit `Cargo.lock`:
-
-| File | From | To |
-|---|---|---|
-| `apps/api/Cargo.toml` (twice) | `git = "file:///home/yann/Code/Facile/tronc-rs"` | `git = "https://github.com/FacileStudio/tronc-rs"` |
-| `apps/api/Cargo.toml` | `git = "file:///home/yann/Code/Facile/porte-rs"` | `git = "https://github.com/FacileStudio/porte-rs"` |
-| `apps/api/Cargo.toml` | `git = "file:///home/yann/Code/Facile/encre"` | `git = "https://github.com/FacileStudio/encre"` |
-| `apps/client/package.json` | `"@facile/encre": "file:/home/yann/Code/Facile/encre"` | `"@facile/encre": "github:FacileStudio/encre#v0.7.0"` |
-
-porte-rs v0.5.0 itself depends on `tronc-rs` v0.3.0 by a `file://` URL; it needs the same
-edit and a new porte tag first. While `encre` is private, the API stage needs a build secret
-(`RUN --mount=type=secret,id=git_token` with `CARGO_NET_GIT_FETCH_WITH_CLI=true`).
+`tronc-rs`, `porte-rs` and `encre` come from their public GitHub repos, pinned by tag. To move
+one, change its `tag` in `apps/api/Cargo.toml` (tronc appears twice, porte pins its own tronc:
+keep them on the same tag so `cargo tree` shows one copy), then run `cargo update -p <crate>`
+and commit `Cargo.lock`. An encre bump also changes `@facile/encre` in
+`apps/client/package.json` to `github:FacileStudio/encre#<tag>`, followed by `bun install`.
+Run `sh scripts/check.sh` before the commit.
 
 ## Registering in the suite
 
