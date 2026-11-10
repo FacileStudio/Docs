@@ -2,6 +2,21 @@
 
 All notable changes to Docs. Versions are local tags until the owner pushes the repo.
 
+## [0.5.1] - 2026-11-10
+
+### Changed
+
+- tronc-rs v0.3.0, porte-rs v0.5.1 and encre v0.7.0 come from their public GitHub repos by
+  tag; the client reads `github:FacileStudio/encre#v0.7.0`, and the image builds with no
+  local paths
+- The client's Vite config no longer dedupes encre's dependencies: the GitHub install is flat
+
+### Fixed
+
+- Signing in from `/pending?action=<id>` (or any other page) returns to that page instead of
+  the home page: the client keeps the path in `sessionStorage`, since porte's `/auth/oidc`
+  takes no return path
+
 ## [0.5.0] - 2026-11-10
 
 ### Added
