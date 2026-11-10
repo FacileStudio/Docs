@@ -11,7 +11,14 @@ pub const MAX_FRAME: usize = 2 << 20;
 /// How many frames wait for a slow member before it is closed with 1013.
 pub const OUTBOX: usize = 512;
 
-fn close(code: u16, reason: String) -> Message {
+/// The longest close reason a WebSocket close frame carries, in bytes (RFC 6455 section 5.5).
+pub const MAX_REASON: usize = 123;
+
+/// A close frame whose reason is cut to [`MAX_REASON`] bytes on a character boundary: a longer
+/// one fails to send and the client sees 1006 instead of the code.
+pub fn close(code: u16, mut reason: String) -> Message {
+    let cut = (0..=MAX_REASON.min(reason.len())).rev().find(|&at| reason.is_char_boundary(at)).unwrap_or(0);
+    reason.truncate(cut);
     Message::Close(Some(CloseFrame { code, reason: reason.into() }))
 }
 
@@ -45,4 +52,13 @@ pub async fn serve(socket: WebSocket, state: AppState, document: Uuid, user_id: 
         }
     }
     state.hub.tell(document, Command::Leave(conn)).await;
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn a_long_close_reason_is_cut_on_a_character_boundary() {
+        let axum::extract::ws::Message::Close(Some(frame)) = super::close(1008, "é".repeat(100)) else { panic!() };
+        assert_eq!((frame.code, frame.reason.len()), (1008, 122));
+    }
 }
