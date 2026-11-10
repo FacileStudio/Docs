@@ -1179,7 +1179,7 @@ dependencies = [
 [[package]]
 name = "encre"
 version = "0.7.0"
-source = "git+file:///home/yann/Code/Facile/encre?tag=v0.7.0#78028cf1b6c15a652d7874e4d1078f73bdf12d0a"
+source = "git+https://github.com/FacileStudio/encre?tag=v0.7.0#78028cf1b6c15a652d7874e4d1078f73bdf12d0a"
 dependencies = [
  "include_dir",
  "pulldown-cmark",
@@ -1224,7 +1224,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -3340,8 +3340,8 @@ dependencies = [
 
 [[package]]
 name = "porte"
-version = "0.5.0"
-source = "git+file:///home/yann/Code/Facile/porte-rs?tag=v0.5.0#98d997d37590dd5ac1ec6831b4b9d0220c1d9652"
+version = "0.5.1"
+source = "git+https://github.com/FacileStudio/porte-rs?tag=v0.5.1#2ed7f9bae3e5e2d3928de742fe394dc6fd5a60cb"
 dependencies = [
  "aes-gcm",
  "async-trait",
@@ -3565,7 +3565,7 @@ dependencies = [
  "once_cell",
  "socket2",
  "tracing",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -4036,7 +4036,7 @@ dependencies = [
  "security-framework",
  "security-framework-sys",
  "webpki-root-certs",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -5336,7 +5336,7 @@ dependencies = [
 [[package]]
 name = "tronc"
 version = "0.3.0"
-source = "git+file:///home/yann/Code/Facile/tronc-rs?tag=v0.3.0#e570296503f2643fe1d567d36368aac6ce923fca"
+source = "git+https://github.com/FacileStudio/tronc-rs?tag=v0.3.0#e570296503f2643fe1d567d36368aac6ce923fca"
 dependencies = [
  "axum",
  "base64 0.23.1",
@@ -6210,7 +6210,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
