@@ -6,7 +6,7 @@ in `apps/api`, SvelteKit client in `apps/client`, one container.
 ## Stack
 
 - **API** (`apps/api`): Rust 1.98 (edition 2024), axum 0.8, sqlx 0.9 on Postgres 16, yrs 0.28
-- **Libraries**: `tronc` (tronc-rs v0.3.0), `porte` (porte-rs v0.5.0), `encre` v0.5.0, all by git
+- **Libraries**: `tronc` (tronc-rs v0.3.0), `porte` (porte-rs v0.5.0), `encre` v0.7.0, all by git
   tag. Never copy their code here; report a gap instead
 - **Client** (`apps/client`): SvelteKit 2, Svelte 5 runes, Tailwind 4, `@facile/muse`, `@facile/encre`
 
@@ -14,7 +14,8 @@ in `apps/api`, SvelteKit client in `apps/client`, one container.
 
 ```sh
 mise run db-up              # Postgres 16 on 127.0.0.1:5654 (container docs_dev_postgres)
-sh scripts/check.sh         # the gate: fmt, clippy -D warnings, tests, then the client
+sh scripts/check.sh         # the gate: fmt, clippy -D warnings, tests, the client, then e2e
+mise run e2e                # Playwright + headless Chromium against the real API and Postgres
 filet check .               # after the gate, before every commit
 mise run dev                # the API on :4000 against the local database
 cd apps/api && cargo run -- migrate status

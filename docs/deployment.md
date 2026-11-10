@@ -57,7 +57,7 @@ reach. Once the owner pushes them, change these lines, then run `cargo update -p
 | `apps/api/Cargo.toml` (twice) | `git = "file:///home/yann/Code/Facile/tronc-rs"` | `git = "https://github.com/FacileStudio/tronc-rs"` |
 | `apps/api/Cargo.toml` | `git = "file:///home/yann/Code/Facile/porte-rs"` | `git = "https://github.com/FacileStudio/porte-rs"` |
 | `apps/api/Cargo.toml` | `git = "file:///home/yann/Code/Facile/encre"` | `git = "https://github.com/FacileStudio/encre"` |
-| `apps/client/package.json` | `"@facile/encre": "file:/home/yann/Code/Facile/encre"` | `"@facile/encre": "github:FacileStudio/encre#v0.5.0"` |
+| `apps/client/package.json` | `"@facile/encre": "file:/home/yann/Code/Facile/encre"` | `"@facile/encre": "github:FacileStudio/encre#v0.7.0"` |
 
 porte-rs v0.5.0 itself depends on `tronc-rs` v0.3.0 by a `file://` URL; it needs the same
 edit and a new porte tag first. While `encre` is private, the API stage needs a build secret

@@ -2,6 +2,32 @@
 
 All notable changes to Docs. Versions are local tags until the owner pushes the repo.
 
+## [0.5.0] - 2026-11-10
+
+### Added
+
+- The SvelteKit client, merged from `feat/client`, served by the API from `CLIENT_DIR`
+- `/pending?action=<id>`: the signed-in owner confirms or dismisses a `docs_replace` request
+  from `/api/mcp/actions`, with muse `ApprovalCard`
+- The share dialog lists a page's live links and revokes any of them
+- Images upload through encre's `onimage` hook (paste, drop, and the editor's Image command);
+  encre `Presence` sits in the document header
+- `mise run e2e`: Playwright with headless Chromium against the real API, Postgres and rooms,
+  seeded by the test-only `e2e_seed` example with sessions minted through porte's store
+- `scripts/check.sh` runs the client's check, tests and build, then the end-to-end run when
+  Postgres and Chromium are there; filet requires both apps
+
+### Changed
+
+- The client follows `docs/api.md` as built: `Document.access` replaces the role guessing, exact
+  list shapes, server-side CommonMark export, the public subtree as tree entries, share tokens
+  on images added by the API only
+- WebSocket close codes: 1001 and 1013 reconnect with backoff, 1008 reloads the page (or says
+  it is gone), 1009 and 1011 stop with an alert; cross-tab BroadcastChannel sync is off
+- porte-rs v0.5.0 (tronc v0.3.0): one tronc crate, porte's MCP verifier used as is, and
+  `porte::Config::from_vars`; the app's verifier shim and error conversions are gone
+- encre v0.7.0 in the API and the client
+
 ## [0.4.0] - 2026-11-10
 
 ### Added
