@@ -46,7 +46,10 @@ async fn erasing_a_person_removes_their_pages_memberships_and_account() {
     let roles = fixture::roles(&app).await;
     let personal = fixture::id(&fixture::page(&app, &roles.member, None, "mine").await);
     let shared = fixture::id(&fixture::page(&app, &roles.member, Some(&roles.space), "ours").await);
-    AppData::new(pool.clone()).on_person_deleted(common::ISSUER, &roles.member.subject).await.unwrap();
+    AppData::new(pool.clone(), app.state.hub.clone())
+        .on_person_deleted(common::ISSUER, &roles.member.subject)
+        .await
+        .unwrap();
     let ids = [uuid::Uuid::parse_str(&personal).unwrap(), uuid::Uuid::parse_str(&shared).unwrap()];
     let left: Vec<uuid::Uuid> = sqlx::query_scalar("SELECT id FROM documents WHERE id = ANY($1)")
         .bind(&ids[..])

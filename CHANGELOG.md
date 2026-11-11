@@ -4,6 +4,42 @@ All notable changes to Docs. Versions follow SemVer.
 
 ## [Unreleased]
 
+### Security
+
+- porte-rs v0.5.2 (`tag = "v0.5.2"`): drops `openidconnect` and `rsa` 0.9.10
+  (RUSTSEC-2023-0071, the Marvin timing attack). Back-channel logout now answers 503 when
+  Registre's JWKS cannot be fetched, so Registre retries, instead of 401
+- An account erase from Registre now closes the person's sockets in every room with 1008,
+  unloads their deleted personal pages, and drops their pending `mcp_actions`. A room whose row
+  was deleted stops instead of retrying the save every 2 s forever, and a save whose author no
+  longer exists stores a null author instead of failing on the foreign key, so one erased
+  account cannot block the edits of everyone else in a shared room
+- Open sockets re-check their session every 30 s: after a logout, a back-channel logout or an
+  expiry they close with 1008. A socket opened with a bearer JWT (no session row) reconnects
+  after 15 minutes. porte-rs has no logout hook, so the check is periodic
+- The container runs as `nonroot` on `gcr.io/distroless/cc-debian12:nonroot`, pinned by
+  digest, with a `HEALTHCHECK`. A one-shot `docs-data-owner` compose service hands the
+  existing `/data` volume to uid 65532 before the API starts
+
+### Changed
+
+- `GET /documents/{id}/revisions` lists metadata only; `GET /documents/{id}/revisions/{rev}`
+  answers one revision with its content
+- `POST /documents/{id}/ops` and `docs_edit` answer `saved: false` instead of 503 when an edit
+  is applied and live but not stored yet; the room keeps retrying, so it must not be replayed
+- A PDF export takes its compile slot before it loads images, loads each image once, and
+  refuses more than 64 images or 100 MiB of them with 413
+- A room applies each socket frame on a blocking thread, so validating a large page no longer
+  stalls the async workers
+- An attachment upload that matches a stored file refreshes its modification time, so the
+  daily sweep cannot delete it while the new row commits
+
+### Removed
+
+- `api import-outline`: Outline is retired and its pages are in Docs. Its icon names stay
+  supported by the client
+
+
 ## [0.6.2] - 2026-11-11
 
 ### Security

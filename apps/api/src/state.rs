@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 use std::sync::Arc;
+use std::time::Duration;
 
 use porte::session::Manager;
 use tokio::sync::Semaphore;
@@ -27,4 +28,6 @@ pub struct AppState {
     pub markdown_max: usize,
     /// The MCP confirmation flow, when `/mcp` is on.
     pub confirmations: Option<Confirmations>,
+    /// How often an open socket re-checks its session.
+    pub socket_recheck: Duration,
 }

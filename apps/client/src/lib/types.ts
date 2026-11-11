@@ -36,12 +36,11 @@ export interface DocumentRecord extends TreeNode {
 	trashed_at: string | null;
 }
 
-/** One saved revision of a document. */
+/** One row of `GET /api/documents/{id}/revisions`: a saved revision, without its body. */
 export interface Revision {
 	id: string;
 	title: string;
 	schema_version: number;
-	content: EncreNode;
 	created_by: number | null;
 	author: string | null;
 	created_at: string;

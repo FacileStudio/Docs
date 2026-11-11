@@ -6,7 +6,7 @@ in `apps/api`, SvelteKit client in `apps/client`, one container.
 ## Stack
 
 - **API** (`apps/api`): Rust 1.98 (edition 2024), axum 0.8, sqlx 0.9 on Postgres 16, yrs 0.28
-- **Libraries**: `tronc` (tronc-rs v0.3.0), `porte` (porte-rs v0.5.1), `encre` v0.9.0, all from
+- **Libraries**: `tronc` (tronc-rs v0.3.0), `porte` (porte-rs v0.5.2), `encre` v0.9.4, all from
   their public `github.com/FacileStudio` repos by tag (bump: `docs/deployment.md`). Never copy
   their code here; report a gap instead
 - **Client** (`apps/client`): SvelteKit 2, Svelte 5 runes, Tailwind 4, `@facile/muse`, `@facile/encre`
@@ -20,7 +20,6 @@ mise run e2e                # Playwright + headless Chromium against the real AP
 filet check .               # after the gate, before every commit
 mise run dev                # the API on :4000 against the local database
 cd apps/api && cargo run -- migrate status
-cd apps/api && cargo run -- import-outline --url <outline> --token <t> --space <id> --dry-run
 ```
 
 The database tests read `TEST_DATABASE_URL` (check.sh defaults it to the local container) and

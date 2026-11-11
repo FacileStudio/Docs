@@ -34,7 +34,7 @@ async fn ops_apply_in_order_bump_the_version_and_refuse_atomically() {
     let ops =
         json!({"ops": [{"op": "append", "markdown": "three"}, {"op": "patch", "find": "three", "replace": "two"}]});
     let answer = app.call("POST", &path, Some(&roles.member), Some(ops)).await.json();
-    assert_eq!(answer, json!({"version": 2, "markdown": "one\n\ntwo"}));
+    assert_eq!(answer, json!({"version": 2, "markdown": "one\n\ntwo", "saved": true}));
     let refused = json!({"ops": [{"op": "append", "markdown": "x"}, {"op": "delete_block", "block_id": "0000000000"}]});
     let answer = app.call("POST", &path, Some(&roles.member), Some(refused)).await;
     assert_eq!(answer.status, 400);
@@ -102,9 +102,13 @@ async fn a_revision_restores_the_content_it_saved() {
     let roles = fixture::roles(&app).await;
     let id = fixture::id(&fixture::page(&app, &roles.member, None, "first").await);
     let ops = json!({"ops": [{"op": "replace_all", "markdown": "second", "expect_version": 1}]});
-    app.call("POST", &format!("/api/documents/{id}/ops"), Some(&roles.member), Some(ops)).await;
+    let applied = app.call("POST", &format!("/api/documents/{id}/ops"), Some(&roles.member), Some(ops)).await.json();
+    assert_eq!(applied["saved"], json!(true));
     let list = app.call("GET", &format!("/api/documents/{id}/revisions"), Some(&roles.member), None).await.json();
     let rev = list[0]["id"].as_str().unwrap();
+    assert!(list[0].get("content").is_none());
+    let one = app.call("GET", &format!("/api/documents/{id}/revisions/{rev}"), Some(&roles.member), None).await.json();
+    assert_eq!(one["content"]["content"][0]["content"][0]["text"], json!("second"));
     let ops = json!({"ops": [{"op": "replace_all", "markdown": "third", "expect_version": 2}]});
     app.call("POST", &format!("/api/documents/{id}/ops"), Some(&roles.member), Some(ops)).await;
     let path = format!("/api/documents/{id}/revisions/{rev}/restore");

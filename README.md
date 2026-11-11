@@ -16,7 +16,7 @@ Docs replaces Outline at `docs.facile.studio`.
 - Full-text search that never leaves the caller's scope
 - Image and PDF attachments, typed by their bytes and served sandboxed
 - Public read-only share links, optionally covering a page's subtree
-- Markdown, CommonMark and PDF export, an Outline importer, and seven MCP tools for agents
+- Markdown, CommonMark and PDF export, and seven MCP tools for agents
 
 ## Stack
 
@@ -56,16 +56,6 @@ With `MCP_RESOURCE=https://<host>/mcp` set, point an MCP client at that URL and 
 Registre. `docs_read_blocks` lists block ids, `docs_edit` changes blocks in place, and
 `docs_replace` asks the person before it overwrites a page.
 
-### Importing Outline
-
-```sh
-cd apps/api
-cargo run --release -- import-outline --url https://docs.facile.studio \
-  --token "$OUTLINE_TOKEN" --space <registre space id> --dry-run
-```
-
-Drop `--dry-run` to write. The import runs in one transaction.
-
 ## Configuration
 
 | Variable | What it does |
@@ -84,7 +74,7 @@ Full reference: [docs/configuration.md](docs/configuration.md).
 ```
 apps/
   api/       Rust API: auth/ (porte), modules/ (documents, rooms, search, attachments,
-             share, export, pending), mcp/, outline/, migrations/, tests/
+             share, export, pending), mcp/, migrations/, tests/
   client/    SvelteKit 5 client
 docs/        Architecture, configuration, development, deployment, API
 scripts/     check.sh, version.sh, postgres-up.sh, postgres-down.sh, verify-deploy.sh

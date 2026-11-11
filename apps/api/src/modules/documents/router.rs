@@ -7,7 +7,7 @@ use tronc::Result;
 use tronc::json::Json;
 
 use super::handlers::{apply, create, list, move_to, patch, read, remove, restore};
-use super::revisions::{self, Revision};
+use super::revisions::{self, Revision, RevisionInfo};
 use super::trash;
 use super::types::{CreateRequest, Document, OpenUiRequest};
 use super::{markdown, service};
@@ -18,8 +18,20 @@ async fn permanent(State(state): State<AppState>, who: Identity, Path(raw): Path
     trash::permanent(&state, who.user_id, id(&raw)?).await.map(|()| StatusCode::NO_CONTENT)
 }
 
-async fn history(State(state): State<AppState>, who: Identity, Path(raw): Path<String>) -> Result<Json<Vec<Revision>>> {
+async fn history(
+    State(state): State<AppState>,
+    who: Identity,
+    Path(raw): Path<String>,
+) -> Result<Json<Vec<RevisionInfo>>> {
     revisions::list(&state, who.user_id, id(&raw)?).await.map(Json)
+}
+
+async fn revision(
+    State(state): State<AppState>,
+    who: Identity,
+    Path((raw, rev)): Path<(String, String)>,
+) -> Result<Json<Revision>> {
+    revisions::one(&state, who.user_id, id(&raw)?, id(&rev)?).await.map(Json)
 }
 
 async fn rollback(
@@ -63,5 +75,6 @@ pub fn routes() -> Router<AppState> {
         .route("/documents/{id}/restore", post(restore))
         .route("/documents/{id}/permanent", delete(permanent))
         .route("/documents/{id}/revisions", get(history))
+        .route("/documents/{id}/revisions/{rev}", get(revision))
         .route("/documents/{id}/revisions/{rev}/restore", post(rollback))
 }

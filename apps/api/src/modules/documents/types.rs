@@ -134,6 +134,9 @@ pub struct OpsRequest {
 pub struct OpsAnswer {
     pub version: i64,
     pub markdown: String,
+    /// False when the operations are applied and live but not stored yet; the room keeps
+    /// retrying, so the request must not be replayed.
+    pub saved: bool,
 }
 
 /// `?space_id=&trashed=` on the tree.

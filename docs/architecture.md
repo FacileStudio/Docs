@@ -26,7 +26,6 @@ Internet ──▶ Traefik ──▶ api (:4000, one replica) ─┬──▶ /h
 | `src/modules/export/` | Facile Markdown, CommonMark and PDF exports |
 | `src/modules/pending/` | The confirm page's API for MCP actions |
 | `src/mcp/` | The seven MCP tools |
-| `src/outline/` | `api import-outline` |
 | `src/apiref.rs` | The OpenAPI document served at `/docs` |
 
 ## Access

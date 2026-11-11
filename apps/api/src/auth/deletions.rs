@@ -1,21 +1,39 @@
 use porte::directory::{DirectoryError, PersonDeleted, StateStore};
-use sqlx::PgPool;
+use sqlx::{PgConnection, PgPool};
+use uuid::Uuid;
 
-/// The app's half of a GDPR erase: personal documents, memberships, then the account row.
+use crate::modules::rooms::{Command, Hub};
+
+/// The app's half of a GDPR erase: personal documents, pending agent actions, memberships, then
+/// the account row. The person's sockets close in every room and their personal pages unload.
 #[derive(Clone)]
 pub struct AppData {
     pool: PgPool,
+    hub: Hub,
 }
 
 impl AppData {
-    /// An eraser over `pool`.
-    pub fn new(pool: PgPool) -> Self {
-        AppData { pool }
+    /// An eraser over `pool`, closing sockets through `hub`.
+    pub fn new(pool: PgPool, hub: Hub) -> Self {
+        AppData { pool, hub }
     }
 }
 
 fn failed(error: sqlx::Error) -> DirectoryError {
     DirectoryError::Failed(error.to_string())
+}
+
+async fn erase(tx: &mut PgConnection, users: &[i64], subject: &str) -> Result<Vec<Uuid>, sqlx::Error> {
+    let pages: Vec<Uuid> =
+        sqlx::query_scalar("DELETE FROM documents WHERE space_id IS NULL AND owner_id = ANY($1) RETURNING id")
+            .bind(users)
+            .fetch_all(&mut *tx)
+            .await?;
+    let names: Vec<String> = users.iter().map(i64::to_string).collect();
+    sqlx::query("DELETE FROM mcp_actions WHERE user_id = ANY($1)").bind(&names).execute(&mut *tx).await?;
+    sqlx::query("DELETE FROM space_members WHERE subject = $1").bind(subject).execute(&mut *tx).await?;
+    sqlx::query("DELETE FROM porte_users WHERE id = ANY($1)").bind(users).execute(&mut *tx).await?;
+    Ok(pages)
 }
 
 #[async_trait::async_trait]
@@ -29,22 +47,11 @@ impl PersonDeleted for AppData {
                 .fetch_all(&mut *tx)
                 .await
                 .map_err(failed)?;
-        sqlx::query("DELETE FROM documents WHERE space_id IS NULL AND owner_id = ANY($1)")
-            .bind(&users)
-            .execute(&mut *tx)
-            .await
-            .map_err(failed)?;
-        sqlx::query("DELETE FROM space_members WHERE subject = $1")
-            .bind(subject)
-            .execute(&mut *tx)
-            .await
-            .map_err(failed)?;
-        sqlx::query("DELETE FROM porte_users WHERE id = ANY($1)")
-            .bind(&users)
-            .execute(&mut *tx)
-            .await
-            .map_err(failed)?;
-        tx.commit().await.map_err(failed)
+        let pages = erase(&mut tx, &users, subject).await.map_err(failed)?;
+        tx.commit().await.map_err(failed)?;
+        self.hub.tell_all(|| Command::Evict(users.clone())).await;
+        self.hub.close(&pages).await;
+        Ok(())
     }
 }
 

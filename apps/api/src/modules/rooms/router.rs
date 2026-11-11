@@ -8,7 +8,7 @@ use axum::routing::get;
 use http::request::Parts;
 use porte::Identity;
 
-use super::ws::{MAX_FRAME, serve};
+use super::ws::{Caller, MAX_FRAME, serve};
 use crate::extract::id;
 use crate::modules::documents::access::{self, Access};
 use crate::state::AppState;
@@ -29,7 +29,8 @@ async fn upgrade(
         Err(rejection) => return Ok(rejection.into_response()),
     };
     let upgrade = upgrade.max_message_size(MAX_FRAME + (1 << 20)).max_frame_size(MAX_FRAME + (1 << 20));
-    Ok(upgrade.on_upgrade(move |socket| serve(socket, state, document, who.user_id, editor)))
+    let caller = Caller { user_id: who.user_id, session_id: who.session_id, editor };
+    Ok(upgrade.on_upgrade(move |socket| serve(socket, state, document, caller)))
 }
 
 /// `GET /documents/{id}/ws`, behind `require_auth`: the y-sync WebSocket of one page.

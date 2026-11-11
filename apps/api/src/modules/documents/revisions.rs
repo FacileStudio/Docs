@@ -16,24 +16,32 @@ use crate::state::AppState;
 /// The most revisions one list answers.
 pub const MAX_REVISIONS: i64 = 50;
 
-/// One revision, newest first in a list.
+/// One revision in a list, newest first, without its body.
 #[derive(Debug, Serialize, sqlx::FromRow)]
-pub struct Revision {
+pub struct RevisionInfo {
     pub id: Uuid,
     pub title: String,
     pub schema_version: i32,
-    pub content: Json<Value>,
     pub created_by: Option<i64>,
     pub author: Option<String>,
     #[serde(with = "time::serde::rfc3339")]
     pub created_at: OffsetDateTime,
 }
 
-/// `GET /documents/{id}/revisions`: the newest [`MAX_REVISIONS`], with their content.
-pub async fn list(state: &AppState, user_id: i64, id: Uuid) -> Result<Vec<Revision>> {
+/// One revision with its body.
+#[derive(Debug, Serialize, sqlx::FromRow)]
+pub struct Revision {
+    #[serde(flatten)]
+    #[sqlx(flatten)]
+    pub info: RevisionInfo,
+    pub content: Json<Value>,
+}
+
+/// `GET /documents/{id}/revisions`: the newest [`MAX_REVISIONS`], metadata only.
+pub async fn list(state: &AppState, user_id: i64, id: Uuid) -> Result<Vec<RevisionInfo>> {
     access::check(state, user_id, id, Access::Viewer).await?;
-    sqlx::query_as::<_, Revision>(
-        "SELECT r.id, r.title, r.schema_version, r.content, r.created_by, u.name AS author, r.created_at \
+    sqlx::query_as::<_, RevisionInfo>(
+        "SELECT r.id, r.title, r.schema_version, r.created_by, u.name AS author, r.created_at \
          FROM document_revisions r LEFT JOIN porte_users u ON u.id = r.created_by \
          WHERE r.document_id = $1 ORDER BY r.created_at DESC, r.id LIMIT $2",
     )
@@ -42,6 +50,22 @@ pub async fn list(state: &AppState, user_id: i64, id: Uuid) -> Result<Vec<Revisi
     .fetch_all(&state.pool)
     .await
     .map_err(db)
+}
+
+/// `GET /documents/{id}/revisions/{rev}`: one revision with its body.
+pub async fn one(state: &AppState, user_id: i64, id: Uuid, rev: Uuid) -> Result<Revision> {
+    access::check(state, user_id, id, Access::Viewer).await?;
+    sqlx::query_as::<_, Revision>(
+        "SELECT r.id, r.title, r.schema_version, r.created_by, u.name AS author, r.created_at, r.content \
+         FROM document_revisions r LEFT JOIN porte_users u ON u.id = r.created_by \
+         WHERE r.id = $1 AND r.document_id = $2",
+    )
+    .bind(rev)
+    .bind(id)
+    .fetch_optional(&state.pool)
+    .await
+    .map_err(db)?
+    .ok_or_else(|| Error::not_found("revision not found"))
 }
 
 /// The content of revision `rev` of document `id`, validated as a write.

@@ -15,7 +15,8 @@ pub async fn save(
 ) -> Result<i64, sqlx::Error> {
     sqlx::query_scalar(
         "UPDATE documents SET content = $2, text = $3, ydoc = $4, schema_version = $5, version = version + 1, \
-         updated_at = now(), updated_by = coalesce($6, updated_by) WHERE id = $1 RETURNING version",
+         updated_at = now(), updated_by = coalesce((SELECT u.id FROM porte_users u WHERE u.id = $6), updated_by) \
+         WHERE id = $1 RETURNING version",
     )
     .bind(id)
     .bind(Json(&prepared.json))
@@ -32,7 +33,7 @@ pub async fn save(
 pub async fn revision(conn: &mut PgConnection, id: Uuid, user_id: Option<i64>, force: bool) -> Result<(), sqlx::Error> {
     sqlx::query(concat!(
         "INSERT INTO document_revisions (document_id, title, schema_version, content, created_by) \
-         SELECT id, title, schema_version, content, $2 FROM documents WHERE id = $1 AND ($3 OR NOT EXISTS (\
+         SELECT id, title, schema_version, content, (SELECT u.id FROM porte_users u WHERE u.id = $2) FROM documents WHERE id = $1 AND ($3 OR NOT EXISTS (\
          SELECT 1 FROM document_revisions r WHERE r.document_id = $1 AND r.created_at > now() - interval '",
         "10 minutes",
         "'))"

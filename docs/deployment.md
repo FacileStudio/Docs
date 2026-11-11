@@ -30,10 +30,11 @@ docker build -t docs .
 
 The root `Dockerfile` builds the client with bun, builds the API with `cargo build --release
 --locked` (the version comes from `apps/client/package.json` through `scripts/version.sh`, and
-the build fails when it cannot be read), and copies both into `gcr.io/distroless/cc-debian12`.
-The image runs as root, without `:nonroot`: the named volume at `/data` is owned by root, the
-same rule Place gives for apps that write to a volume. The entrypoint is `/api`, so
-`docker run docs migrate status` and `docker run docs import-outline …` work.
+the build fails when it cannot be read), and copies both into `gcr.io/distroless/cc-debian12:nonroot`, pinned by digest. The API runs
+as `nonroot` (uid 65532). The `/data` volume was created by a root container, so
+`docker-compose.yml` runs a one-shot `docs-data-owner` service (busybox) that hands `/data` to
+65532 before `docs-api` starts; it is idempotent. The entrypoint is `/api`, so
+`docker run docs migrate status` works.
 
 ## Migrations
 
@@ -61,7 +62,6 @@ Follow plan section 2.10: add the `Docs` client to `Registre/seed.yaml` (redirec
 `https://docs.facile.studio/api/auth/oidc/callback`, sync `/api/registre/sync`, deletions
 `/api/registre/deletions`, back-channel logout `/api/auth/backchannel-logout`, MCP resource
 `https://docs.facile.studio/mcp` with scopes `docs.read docs.write`), set the Dokploy
-environment with the `dokploy-env-safe` flow, deploy, verify, then run
-`api import-outline --dry-run` against Outline.
+environment with the `dokploy-env-safe` flow, deploy, verify.
 
 Back to the [documentation index](README.md).

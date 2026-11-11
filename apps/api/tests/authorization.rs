@@ -57,6 +57,7 @@ fn cases() -> Vec<Case> {
     all.extend([
         case(("DELETE", "/api/documents/{id}/permanent", None, Need::Manager, Prep::Trashed, 204)),
         case(("GET", "/api/documents/{id}/revisions", None, Need::Viewer, Prep::Revision, 200)),
+        case(("GET", "/api/documents/{id}/revisions/{rev}", None, Need::Viewer, Prep::Revision, 200)),
         case(("POST", "/api/documents/{id}/revisions/{rev}/restore", None, Need::Editor, Prep::Revision, 200)),
         case((
             "POST",

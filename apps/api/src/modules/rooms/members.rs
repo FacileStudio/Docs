@@ -1,8 +1,9 @@
 use tokio::time::Instant;
 
+use super::blocking::handle_owned;
 use super::command::{Command, Member, Out};
 use super::room::{Conn, Room};
-use super::sync::{self, departure};
+use super::sync::{Core, departure};
 use crate::modules::documents::access::{self, Access};
 
 impl Room {
@@ -13,7 +14,7 @@ impl Room {
                 self.join(member);
                 _ = reply.send(Ok(Ok(())));
             }
-            Command::Message(conn, frame) => self.message(conn, &frame),
+            Command::Message(conn, frame) => self.message(conn, frame).await,
             Command::Leave(conn) => self.leave(conn).await,
             Command::Ops(ops, user, reply) => _ = reply.send(Ok(self.ops(ops, user).await)),
             Command::Replace(prepared, user, reply) => _ = reply.send(Ok(self.replace(&prepared, user).await)),
@@ -32,15 +33,28 @@ impl Room {
         let conn = Conn { outbox: member.outbox, user_id: member.user_id, editor, clients: Default::default() };
         self.conns.insert(member.conn, conn);
         self.empty_since = None;
-        for frame in sync::opening(&self.core) {
+        for frame in super::sync::opening(&self.core) {
             self.send(member.conn, Out::Binary(frame));
         }
     }
 
-    fn message(&mut self, conn: u64, frame: &[u8]) {
+    /// Applies one frame off the async threads: an update re-reads and re-validates the whole
+    /// document, which must not stall the runtime on a large page.
+    async fn message(&mut self, conn: u64, frame: Vec<u8>) {
         let Some(member) = self.conns.get_mut(&conn) else { return };
         let (user_id, editor) = (member.user_id, member.editor);
-        let effects = sync::handle(&mut self.core, frame, editor, &mut member.clients);
+        let clients = std::mem::take(&mut member.clients);
+        let core = std::mem::replace(&mut self.core, Core::empty());
+        let Ok((core, clients, effects)) =
+            tokio::task::spawn_blocking(move || handle_owned(core, &frame, editor, clients)).await
+        else {
+            tracing::error!(document = %self.id, "rooms: a frame task did not finish, unloading without saving");
+            return self.end(1011, "room failed");
+        };
+        self.core = core;
+        if let Some(member) = self.conns.get_mut(&conn) {
+            member.clients = clients;
+        }
         self.apply_effects(conn, user_id, effects);
     }
 

@@ -73,12 +73,13 @@ the trash listing.
 | `POST /documents/import-openui` | `{"source","title","space_id"?,"parent_id"?}` | 201 `Document` | editor of the parent or the scope |
 | `GET /documents/{id}` | `?format=json|markdown` | `Document` | viewer |
 | `PATCH /documents/{id}` | `{"title"?,"icon"?}` (title ≤ 200, icon ≤ 32 characters) | `Document` | editor |
-| `POST /documents/{id}/ops` | `{"ops":[Op]}`, at most 100, all or nothing | `{"version","markdown"}` | editor |
+| `POST /documents/{id}/ops` | `{"ops":[Op]}`, at most 100, all or nothing | `{"version","markdown","saved"}`; `saved: false` is applied and live, stored later: never replay it | editor |
 | `POST /documents/{id}/move` | `{"parent_id": uuid|null, "before": uuid|null}` | `Document`, `position` the midpoint of its new neighbours | manager |
 | `DELETE /documents/{id}` | | 204, the subtree goes to the trash; purged after 30 days | manager |
 | `POST /documents/{id}/restore` | | `Document`; to the root when its parent stays trashed | manager |
 | `DELETE /documents/{id}/permanent` | | 204, only when trashed (else 412) | manager |
-| `GET /documents/{id}/revisions` | | `[{"id","title","schema_version","content","created_by","author","created_at"}]`, newest 50 | viewer |
+| `GET /documents/{id}/revisions` | | `[{"id","title","schema_version","created_by","author","created_at"}]`, newest 50, no bodies | viewer |
+| `GET /documents/{id}/revisions/{rev}` | | one revision with its `content` | viewer |
 | `POST /documents/{id}/revisions/{rev}/restore` | | `Document` | editor |
 | `GET /search` | `?q=&space_id=` | `[{"id","title","snippet","updated_at"}]`, max 50, `<b>` marks the match | member of the scope |
 
@@ -94,11 +95,11 @@ says how to narrow it. A `patch` that does not match exactly `expect` times says
 Every markdown body the API parses is refused with 413 `resource_exhausted` above
 `MARKDOWN_MAX_BYTES` (1 MiB by default), before anything is read or written: `markdown` on
 `POST /documents`, `source` on `POST /documents/import-openui`, the markdown of one `ops` request
-summed over its operations (a `patch` counts `replace` once per `expect`), each page of
-`api import-outline`, and the `markdown` of `docs_create`, `docs_edit` and `docs_replace`. encre
+summed over its operations (a `patch` counts `replace` once per `expect`), and the `markdown` of
+`docs_create`, `docs_edit` and `docs_replace`. encre
 measured up to 0.6 s of CPU for a hostile 1 MiB body; parsing runs on a blocking thread, off the
 request workers. JSON bodies are also capped at 1 MiB by tronc, so a larger cap only helps MCP
-(4 MiB) and the Outline import.
+(4 MiB).
 
 Markdown that nests past encre's limits (`spec/FORMAT.md` rules 8 and 9 and section 2.6: more
 than 64 levels of blocks and spans, more than 48 in the document, more than 8 `callout`,
@@ -182,8 +183,8 @@ and the limits above. A refusal reaches the agent as an `isError` result with th
 | `docs_list_tree` | read | `space_id`? | `{"pages":[{"id","parent_id","title"}]}` |
 | `docs_read` | read | `document_id` | `{"id","title","version","markdown","truncated"}` |
 | `docs_read_blocks` | read | `document_id`, `range`? | `{"version","blocks":[{"id","type","markdown"}]}` |
-| `docs_create` | write | `title`, `markdown`, `space_id`?, `parent_id`? | `{"id","version","markdown"}` |
-| `docs_edit` | write | `document_id`, `ops` (no `replace_all`) | `{"id","version","markdown"}` |
+| `docs_create` | write | `title`, `markdown`, `space_id`?, `parent_id`? | `{"id","version","markdown","saved"}` |
+| `docs_edit` | write | `document_id`, `ops` (no `replace_all`) | `{"id","version","markdown","saved"}` |
 | `docs_replace` | write, destructive | `document_id`, `markdown`, `expect_version` | `{"status","confirm_url"?}` |
 
 `docs_replace` asks the person through MRTR elicitation when the client can; otherwise it
@@ -195,7 +196,6 @@ Edits run in the page's room, so open editors see them live. There is no delete 
 ```sh
 api migrate status|up
 api healthcheck
-api import-outline --url https://docs.facile.studio --token <api token> --space <space id> [--dry-run]
 ```
 
 Back to the [documentation index](README.md).
