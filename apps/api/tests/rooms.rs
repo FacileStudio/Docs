@@ -1,20 +1,11 @@
 mod common;
 
-use std::net::SocketAddr;
 use std::time::Duration;
 
 use common::fixture;
 use common::typing::{read, type_into_first_paragraph};
 use common::ysync::Peer;
 use serde_json::json;
-
-async fn serve(app: &common::App) -> String {
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
-    let addr = listener.local_addr().unwrap();
-    let router = app.router.clone().into_make_service_with_connect_info::<SocketAddr>();
-    tokio::spawn(async move { axum::serve(listener, router).await.unwrap() });
-    format!("ws://{addr}")
-}
 
 async fn stored(app: &common::App, id: &str) -> serde_json::Value {
     sqlx::query_scalar::<_, sqlx::types::Json<serde_json::Value>>("SELECT content FROM documents WHERE id = $1::uuid")
@@ -31,7 +22,7 @@ async fn two_peers_editing_one_paragraph_offline_converge_and_the_store_matches(
     let app = common::app(pool).await;
     let roles = fixture::roles(&app).await;
     let id = fixture::id(&fixture::page(&app, &roles.member, Some(&roles.space), "hello world").await);
-    let url = format!("{}/api/documents/{id}/ws", serve(&app).await);
+    let url = format!("{}/api/documents/{id}/ws", app.serve().await);
     let (mut a, mut b) = (Peer::new(), Peer::new());
     a.connect(&url, &roles.member.token).await;
     b.connect(&url, &roles.owner.token).await;
@@ -63,7 +54,7 @@ async fn a_schema_breaking_update_is_reverted_and_its_sender_closed_with_1008() 
     let app = common::app(pool).await;
     let roles = fixture::roles(&app).await;
     let id = fixture::id(&fixture::page(&app, &roles.member, None, "safe").await);
-    let url = format!("{}/api/documents/{id}/ws", serve(&app).await);
+    let url = format!("{}/api/documents/{id}/ws", app.serve().await);
     let mut bad = Peer::new();
     bad.connect(&url, &roles.member.token).await;
     let before = read(&bad.doc);
@@ -84,12 +75,42 @@ async fn a_schema_breaking_update_is_reverted_and_its_sender_closed_with_1008() 
 }
 
 #[tokio::test]
+async fn a_ten_thousand_deep_update_is_refused_with_1008_and_the_room_survives() {
+    let Some(pool) = common::pool("docs_rooms_deep").await else { return };
+    let app = common::app(pool).await;
+    let roles = fixture::roles(&app).await;
+    let id = fixture::id(&fixture::page(&app, &roles.member, None, "safe").await);
+    let url = format!("{}/api/documents/{id}/ws", app.serve().await);
+    let mut hostile = Peer::new();
+    hostile.connect(&url, &roles.member.token).await;
+    let before = read(&hostile.doc);
+    hostile
+        .edit(|txn, fragment| {
+            use yrs::{XmlElementPrelim, XmlFragment};
+            let mut innermost = fragment.push_back(txn, XmlElementPrelim::empty("callout"));
+            for _ in 0..10_000 {
+                innermost = innermost.push_back(txn, XmlElementPrelim::empty("callout"));
+            }
+        })
+        .await;
+    hostile.pump(Duration::from_millis(1500)).await;
+    assert_eq!(hostile.closed, Some(1008));
+    let mut fresh = Peer::new();
+    fresh.connect(&url, &roles.member.token).await;
+    assert_eq!(read(&fresh.doc), before);
+    fresh.edit(|txn, f| type_into_first_paragraph(txn, f, 4, "!")).await;
+    fresh.pump(Duration::from_millis(300)).await;
+    assert_eq!(fresh.closed, None);
+    assert_eq!(app.call("GET", &format!("/api/documents/{id}"), Some(&roles.member), None).await.status, 200);
+}
+
+#[tokio::test]
 async fn a_viewer_update_is_dropped_and_rest_ops_reach_open_editors() {
     let Some(pool) = common::pool("docs_rooms_views").await else { return };
     let app = common::app(pool).await;
     let roles = fixture::roles(&app).await;
     let id = fixture::id(&fixture::page(&app, &roles.member, None, "keep").await);
-    let url = format!("{}/api/documents/{id}/ws", serve(&app).await);
+    let url = format!("{}/api/documents/{id}/ws", app.serve().await);
     let mut editor = Peer::new();
     editor.connect(&url, &roles.member.token).await;
     let ops = json!({"ops": [{"op": "append", "markdown": "from an agent"}]});
@@ -117,7 +138,7 @@ async fn a_cookie_upgrade_from_another_origin_is_refused() {
     let app = common::app(pool).await;
     let roles = fixture::roles(&app).await;
     let id = fixture::id(&fixture::page(&app, &roles.member, None, "x").await);
-    let url = format!("{}/api/documents/{id}/ws", serve(&app).await);
+    let url = format!("{}/api/documents/{id}/ws", app.serve().await);
     let attempt = |origin: &'static str| {
         use tokio_tungstenite::tungstenite::client::IntoClientRequest;
         let mut request = url.as_str().into_client_request().unwrap();
@@ -137,7 +158,7 @@ async fn a_frame_over_two_mebibytes_closes_with_1009() {
     let app = common::app(pool).await;
     let roles = fixture::roles(&app).await;
     let id = fixture::id(&fixture::page(&app, &roles.member, None, "x").await);
-    let url = format!("{}/api/documents/{id}/ws", serve(&app).await);
+    let url = format!("{}/api/documents/{id}/ws", app.serve().await);
     let mut peer = Peer::new();
     peer.connect(&url, &roles.member.token).await;
     peer.send_raw(vec![0u8; (2 << 20) + 1]).await;
@@ -151,7 +172,7 @@ async fn a_space_removed_by_the_directory_closes_its_sockets_and_refuses_reconne
     let app = common::app(pool.clone()).await;
     let roles = fixture::roles(&app).await;
     let id = fixture::id(&fixture::page(&app, &roles.member, Some(&roles.space), "shared").await);
-    let url = format!("{}/api/documents/{id}/ws", serve(&app).await);
+    let url = format!("{}/api/documents/{id}/ws", app.serve().await);
     let mut peer = Peer::new();
     peer.connect(&url, &roles.member.token).await;
     let apply = api::auth::SpacesApply::new(pool, app.state.hub.clone());
