@@ -4,6 +4,7 @@
 	import { Button, ConfirmModal, Icon, IconButton, Menu, StatusDot, icons, toast } from '@facile/muse';
 	import { backend } from '$lib/backend';
 	import { shareIcon } from '$lib/brand';
+	import { glyph } from '$lib/format';
 	import type { Connection } from '$lib/collab';
 	import { runExport, type ExportKind } from '$lib/export';
 	import { tree } from '$lib/tree.svelte';
@@ -99,9 +100,9 @@
 		{/if}
 	</div>
 	<div class="flex items-center gap-2">
-		<IconChooser value={doc.icon} disabled={locked} onpick={(icon) => save({ icon })} />
+		<IconChooser value={glyph(doc.icon)} disabled={locked} onpick={(icon) => save({ icon })} />
 		<input
-			class="bare min-w-0 flex-1 bg-transparent text-3xl font-semibold text-fc-fg outline-none
+			class="bare min-w-0 flex-1 bg-transparent text-3xl text-ellipsis font-semibold text-fc-fg outline-none
 				placeholder:text-fc-fg-muted"
 			aria-label="Titre du document"
 			placeholder="Sans titre"
