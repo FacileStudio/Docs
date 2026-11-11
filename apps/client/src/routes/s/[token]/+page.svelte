@@ -4,6 +4,7 @@
 	import { EmptyState, Spinner, icons } from '@facile/muse';
 	import { backend } from '$lib/backend';
 	import { renderDiagram } from '$lib/diagrams';
+	import { glyph } from '$lib/format';
 	import { browserLocale } from '$lib/locale';
 	import { outline } from '$lib/share';
 	import type { PublicPage } from '$lib/types';
@@ -69,7 +70,7 @@
 							style:padding-left="{0.75 + depth * 1.25}rem"
 							class="rounded-fc-md py-2 pr-3 text-fc-sm text-fc-fg hover:bg-fc-surface aria-[current=page]:bg-fc-surface"
 						>
-							{node.icon}
+							{glyph(node.icon)}
 							{node.title || 'Sans titre'}
 						</a>
 					{/each}

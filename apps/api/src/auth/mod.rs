@@ -1,6 +1,7 @@
 //! porte wiring: sessions, Registre sign-in, directory sync, deletions and MCP auth.
 
 mod deletions;
+mod picture;
 mod retire;
 mod routes;
 mod spaces;
@@ -17,6 +18,7 @@ use porte::{mcpauth, pg};
 use sqlx::PgPool;
 
 pub use deletions::{AppData, DeletionState};
+pub use picture::Pictures;
 pub use routes::routes;
 pub use spaces::SpacesApply;
 pub use store::SpaceStore;
@@ -47,7 +49,7 @@ impl Kits {
         let store = pg::Store::new(pool.clone()).with_token_sealer(pg::TokenSealer::parse(&cfg.token_key)?);
         let sessions = Manager::new(&cfg.porte, session::Deps { sessions: store.sessions(), now: None });
         let deps = oidc::Deps {
-            users: store.users(),
+            users: Pictures::wrap(store.users()),
             identities: store.identities(),
             codes: store.login_codes(),
             sessions: sessions.clone(),

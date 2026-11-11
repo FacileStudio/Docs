@@ -2,7 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { Button, Card, EmptyState, Icon, PageHeader, icons, toast } from '@facile/muse';
 	import { documentIcon } from '$lib/brand';
-	import { formatDate } from '$lib/format';
+	import { formatDate, glyph } from '$lib/format';
 	import { importMarkdown } from '$lib/import';
 	import { session } from '$lib/session.svelte';
 	import { tree } from '$lib/tree.svelte';
@@ -74,7 +74,9 @@
 						class="block rounded-fc-lg outline-none focus-visible:ring-2 focus-visible:ring-fc-accent"
 					>
 						<Card class="flex items-center gap-3 transition-colors hover:bg-fc-surface">
-							{#if node.icon}<span class="w-5 text-center text-lg" aria-hidden="true">{node.icon}</span>
+							{#if glyph(node.icon)}<span class="w-5 shrink-0 text-center text-lg" aria-hidden="true"
+									>{glyph(node.icon)}</span
+								>
 							{:else}<Icon icon={documentIcon} size={20} />{/if}
 							<span class="min-w-0 flex-1 truncate text-fc-sm font-medium text-fc-fg">{node.title || 'Sans titre'}</span
 							>

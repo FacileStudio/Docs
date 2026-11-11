@@ -2,6 +2,21 @@
 
 All notable changes to Docs. Versions follow SemVer.
 
+## [Unreleased]
+
+### Fixed
+
+- Pages imported from Outline carried Outline's icon names (`academicCap`, `collection`) as their
+  icon. The tree, the home list, the page header, the trash and the share page printed that name
+  as text over the title. The client now draws an icon only when it is an emoji, and the Outline
+  import keeps emoji icons only
+- The sidebar user card shows the Registre profile picture: every sign-in copies the `https`
+  `picture` claim into `porte_users.avatar_url` (porte-rs stores no avatars), and
+  `/auth/me` and `/auth/session` fall back to the directory picture of a space member who signed
+  in before
+- muse's sidebar, user menu and mobile nav speak French, like the rest of Docs, and the menu
+  hides the language row the app does not translate
+
 ## [0.6.0] - 2026-11-11
 
 ### Schema 2

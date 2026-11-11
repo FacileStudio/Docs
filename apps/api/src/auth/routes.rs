@@ -23,13 +23,18 @@ struct SessionAnswer {
 }
 
 async fn account(state: &AppState, identity: &Identity) -> SessionUser {
-    let row: Option<(String, String, String)> =
-        sqlx::query_as("SELECT email, name, avatar_url FROM porte_users WHERE id = $1")
-            .bind(identity.user_id)
-            .fetch_optional(&state.pool)
-            .await
-            .ok()
-            .flatten();
+    let row: Option<(String, String, String)> = sqlx::query_as(
+        "SELECT u.email, u.name, COALESCE(NULLIF(u.avatar_url, ''), (SELECT m.picture FROM space_members m
+             JOIN porte_identities i ON i.subject = m.subject AND i.provider = $2
+             WHERE i.user_id = u.id AND m.picture <> '' LIMIT 1), '')
+         FROM porte_users u WHERE u.id = $1",
+    )
+    .bind(identity.user_id)
+    .bind(&*state.issuer)
+    .fetch_optional(&state.pool)
+    .await
+    .ok()
+    .flatten();
     match row {
         Some((email, name, avatar_url)) => SessionUser { email, name, avatar_url },
         None => SessionUser { email: identity.email.clone(), name: identity.name.clone(), ..SessionUser::default() },

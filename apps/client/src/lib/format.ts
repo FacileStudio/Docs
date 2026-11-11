@@ -5,3 +5,8 @@ export function formatDate(value: string): string {
 	const date = new Date(value);
 	return Number.isNaN(date.getTime()) ? value : DATE.format(date);
 }
+
+/** A document icon worth drawing: an emoji. Pages imported from Outline may carry its icon names (`academicCap`). */
+export function glyph(icon: string | null | undefined): string {
+	return icon && !/[a-z]/i.test(icon) ? icon : '';
+}
