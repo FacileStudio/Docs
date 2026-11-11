@@ -20,7 +20,6 @@ mise run e2e                # Playwright + headless Chromium against the real AP
 filet check .               # after the gate, before every commit
 mise run dev                # the API on :4000 against the local database
 cd apps/api && cargo run -- migrate status
-cd apps/api && cargo run -- import-outline --url <outline> --token <t> --space <id> --dry-run
 ```
 
 The database tests read `TEST_DATABASE_URL` (check.sh defaults it to the local container) and

@@ -24,7 +24,6 @@ porte's configuration. A missing required variable, or an inconsistent pair, exi
 | `MCP_RESOURCE` | no | — | `https://<host>/mcp`. Its presence mounts `/mcp` |
 | `MCP_STATE_KEY` | with MCP | — | HMAC key of the confirmation flow; boot fails without it when MCP is on |
 | `MARKDOWN_MAX_BYTES` | no | `1048576` | The largest markdown body one request, MCP call or imported page may ask the API to parse; above it, 413. A positive byte count. See [API, markdown limits](api.md#markdown-limits) |
-| `OUTLINE_TOKEN` | no | — | `api import-outline` reads the Outline API token here when `--token` is absent |
 | `TEST_DATABASE_URL` | tests | — | Postgres the integration tests create their schemas in |
 | `APP_VERSION` | build | `dev` | Read at compile time; the Dockerfile stamps it from `apps/client/package.json` |
 

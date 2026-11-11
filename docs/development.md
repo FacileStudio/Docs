@@ -52,7 +52,6 @@ against Postgres through `tronc::testdb`, one schema per test prefix, kept betwe
 | `durability.rs` | Kills the real binary one second after an edit and proves nothing is lost |
 | `mcp.rs` | tronc's MCP conformance kit with `docs_replace` confirmed, and every tool |
 | `exports.rs` | PDF text of a page with every component, markdown exports, OpenUI, the API reference drift test |
-| `outline_import.rs` | The importer against a fake Outline serving `tests/testdata/outline` |
 
 Without `TEST_DATABASE_URL` the database tests print a skip banner and pass: read the output.
 
