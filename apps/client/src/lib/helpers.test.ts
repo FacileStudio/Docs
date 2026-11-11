@@ -1,21 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 import { backend } from './backend';
 import { connectionOf, socketBase, stopOf } from './collab';
-import { glyph } from './format';
 import { uploader } from './images';
 import { titleOf } from './import';
 import { scopeAccess } from './session.svelte';
 import { snippetParts } from './snippet';
 
 describe('helpers', () => {
-	it('draws only emoji document icons, never Outline icon names', () => {
-		expect(glyph('🚀')).toBe('🚀');
-		expect(glyph('academicCap')).toBe('');
-		expect(glyph('collection')).toBe('');
-		expect(glyph('')).toBe('');
-		expect(glyph(undefined)).toBe('');
-	});
-
 	it('builds the y-websocket URL of the origin', () => {
 		expect(socketBase({ protocol: 'https:', host: 'docs.facile.studio' })).toBe(
 			'wss://docs.facile.studio/api/documents'

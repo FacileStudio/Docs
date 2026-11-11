@@ -1,11 +1,12 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { Button, Card, EmptyState, Icon, PageHeader, icons, toast } from '@facile/muse';
+	import { Button, Card, EmptyState, icons, toast } from '@facile/muse';
 	import { documentIcon } from '$lib/brand';
-	import { formatDate, glyph } from '$lib/format';
+	import { formatDate } from '$lib/format';
 	import { importMarkdown } from '$lib/import';
 	import { session } from '$lib/session.svelte';
 	import { tree } from '$lib/tree.svelte';
+	import PageGlyph from '$lib/components/PageGlyph.svelte';
 
 	let picker: HTMLInputElement | undefined = $state();
 	let busy = $state(false);
@@ -41,16 +42,20 @@
 <svelte:head><title>Docs</title></svelte:head>
 
 <div class="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-6 sm:px-6 md:py-10">
-	<PageHeader title="Documents récents" description={session.space?.name ?? 'Espace personnel'}>
-		{#snippet actions()}
-			{#if edit}
+	<header class="flex flex-wrap items-start justify-between gap-4">
+		<div class="flex flex-col gap-1">
+			<h1 class="text-fc-2xl font-semibold whitespace-nowrap text-fc-fg">Documents récents</h1>
+			<p class="text-fc-sm text-fc-fg-muted">{session.space?.name ?? 'Espace personnel'}</p>
+		</div>
+		{#if edit}
+			<div class="flex flex-wrap items-center gap-2">
 				<Button variant="ghost" icon={icons.upload} disabled={busy} onclick={() => picker?.click()}
 					>Importer du markdown</Button
 				>
 				<Button icon={icons.plus} disabled={busy} onclick={() => run(() => tree.create())}>Nouveau document</Button>
-			{/if}
-		{/snippet}
-	</PageHeader>
+			</div>
+		{/if}
+	</header>
 	<input
 		bind:this={picker}
 		type="file"
@@ -74,10 +79,7 @@
 						class="block rounded-fc-lg outline-none focus-visible:ring-2 focus-visible:ring-fc-accent"
 					>
 						<Card class="flex items-center gap-3 transition-colors hover:bg-fc-surface">
-							{#if glyph(node.icon)}<span class="w-5 shrink-0 text-center text-lg" aria-hidden="true"
-									>{glyph(node.icon)}</span
-								>
-							{:else}<Icon icon={documentIcon} size={20} />{/if}
+							<PageGlyph value={node.icon} size={20} />
 							<span class="min-w-0 flex-1 truncate text-fc-sm font-medium text-fc-fg">{node.title || 'Sans titre'}</span
 							>
 							<span class="shrink-0 text-fc-xs text-fc-fg-muted">{formatDate(node.updated_at)}</span>

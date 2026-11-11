@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { Button, Icon, Popover } from '@facile/muse';
-	import { documentIcon } from '$lib/brand';
+	import { Button, Popover } from '@facile/muse';
+	import { PICKABLE } from '$lib/icons';
+	import PageGlyph from './PageGlyph.svelte';
 
 	let {
 		value,
@@ -40,18 +41,28 @@
 </script>
 
 {#if disabled}
-	<span class="flex size-11 items-center justify-center text-2xl" aria-hidden="true">
-		{#if value}{value}{:else}<Icon icon={documentIcon} size={24} />{/if}
-	</span>
+	<span class="flex size-11 items-center justify-center"><PageGlyph {value} size={28} /></span>
 {:else}
 	<Popover label="Icône du document" bind:open align="start">
 		{#snippet trigger()}
-			<span class="flex size-8 items-center justify-center text-2xl">
-				{#if value}{value}{:else}<Icon icon={documentIcon} size={24} />{/if}
-			</span>
+			<span class="flex size-8 items-center justify-center"><PageGlyph {value} size={28} /></span>
 		{/snippet}
 		<div class="flex w-64 flex-col gap-2 p-2">
 			<div class="grid grid-cols-5 gap-1">
+				{#each PICKABLE as choice (choice.value)}
+					<button
+						type="button"
+						class="flex size-11 items-center justify-center rounded-fc-md text-fc-fg hover:bg-fc-surface {choice.value ===
+						value
+							? 'bg-fc-surface'
+							: ''}"
+						aria-label="Choisir {choice.label}"
+						aria-pressed={choice.value === value}
+						onclick={() => pick(choice.value)}
+					>
+						<PageGlyph value={choice.value} size={20} />
+					</button>
+				{/each}
 				{#each choices as icon (icon)}
 					<button
 						type="button"

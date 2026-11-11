@@ -104,6 +104,8 @@ scripts/     check.sh, version.sh, postgres-up.sh, postgres-down.sh, verify-depl
 
 Docs is licensed under the [GNU Affero General Public License v3.0](LICENSE) (`AGPL-3.0-only`). A commercial licence is available from Facile Studio for use that cannot meet the AGPL's terms.
 
+The page icons in `apps/client/src/lib/icon-data.ts` are [Solar](https://www.figma.com/community/file/1166831539721848736) by 480 Design, under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+
 ---
 
 Part of the [Facile Suite](https://facile.studio) — self-hosted tools for creative studios

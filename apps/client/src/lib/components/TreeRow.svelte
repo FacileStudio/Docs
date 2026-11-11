@@ -2,11 +2,10 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { Icon, IconButton, icons, toast } from '@facile/muse';
-	import { documentIcon } from '$lib/brand';
-	import { glyph } from '$lib/format';
 	import { tree } from '$lib/tree.svelte';
 	import { canPlace, dropPlacement, shiftPlacement, type DropZone, type Shift } from '$lib/tree-order';
 	import type { Placement, TreeNode } from '$lib/types';
+	import PageGlyph from './PageGlyph.svelte';
 	import TreeRow from './TreeRow.svelte';
 
 	let {
@@ -20,7 +19,6 @@
 
 	const kids = $derived(tree.children(node.id));
 	const open = $derived(Boolean(tree.expanded[node.id]));
-	const icon = $derived(glyph(node.icon));
 	const active = $derived(page.url.pathname === `/d/${node.id}`);
 	const keys: Record<string, Shift> = { ArrowUp: 'up', ArrowDown: 'down', ArrowRight: 'in', ArrowLeft: 'out' };
 
@@ -112,8 +110,7 @@
 			ondragend={() => (tree.dragging = null)}
 			onkeydown={shift}
 		>
-			{#if icon}<span class="w-4 shrink-0 text-center" aria-hidden="true">{icon}</span>
-			{:else}<Icon icon={documentIcon} size={16} />{/if}
+			<PageGlyph value={node.icon} />
 			<span class="truncate">{node.title || 'Sans titre'}</span>
 		</a>
 		{#if edit}
