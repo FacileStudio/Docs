@@ -13,12 +13,20 @@ pub fn path(data_dir: &Path, sha256: &str) -> PathBuf {
     data_dir.join("attachments").join(&sha256[..2]).join(sha256)
 }
 
-/// Writes `bytes` under their digest, once: an identical file is already there. The write
-/// goes to a temporary name first, so a reader never sees half a file.
+/// Marks `target` as just written, so the sweep's grace period starts again.
+async fn refresh(target: PathBuf) -> io::Result<()> {
+    let touch = move || std::fs::File::options().append(true).open(target)?.set_modified(std::time::SystemTime::now());
+    tokio::task::spawn_blocking(touch).await.map_err(io::Error::other)?
+}
+
+/// Writes `bytes` under their digest, once: an identical file is already there, and only its
+/// modification time is refreshed so the sweep cannot take it while its new row commits. The
+/// write goes to a temporary name first, so a reader never sees half a file.
 pub async fn store(data_dir: &Path, bytes: &[u8]) -> io::Result<String> {
     let sha256 = digest(bytes);
     let target = path(data_dir, &sha256);
     if tokio::fs::try_exists(&target).await? {
+        refresh(target).await?;
         return Ok(sha256);
     }
     let dir = target.parent().ok_or_else(|| io::Error::other("attachment path has no parent"))?;

@@ -36,6 +36,7 @@ pub(super) struct Room {
     pub(super) dirty: Option<(Instant, Option<i64>)>,
     pub(super) unrevised: bool,
     pub(super) empty_since: Option<Instant>,
+    pub(super) ended: bool,
 }
 
 /// The room task: loads the document, then serves commands until it has been empty for
@@ -80,10 +81,13 @@ async fn sleep_until(deadline: Option<Instant>) {
 impl Room {
     fn new(state: AppState, id: Uuid, core: Core, version: i64, trashed: bool) -> Self {
         let (conns, dirty, empty_since) = (HashMap::new(), None, Some(Instant::now()));
-        Room { state, id, core, conns, version, trashed, dirty, unrevised: false, empty_since }
+        Room { state, id, core, conns, version, trashed, dirty, unrevised: false, empty_since, ended: false }
     }
 
     fn deadline(&self) -> Option<Instant> {
+        if self.ended {
+            return Some(Instant::now());
+        }
         let save = self.dirty.map(|(at, _)| at + DEBOUNCE);
         let idle = self.empty_since.map(|at| at + IDLE);
         save.into_iter().chain(idle).min()
@@ -93,7 +97,7 @@ impl Room {
         if self.dirty.is_some_and(|(at, _)| at + DEBOUNCE <= Instant::now()) {
             self.save(false).await;
         }
-        self.empty_since.is_some_and(|at| at + IDLE <= Instant::now()) && self.dirty.is_none()
+        self.ended || self.empty_since.is_some_and(|at| at + IDLE <= Instant::now()) && self.dirty.is_none()
     }
 
     pub(super) async fn save(&mut self, force: bool) {
@@ -104,6 +108,7 @@ impl Room {
                 self.dirty = None;
                 self.unrevised &= !force;
             }
+            Err(error) if error.code == tronc::Code::NotFound => self.vanish(),
             Err(error) => {
                 tracing::error!(document = %self.id, error = %error.message, "rooms: persist failed, retrying");
                 self.dirty = Some((Instant::now(), author));

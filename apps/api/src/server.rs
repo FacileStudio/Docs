@@ -41,9 +41,6 @@ pub async fn run() -> ExitCode {
     if let Some(result) = tronc::migrate::command(&argv, &pool, &crate::MIGRATOR).await {
         return result.map_or_else(|error| fail(&error), |()| ExitCode::SUCCESS);
     }
-    if let Some(parsed) = crate::outline::parse(argv.get(1..).unwrap_or_default()) {
-        return import(&config, &pool, parsed).await;
-    }
     match serve(config, pool).await {
         Ok(()) => ExitCode::SUCCESS,
         Err(error) => fail(&error),
@@ -61,23 +58,7 @@ pub fn state(config: &Config, pool: PgPool, kits: &Kits, hub: Hub) -> AppState {
         exports: crate::modules::export::pdf::slots(),
         markdown_max: config.markdown_max,
         confirmations: None,
-    }
-}
-
-async fn import(config: &Config, pool: &PgPool, parsed: Result<crate::outline::Args, String>) -> ExitCode {
-    let args = match parsed {
-        Ok(args) => crate::outline::Args { markdown_max: config.markdown_max, ..args },
-        Err(usage) => return fail(&usage),
-    };
-    if let Err(error) = tronc::migrate::run(pool, &crate::MIGRATOR).await {
-        return fail(&error);
-    }
-    match crate::outline::run(pool, &config.data_dir, &args).await {
-        Ok(report) => {
-            print!("{report}");
-            ExitCode::SUCCESS
-        }
-        Err(error) => fail(&error),
+        socket_recheck: crate::modules::rooms::SOCKET_RECHECK,
     }
 }
 

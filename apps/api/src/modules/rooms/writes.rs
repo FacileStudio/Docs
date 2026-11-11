@@ -29,7 +29,9 @@ impl Room {
         }
     }
 
-    async fn edit(&mut self, author: i64, force: bool, edit: Edit) -> tronc::Result<()> {
+    /// Applies `edit`, broadcasts it and tries to persist it. `Ok(false)` is an applied edit that
+    /// is not saved yet: the room keeps retrying, so a caller must not replay it.
+    async fn edit(&mut self, author: i64, force: bool, edit: Edit) -> tronc::Result<bool> {
         self.writable()?;
         let before = self.core.doc.transact().encode_state_as_update_v1(&StateVector::default());
         let doc = self.core.doc.clone();
@@ -46,10 +48,10 @@ impl Room {
         self.broadcast(None, &encode(Message::Sync(SyncMessage::Update(update))));
         self.touch(Some(author));
         self.save(force).await;
-        match self.dirty {
-            None => Ok(()),
-            Some(_) => Err(tronc::Error::unavailable("the edit is applied but not saved yet; it will be")),
+        if self.ended {
+            return Err(tronc::Error::not_found("the document was deleted"));
         }
+        Ok(self.dirty.is_none())
     }
 
     /// Agent operations as one Yjs transaction, persisted before the answer.
@@ -62,11 +64,9 @@ impl Room {
         let apply = move |txn: &mut yrs::TransactionMut, fragment: &yrs::XmlFragmentRef| {
             list.iter().try_for_each(|op| ops::apply_yjs(txn, fragment, version, op).map(|_| ()).map_err(refusal))
         };
-        if !reads_only {
-            self.edit(author, false, Box::new(apply)).await?;
-        }
+        let saved = reads_only || self.edit(author, false, Box::new(apply)).await?;
         let (prepared, _) = super::persist::snapshot(&self.core.doc)?;
-        Ok(OpsAnswer { version: self.version, markdown: encre::markdown::serialize(&prepared.node) })
+        Ok(OpsAnswer { version: self.version, markdown: encre::markdown::serialize(&prepared.node), saved })
     }
 
     /// Replaces the whole document (a revision restore) and writes a revision.
@@ -85,6 +85,21 @@ impl Room {
         let conns: Vec<u64> = self.conns.keys().copied().collect();
         for conn in conns {
             self.drop_conn(conn, Some(Out::Close(1001, "server restarting".to_owned())));
+        }
+    }
+
+    pub(super) fn vanish(&mut self) {
+        tracing::info!(document = %self.id, "rooms: the document was deleted, unloading");
+        self.end(1008, "document deleted");
+    }
+
+    /// Unloads without saving: every member is closed with `code` and the room stops at once.
+    pub(super) fn end(&mut self, code: u16, reason: &str) {
+        self.dirty = None;
+        self.ended = true;
+        let conns: Vec<u64> = self.conns.keys().copied().collect();
+        for conn in conns {
+            self.drop_conn(conn, Some(Out::Close(code, reason.to_owned())));
         }
     }
 }

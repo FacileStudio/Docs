@@ -18,6 +18,10 @@ use crate::state::AppState;
 pub const TIMEOUT: Duration = Duration::from_secs(30);
 /// How many compiles run at once.
 pub const CONCURRENCY: usize = 2;
+/// The most distinct images one export embeds.
+pub const MAX_IMAGES: usize = 64;
+/// The most image bytes one export loads.
+pub const MAX_IMAGE_BYTES: usize = 100 << 20;
 
 /// The compile slots, shared by the whole process.
 pub fn slots() -> Arc<Semaphore> {
@@ -25,8 +29,9 @@ pub fn slots() -> Arc<Semaphore> {
 }
 
 fn image_sources(node: &Node, out: &mut Vec<String>) {
-    if node.kind == "image" {
-        out.push(node.attr_str("src").to_owned());
+    let src = node.attr_str("src");
+    if node.kind == "image" && !out.iter().any(|seen| seen == src) {
+        out.push(src.to_owned());
     }
     node.content.iter().for_each(|child| image_sources(child, out));
 }
@@ -40,7 +45,10 @@ pub fn attachment_id(src: &str) -> Option<Uuid> {
 async fn images(state: &AppState, user_id: i64, doc: &Node) -> Result<(HashMap<String, PathBuf>, Assets)> {
     let mut sources = Vec::new();
     image_sources(doc, &mut sources);
-    let (mut paths, mut assets) = (HashMap::new(), Assets::new());
+    if sources.len() > MAX_IMAGES {
+        return Err(Error::too_large(format!("a PDF embeds at most {MAX_IMAGES} images")));
+    }
+    let (mut paths, mut assets, mut total) = (HashMap::new(), Assets::new(), 0usize);
     for src in sources {
         let Some(id) = attachment_id(&src) else { continue };
         let Ok(found) = attachments::find(state, id).await else { continue };
@@ -50,6 +58,10 @@ async fn images(state: &AppState, user_id: i64, doc: &Node) -> Result<(HashMap<S
             continue;
         }
         let Ok((_, bytes)) = attachments::open(state, Some(user_id), None, id).await else { continue };
+        total += bytes.len();
+        if total > MAX_IMAGE_BYTES {
+            return Err(Error::too_large("the images of this PDF exceed 100 MiB"));
+        }
         let path = format!("/images/{id}.{}", found.mime.trim_start_matches("image/"));
         assets.insert(&path, bytes);
         paths.insert(src, PathBuf::from(path));
@@ -69,11 +81,12 @@ fn compile(doc: &Node, title: &str, paths: &HashMap<String, PathBuf>, assets: &A
     encre::pdf::compile(&source, assets).map_err(|error| Error::internal("the PDF did not compile", error))
 }
 
-/// The document as a PDF: images resolved through the caller's access, compiled off the async
-/// threads, at most [`CONCURRENCY`] at once, refused after [`TIMEOUT`].
+/// The document as a PDF: a compile slot first, then images resolved through the caller's
+/// access (at most [`MAX_IMAGES`] and [`MAX_IMAGE_BYTES`]), compiled off the async threads, at
+/// most [`CONCURRENCY`] at once, refused after [`TIMEOUT`].
 pub async fn export(state: &AppState, user_id: i64, doc: Node, title: String) -> Result<Vec<u8>> {
-    let (paths, assets) = images(state, user_id, &doc).await?;
     let permit = state.exports.clone().acquire_owned().await.map_err(|e| Error::internal("export slots closed", e))?;
+    let (paths, assets) = images(state, user_id, &doc).await?;
     let job = tokio::task::spawn_blocking(move || {
         let _permit = permit;
         compile(&doc, &title, &paths, &assets)

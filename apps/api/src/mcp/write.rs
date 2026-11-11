@@ -28,6 +28,8 @@ pub struct Written {
     pub id: String,
     pub version: i64,
     pub markdown: String,
+    /// False when the edit is applied and live but not stored yet: do not send it again.
+    pub saved: bool,
 }
 
 /// `docs_create`: a new page from markdown.
@@ -47,7 +49,7 @@ pub async fn create(state: AppState, call: Call, input: CreateIn) -> Result<Answ
             .unwrap_or_default(),
         crate::modules::documents::types::Body::Markdown(text) => text.clone(),
     };
-    Ok(Written { id: doc.id.to_string(), version: doc.version, markdown }.into())
+    Ok(Written { id: doc.id.to_string(), version: doc.version, markdown, saved: true }.into())
 }
 
 /// `docs_edit`.
@@ -79,7 +81,8 @@ pub async fn edit(state: AppState, call: Call, input: EditIn) -> Result<Answer<W
     let document = id(&input.document_id)?;
     let list = parse_ops(input.ops)?;
     let answer = ops::run(&state, user(&call)?, document, &list).await?;
-    Ok(Written { id: input.document_id, version: answer.version, markdown: answer.markdown }.into())
+    Ok(Written { id: input.document_id, version: answer.version, markdown: answer.markdown, saved: answer.saved }
+        .into())
 }
 
 #[cfg(test)]

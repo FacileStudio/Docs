@@ -1,5 +1,6 @@
 //! Collaboration rooms: one in-memory Yjs document per open page, spoken to over y-sync.
 
+mod blocking;
 pub mod command;
 mod drain;
 pub mod hub;
@@ -15,3 +16,4 @@ mod ws;
 pub use command::{Command, Gone, Out};
 pub use hub::Hub;
 pub use router::routes;
+pub use ws::SOCKET_RECHECK;

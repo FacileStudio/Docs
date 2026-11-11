@@ -68,6 +68,7 @@ pub async fn app_with(pool: PgPool, vars: &[(&str, &str)]) -> App {
         exports: api::modules::export::pdf::slots(),
         markdown_max: config.markdown_max,
         confirmations: None,
+        socket_recheck: std::time::Duration::from_millis(200),
     };
     let router = api::router::build_router(state.clone(), &kits, None).unwrap();
     App { router, state, kits, pool }

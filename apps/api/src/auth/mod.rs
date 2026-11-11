@@ -77,7 +77,7 @@ impl Kits {
         };
         let apply = Arc::new(SpacesApply::new(pool.clone(), hub.clone()));
         self.syncer = Some(Syncer::new(client.clone(), apply, Duration::ZERO));
-        let data = Arc::new(AppData::new(pool.clone()));
+        let data = Arc::new(AppData::new(pool.clone(), hub.clone()));
         let state = Arc::new(DeletionState::new(pool.clone()));
         self.deletions = Some(Deletions::new(client, data, Some(Arc::new(store)), Some(state), Duration::ZERO));
     }
