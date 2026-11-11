@@ -4,6 +4,8 @@ All notable changes to Docs. Versions follow SemVer.
 
 ## [Unreleased]
 
+## [0.6.2] - 2026-11-11
+
 ### Security
 
 - encre v0.9.4 in the API and the client (`tag = "v0.9.4"`, `github:FacileStudio/encre#v0.9.4`).
