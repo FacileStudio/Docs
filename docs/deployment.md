@@ -5,7 +5,7 @@ How Docs ships: one image, one container, one Traefik router, one hostname, one 
 ## Topology
 
 ```
-docs-next.facile.studio ──▶ Traefik (web → websecure) ──▶ docs-api:4000 ──▶ docs-db:5432
+docs.facile.studio ──▶ Traefik (web → websecure) ──▶ docs-api:4000 ──▶ docs-db:5432
                                                               │
                                                    volume docs_attachments at /data
 ```
@@ -44,7 +44,7 @@ Migrations run at boot, behind sqlx's lock. `0001_porte.sql` is porte's schema v
 
 `/health` and `/ready` (also under `/api`). The compose healthcheck re-execs the binary:
 `["CMD", "/api", "healthcheck"]`. After a deploy run `sh scripts/verify-deploy.sh
-docs-next.facile.studio` or the `deploy-verify` flow.
+docs.facile.studio` or the `deploy-verify` flow.
 
 ## Bumping a library
 
@@ -58,9 +58,9 @@ Run `sh scripts/check.sh` before the commit.
 ## Registering in the suite
 
 Follow plan section 2.10: add the `Docs` client to `Registre/seed.yaml` (redirect
-`https://docs-next.facile.studio/api/auth/oidc/callback`, sync `/api/registre/sync`, deletions
+`https://docs.facile.studio/api/auth/oidc/callback`, sync `/api/registre/sync`, deletions
 `/api/registre/deletions`, back-channel logout `/api/auth/backchannel-logout`, MCP resource
-`https://docs-next.facile.studio/mcp` with scopes `docs.read docs.write`), set the Dokploy
+`https://docs.facile.studio/mcp` with scopes `docs.read docs.write`), set the Dokploy
 environment with the `dokploy-env-safe` flow, deploy, verify, then run
 `api import-outline --dry-run` against Outline.
 

@@ -40,11 +40,11 @@ services:
     labels:
       traefik.enable: 'true'
       traefik.docker.network: dokploy-network
-      traefik.http.routers.docs-web.rule: "Host(`docs-next.facile.studio`)"
+      traefik.http.routers.docs-web.rule: "Host(`docs.facile.studio`)"
       traefik.http.routers.docs-web.entrypoints: web
       traefik.http.routers.docs-web.middlewares: redirect-to-https@file
       traefik.http.routers.docs-web.service: docs-api
-      traefik.http.routers.docs-secure.rule: "Host(`docs-next.facile.studio`)"
+      traefik.http.routers.docs-secure.rule: "Host(`docs.facile.studio`)"
       traefik.http.routers.docs-secure.entrypoints: websecure
       traefik.http.routers.docs-secure.tls.certresolver: letsencrypt
       traefik.http.routers.docs-secure.service: docs-api

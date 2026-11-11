@@ -5,8 +5,7 @@
 Collaborative documents for the Facile suite: a tree of pages per space, edited together in
 real time, searchable, exportable to PDF, readable and writable by agents.
 
-Docs replaces Outline at `docs.facile.studio`. It builds at `docs-next.facile.studio` until the
-cutover, and is not deployed yet.
+Docs replaces Outline at `docs.facile.studio`.
 
 ## What it does
 

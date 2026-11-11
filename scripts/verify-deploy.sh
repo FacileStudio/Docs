@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -eu
 
-base="https://${1:-docs-next.facile.studio}"
+base="https://${1:-docs.facile.studio}"
 fails=0
 
 check() {
