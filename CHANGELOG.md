@@ -6,6 +6,9 @@ All notable changes to Docs. Versions follow SemVer.
 
 ### Security
 
+- porte-rs v0.5.2 (`tag = "v0.5.2"`): drops `openidconnect` and `rsa` 0.9.10
+  (RUSTSEC-2023-0071, the Marvin timing attack). Back-channel logout now answers 503 when
+  Registre's JWKS cannot be fetched, so Registre retries, instead of 401
 - An account erase from Registre now closes the person's sockets in every room with 1008,
   unloads their deleted personal pages, and drops their pending `mcp_actions`. A room whose row
   was deleted stops instead of retrying the save every 2 s forever, and a save whose author no

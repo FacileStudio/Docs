@@ -8,7 +8,7 @@ How to run the API locally, test it, and pass the gate before a commit.
 - Docker, for Postgres 16, and `pg_isready` (psql 16 or later)
 - bun 1.4 for the client, `filet` 0.18 or later, `mise` and `lefthook`
 - Network access to GitHub: `tronc-rs`, `porte-rs` and `encre` come from their public repos by
-  tag (`v0.3.0`, `v0.5.1`, `v0.7.0`)
+  tag (`v0.3.0`, `v0.5.2`, `v0.9.4`)
 
 ## Setup
 
