@@ -4,6 +4,8 @@ All notable changes to Docs. Versions follow SemVer.
 
 ## [Unreleased]
 
+## [0.6.3] - 2026-11-11
+
 ### Security
 
 - porte-rs v0.5.2 (`tag = "v0.5.2"`): drops `openidconnect` and `rsa` 0.9.10
