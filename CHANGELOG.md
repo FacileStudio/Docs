@@ -4,6 +4,8 @@ All notable changes to Docs. Versions follow SemVer.
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-11-11
+
 ### Fixed
 
 - Pages imported from Outline carried Outline's icon names (`academicCap`, `collection`) as their
