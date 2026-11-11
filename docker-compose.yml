@@ -20,10 +20,16 @@ services:
       retries: 10
     deploy:
       update_config:
-        order: start-first
+        order: stop-first
         parallelism: 1
       restart_policy:
         condition: any
+  docs-data-owner:
+    image: busybox:1.37@sha256:a7dbc319b1438115a207e11930dc4bb3e643dcb3ec0bdd694bb36cd8fad289ec
+    restart: "no"
+    command: ["chown", "-R", "65532:65532", "/data"]
+    volumes:
+    - attachments:/data
   docs-api:
     container_name: docs-api
     restart: unless-stopped
@@ -76,6 +82,8 @@ services:
     depends_on:
       docs-db:
         condition: service_healthy
+      docs-data-owner:
+        condition: service_completed_successfully
     deploy:
       replicas: 1
       update_config:
