@@ -13,6 +13,7 @@
 		Toaster,
 		Topbar,
 		icons,
+		provideLocale,
 		type UserMenuOptions
 	} from '@facile/muse';
 	import { backend } from '$lib/backend';
@@ -34,6 +35,7 @@
 	const bare = $derived(path.startsWith('/s/'));
 	const onSettings = $derived(path.startsWith('/settings'));
 
+	provideLocale(() => 'fr');
 	restoreTheme();
 
 	$effect(() => {
@@ -66,6 +68,7 @@
 	});
 	const userMenu = $derived<UserMenuOptions>({
 		settingsHref: '/settings',
+		showLanguage: false,
 		onThemeChange: saveTheme,
 		onSignOut: async () => {
 			await session.logout();
