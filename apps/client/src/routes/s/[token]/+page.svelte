@@ -4,7 +4,7 @@
 	import { EmptyState, Spinner, icons } from '@facile/muse';
 	import { backend } from '$lib/backend';
 	import { renderDiagram } from '$lib/diagrams';
-	import { glyph } from '$lib/format';
+	import PageGlyph from '$lib/components/PageGlyph.svelte';
 	import { browserLocale } from '$lib/locale';
 	import { outline } from '$lib/share';
 	import type { PublicPage } from '$lib/types';
@@ -58,7 +58,11 @@
 			{#if childId && root}
 				<a href="/s/{token}" class="text-fc-sm text-fc-fg-muted hover:text-fc-fg">← {root.title || 'Retour'}</a>
 			{/if}
-			<h1 class="text-3xl font-semibold text-fc-fg">{shown.title || 'Sans titre'}</h1>
+			<h1 class="flex items-start gap-3 text-2xl leading-tight font-semibold text-fc-fg sm:text-3xl">
+				<PageGlyph value={shown.icon} size={28} class="mt-0.5" /><span class="min-w-0 break-words"
+					>{shown.title || 'Sans titre'}</span
+				>
+			</h1>
 			<Document doc={shown.content} {locale} {renderDiagram} />
 			{#if subtree.length}
 				<nav aria-label="Sous-pages" class="flex flex-col gap-1">
@@ -68,10 +72,10 @@
 							href="/s/{token}?doc={node.id}"
 							aria-current={node.id === childId ? 'page' : undefined}
 							style:padding-left="{0.75 + depth * 1.25}rem"
-							class="rounded-fc-md py-2 pr-3 text-fc-sm text-fc-fg hover:bg-fc-surface aria-[current=page]:bg-fc-surface"
+							class="flex items-center gap-2 rounded-fc-md py-2 pr-3 text-fc-sm text-fc-fg hover:bg-fc-surface aria-[current=page]:bg-fc-surface"
 						>
-							{glyph(node.icon)}
-							{node.title || 'Sans titre'}
+							<PageGlyph value={node.icon} />
+							<span class="min-w-0 truncate">{node.title || 'Sans titre'}</span>
 						</a>
 					{/each}
 				</nav>

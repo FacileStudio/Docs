@@ -2,10 +2,11 @@
 	import { goto } from '$app/navigation';
 	import { Icon, Input, Modal, Spinner, icons } from '@facile/muse';
 	import { backend } from '$lib/backend';
-	import { documentIcon } from '$lib/brand';
 	import { session } from '$lib/session.svelte';
 	import { snippetParts } from '$lib/snippet';
+	import { tree } from '$lib/tree.svelte';
 	import type { SearchHit } from '$lib/types';
+	import PageGlyph from './PageGlyph.svelte';
 
 	let { open = $bindable(false) }: { open?: boolean } = $props();
 
@@ -93,7 +94,7 @@
 						onmouseenter={() => (selected = i)}
 						onclick={() => choose(hit)}
 					>
-						<Icon icon={documentIcon} size={16} class="mt-0.5" />
+						<PageGlyph value={tree.nodes.find((node) => node.id === hit.id)?.icon} class="mt-0.5" />
 						<span class="flex min-w-0 flex-col gap-0.5">
 							<span class="truncate text-fc-sm font-medium text-fc-fg">{hit.title || 'Sans titre'}</span>
 							<span class="line-clamp-2 text-fc-xs">

@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { Button, Card, ConfirmModal, EmptyState, PageHeader, Spinner, icons, toast } from '@facile/muse';
 	import { backend } from '$lib/backend';
-	import { formatDate, glyph } from '$lib/format';
+	import { formatDate } from '$lib/format';
+	import PageGlyph from '$lib/components/PageGlyph.svelte';
 	import { session } from '$lib/session.svelte';
 	import { tree } from '$lib/tree.svelte';
 	import type { TreeNode } from '$lib/types';
@@ -62,18 +63,21 @@
 		<ul class="flex flex-col gap-2">
 			{#each rows as row (row.id)}
 				<li>
-					<Card class="flex flex-wrap items-center gap-3">
-						<div class="flex min-w-0 flex-1 flex-col">
-							<span class="truncate text-fc-sm font-medium text-fc-fg"
-								>{glyph(row.icon)} {row.title || 'Sans titre'}</span
-							>
+					<Card class="flex flex-wrap items-center gap-x-3 gap-y-2">
+						<PageGlyph value={row.icon} size={20} />
+						<div class="flex min-w-48 flex-1 flex-col">
+							<span class="truncate text-fc-sm font-medium text-fc-fg">{row.title || 'Sans titre'}</span>
 							<span class="text-fc-xs text-fc-fg-muted">{formatDate(row.trashed_at ?? row.updated_at)}</span>
 						</div>
 						{#if manage}
-							<Button variant="secondary" size="sm" icon={icons.refresh} onclick={() => restore(row)}>Restaurer</Button>
-							<Button variant="ghost-danger" size="sm" icon={icons.remove} onclick={() => (doomed = row)}
-								>Supprimer</Button
-							>
+							<div class="ml-auto flex items-center gap-2">
+								<Button variant="secondary" size="sm" icon={icons.refresh} onclick={() => restore(row)}
+									>Restaurer</Button
+								>
+								<Button variant="ghost-danger" size="sm" icon={icons.remove} onclick={() => (doomed = row)}
+									>Supprimer</Button
+								>
+							</div>
 						{/if}
 					</Card>
 				</li>

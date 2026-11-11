@@ -31,13 +31,6 @@ pub struct Plan {
     pub unconverted: Vec<(String, String)>,
 }
 
-/// An Outline icon kept only when it is an emoji: Outline also stores names of its own icon set
-/// (`academicCap`, `collection`), which Docs cannot draw and would print as text.
-fn emoji(icon: Option<&str>) -> String {
-    let icon = icon.unwrap_or_default();
-    if icon.chars().any(|c| c.is_ascii_alphabetic()) { String::new() } else { icon.to_owned() }
-}
-
 fn stamp(raw: &str) -> OffsetDateTime {
     OffsetDateTime::parse(raw, &Rfc3339).unwrap_or_else(|_| OffsetDateTime::now_utc())
 }
@@ -58,7 +51,7 @@ fn walk(plan: &mut Plan, source: &Source, nodes: &[NavNode], parent: Uuid) {
             parent: Some(parent),
             position: (index + 1) as f64,
             title: doc.title.clone(),
-            icon: emoji(doc.icon.as_deref()),
+            icon: doc.icon.clone().unwrap_or_default(),
             markdown: done.markdown,
             attachments: done.attachments,
             created_at: stamp(&doc.created_at),
@@ -76,7 +69,7 @@ fn collection_page(collection: &Collection, position: usize) -> Page {
         parent: None,
         position: position as f64,
         title: collection.name.clone(),
-        icon: emoji(collection.icon.as_deref()),
+        icon: collection.icon.clone().unwrap_or_default(),
         markdown: collection.description.clone().unwrap_or_default(),
         attachments: Vec::new(),
         created_at: now,
@@ -117,18 +110,4 @@ pub async fn build(client: &Client) -> Result<Plan, PlanError> {
         walk(&mut plan, &source, &tree, root_id);
     }
     Ok(plan)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::emoji;
-
-    #[test]
-    fn only_emoji_icons_survive_the_import() {
-        assert_eq!(emoji(Some("🚀")), "🚀");
-        assert_eq!(emoji(Some("1️⃣")), "1️⃣");
-        assert_eq!(emoji(Some("academicCap")), "");
-        assert_eq!(emoji(Some("collection")), "");
-        assert_eq!(emoji(None), "");
-    }
 }

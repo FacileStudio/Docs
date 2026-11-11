@@ -29,7 +29,7 @@
 		"vitest": "^5.1.0"
 	},
 	"dependencies": {
-		"@facile/encre": "github:FacileStudio/encre#v0.9.0",
+		"@facile/encre": "github:FacileStudio/encre#v0.9.4",
 		"@facile/muse": "github:FacileStudio/muse#v0.17.1",
 		"mermaid": "^12.3.0",
 		"y-protocols": "^1.0.7",

@@ -4,7 +4,6 @@
 	import { Button, ConfirmModal, Icon, IconButton, Menu, StatusDot, icons, toast } from '@facile/muse';
 	import { backend } from '$lib/backend';
 	import { shareIcon } from '$lib/brand';
-	import { glyph } from '$lib/format';
 	import type { Connection } from '$lib/collab';
 	import { runExport, type ExportKind } from '$lib/export';
 	import { tree } from '$lib/tree.svelte';
@@ -77,41 +76,56 @@
 </script>
 
 <header class="flex flex-col gap-3">
-	<div class="flex flex-wrap items-center justify-end gap-2">
-		<StatusDot tone={status.tone} label={status.label} pulse={status.pulse} />
-		<div class="mr-auto">
+	<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+		<div class="flex min-w-0 flex-1 items-center gap-2">
+			<StatusDot tone={status.tone} label={status.label} pulse={status.pulse} />
 			{#if provider}<Presence {provider} />{/if}
+			{#if access === 'viewer'}<span class="text-fc-xs whitespace-nowrap text-fc-fg-muted">Lecture seule</span>{/if}
 		</div>
-		{#if access === 'viewer'}<span class="text-fc-xs text-fc-fg-muted">Lecture seule</span>{/if}
-		<Button variant="ghost" size="sm" icon={icons.history} href="/d/{doc.id}/history">Historique</Button>
-		<Menu label="Exporter" items={exports} align="end">
-			{#snippet trigger()}<span class="flex items-center gap-2"><Icon icon={icons.download} size={16} />Exporter</span
-				>{/snippet}
-		</Menu>
-		{#if access === 'manager'}
-			<IconButton variant="ghost" aria-label="Partager" onclick={() => (sharing = true)}>
-				<Icon icon={shareIcon} size={18} />
-			</IconButton>
-			{#if !doc.trashed_at}
-				<IconButton variant="ghost-danger" aria-label="Mettre à la corbeille" onclick={() => (trashing = true)}>
-					<Icon icon={icons.remove} size={18} />
+		<div class="ml-auto flex shrink-0 items-center gap-1">
+			<Button variant="ghost" size="sm" icon={icons.history} href="/d/{doc.id}/history" aria-label="Historique"
+				><span class="hidden sm:inline">Historique</span></Button
+			>
+			<Menu label="Exporter" items={exports} align="end">
+				{#snippet trigger()}<span class="flex items-center gap-2"
+						><Icon icon={icons.download} size={16} /><span class="hidden sm:inline">Exporter</span></span
+					>{/snippet}
+			</Menu>
+			{#if access === 'manager'}
+				<IconButton variant="ghost" aria-label="Partager" onclick={() => (sharing = true)}>
+					<Icon icon={shareIcon} size={18} />
 				</IconButton>
+				{#if !doc.trashed_at}
+					<IconButton variant="ghost-danger" aria-label="Mettre à la corbeille" onclick={() => (trashing = true)}>
+						<Icon icon={icons.remove} size={18} />
+					</IconButton>
+				{/if}
 			{/if}
-		{/if}
+		</div>
 	</div>
-	<div class="flex items-center gap-2">
-		<IconChooser value={glyph(doc.icon)} disabled={locked} onpick={(icon) => save({ icon })} />
-		<input
-			class="bare min-w-0 flex-1 bg-transparent text-3xl text-ellipsis font-semibold text-fc-fg outline-none
-				placeholder:text-fc-fg-muted"
-			aria-label="Titre du document"
-			placeholder="Sans titre"
-			maxlength="200"
-			readonly={locked}
-			bind:value={title}
-			onblur={commitTitle}
-			onkeydown={(event) => event.key === 'Enter' && (event.currentTarget as HTMLInputElement).blur()}
-		/>
+	<div class="flex items-start gap-2">
+		<IconChooser value={doc.icon} disabled={locked} onpick={(icon) => save({ icon })} />
+		<div class="grid min-w-0 flex-1 text-2xl leading-tight font-semibold sm:text-3xl">
+			<span aria-hidden="true" class="invisible col-start-1 row-start-1 py-1 break-words whitespace-pre-wrap"
+				>{title || 'Sans titre'}&#32;</span
+			>
+			<textarea
+				rows="1"
+				class="col-start-1 row-start-1 resize-none overflow-hidden bg-transparent py-1 text-fc-fg outline-none
+					placeholder:text-fc-fg-muted"
+				aria-label="Titre du document"
+				placeholder="Sans titre"
+				maxlength="200"
+				readonly={locked}
+				bind:value={title}
+				onblur={commitTitle}
+				onkeydown={(event) => {
+					if (event.key !== 'Enter') return;
+					event.preventDefault();
+					(event.currentTarget as HTMLTextAreaElement).blur();
+				}}
+			></textarea>
+		</div>
 	</div>
 </header>
 

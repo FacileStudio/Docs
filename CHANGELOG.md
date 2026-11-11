@@ -4,6 +4,30 @@ All notable changes to Docs. Versions follow SemVer.
 
 ## [Unreleased]
 
+### Security
+
+- encre v0.9.4 in the API and the client (`tag = "v0.9.4"`, `github:FacileStudio/encre#v0.9.4`).
+  `encre::yjs::read` recursed without a bound, so one hostile Yjs update nested deep enough
+  overflowed the stack and killed `docs-api`. It now answers `YjsError::Invalid`, the room
+  reverts the update and closes its sender with 1008. A room test sends a 10 000-deep update
+  and checks the refusal, the unchanged page and that the room still serves the next editor
+- encre v0.9.4 also bounds OpenUI nesting (`openui::Error::TooDeep`) and normalizes pasted tables
+
+### Fixed
+
+- Page icons draw as icons everywhere: the tree, the home list, the page header, the icon
+  chooser, search, the trash and the share page. Outline icon names (`academicCap`,
+  `collection`) and Font Awesome names (`folder-closed`, `user-graduate`, `book`) map to muse
+  Solar glyphs (`apps/client/src/lib/icons.ts`), emoji stay emoji, and an unknown name draws the
+  document icon. The icon chooser offers fifteen glyphs next to the emoji. The Outline import
+  keeps the icon name again instead of dropping it, since the client now draws it
+- Docs has a favicon: `favicon.svg`, `favicon.ico`, `apple-touch-icon.png`, `icon-192.png`,
+  `icon-512.png` and `site.webmanifest`, built from the brand glyph like Sablier's
+- Layout: long page titles wrap instead of being cut, the document toolbar keeps its actions
+  together (icon-only on phones), "Documents récents" stays on one line, trash rows keep their
+  title readable on phones, the sidebar starts collapsed below 1280 px, settings hide the
+  document tree, and unknown URLs show a French "Page introuvable" page instead of a bare 404
+
 ## [0.6.1] - 2026-11-11
 
 ### Fixed

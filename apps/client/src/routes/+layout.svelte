@@ -27,7 +27,7 @@
 
 	let { children } = $props();
 
-	let collapsed = $state(false);
+	let collapsed = $state(typeof window !== 'undefined' && window.innerWidth < 1280);
 	let searching = $state(false);
 	let treeOpen = $state(false);
 
@@ -104,9 +104,11 @@
 				{userMenu}
 				class="h-full"
 			/>
-			<aside class="flex h-full w-64 flex-col overflow-hidden rounded-fc-lg bg-fc-component" aria-label="Documents">
-				<Tree />
-			</aside>
+			{#if !onSettings}
+				<aside class="flex h-full w-64 flex-col overflow-hidden rounded-fc-lg bg-fc-component" aria-label="Documents">
+					<Tree />
+				</aside>
+			{/if}
 		</div>
 
 		<main class="min-w-0 flex-1 overflow-auto overscroll-contain pb-28 md:pb-0">

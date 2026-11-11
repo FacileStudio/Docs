@@ -1178,8 +1178,8 @@ dependencies = [
 
 [[package]]
 name = "encre"
-version = "0.9.0"
-source = "git+https://github.com/FacileStudio/encre?tag=v0.9.0#100f887a473c587297ab86fe13719deafa30a71a"
+version = "0.9.4"
+source = "git+https://github.com/FacileStudio/encre?tag=v0.9.4#fea52b7303c67fcb616f9500203a6cbf787fa75d"
 dependencies = [
  "include_dir",
  "pulldown-cmark",

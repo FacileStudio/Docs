@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+	<style>
+		:root { color: #0a0a0a }
+		@media (prefers-color-scheme: dark) { :root { color: #fafafa } }
+	</style>
+	<path fill="currentColor" opacity=".5" d="M4 6c0-2.8 0-4 1.2-5S8.2 0 11 0h2l7 7v11c0 2.8 0 4-1.2 5s-3 1-5.8 1h-2c-2.8 0-4.6 0-5.8-1S4 20.8 4 18Z"/><path fill="currentColor" d="M13 0v4c0 1.9 0 2.8.6 3.4S15.1 8 17 8h3.9L13 0ZM8 13h8v1.5H8Zm0 4h5v1.5H8Z"/>
+</svg>

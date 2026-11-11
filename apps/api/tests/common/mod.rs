@@ -74,6 +74,14 @@ pub async fn app_with(pool: PgPool, vars: &[(&str, &str)]) -> App {
 }
 
 impl App {
+    pub async fn serve(&self) -> String {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        let router = self.router.clone().into_make_service_with_connect_info::<std::net::SocketAddr>();
+        tokio::spawn(async move { axum::serve(listener, router).await.unwrap() });
+        format!("ws://{addr}")
+    }
+
     pub async fn person(&self, name: &str) -> Person {
         let subject = format!("{name}-{}", uuid::Uuid::new_v4());
         let user_id: i64 = sqlx::query_scalar("INSERT INTO porte_users (email, name) VALUES ($1, $2) RETURNING id")
