@@ -17,16 +17,40 @@ macro_rules! subtree {
 /// `DELETE /documents/{id}`: moves the page and its subtree to the trash.
 pub async fn trash(state: &AppState, user_id: i64, id: Uuid) -> Result<()> {
     access::check(state, user_id, id, Access::Manager).await?;
+    let mut tx = state.pool.begin().await.map_err(db)?;
+    lock_subtree(&mut tx, id).await?;
     let ids: Vec<Uuid> = sqlx::query_scalar(concat!(
         subtree!(),
         "UPDATE documents SET trashed_at = now() WHERE id IN (SELECT id FROM sub) AND trashed_at IS NULL RETURNING id"
     ))
     .bind(id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut *tx)
     .await
     .map_err(db)?;
+    tx.commit().await.map_err(db)?;
     state.hub.close(&ids).await;
     Ok(())
+}
+
+/// Locks every page under `id` until the transaction ends, so no create or move can add a live
+/// child to it meanwhile. A child committed while the lock waited shows up on the next pass;
+/// the subtree is locked once a pass finds nothing new.
+async fn lock_subtree(tx: &mut sqlx::PgConnection, id: Uuid) -> Result<()> {
+    let mut locked = 0;
+    loop {
+        let ids: Vec<Uuid> = sqlx::query_scalar(concat!(
+            subtree!(),
+            "SELECT id FROM documents WHERE id IN (SELECT id FROM sub) FOR UPDATE"
+        ))
+        .bind(id)
+        .fetch_all(&mut *tx)
+        .await
+        .map_err(db)?;
+        if ids.len() == locked {
+            return Ok(());
+        }
+        locked = ids.len();
+    }
 }
 
 /// `POST /documents/{id}/restore`: brings back the page and what was trashed with it. A page
