@@ -196,6 +196,13 @@ Edits run in the page's room, so open editors see them live. There is no delete 
 ```sh
 api migrate status|up
 api healthcheck
+api ops <document-id> <ops.json | ->
 ```
+
+`api ops` applies a JSON list of the operations above to one page through its room, with no
+author, and prints the `/ops` answer; `[{"op": "read"}]` only reads. In production run it with
+`docker exec -i docs-api /api ops <id> - < ops.json`. The room lives in that process, so run it
+while nobody has the page open: a room the server holds open would overwrite the change on its
+next save.
 
 Back to the [documentation index](README.md).

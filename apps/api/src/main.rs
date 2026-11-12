@@ -1,4 +1,4 @@
-//! The `api` binary: the server, `healthcheck`, and `migrate`.
+//! The `api` binary: the server, `healthcheck`, `migrate` and `ops`.
 #![deny(unused, dead_code)]
 
 use std::process::ExitCode;
