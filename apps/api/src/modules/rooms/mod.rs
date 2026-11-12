@@ -1,6 +1,7 @@
 //! Collaboration rooms: one in-memory Yjs document per open page, spoken to over y-sync.
 
 mod blocking;
+mod clients;
 pub mod command;
 mod drain;
 pub mod hub;

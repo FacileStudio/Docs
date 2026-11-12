@@ -5,6 +5,7 @@ use yrs::updates::decoder::{Decode, DecoderV1};
 use yrs::updates::encoder::Encode;
 use yrs::{ClientID, Doc, ReadTxn, StateVector, Transact, Update};
 
+use super::clients::Clients;
 use super::load::from_state;
 use crate::modules::documents::content;
 
@@ -83,15 +84,18 @@ fn on_update(core: &mut Core, update: Vec<u8>, editor: bool) -> Vec<Effect> {
     }
 }
 
-fn on_message(core: &mut Core, message: Message, editor: bool, clients: &mut HashSet<ClientID>) -> Vec<Effect> {
+fn on_message(core: &mut Core, message: Message, editor: bool, clients: &mut Clients) -> Vec<Effect> {
     match message {
         Message::Sync(SyncMessage::SyncStep1(sv)) => {
             let update = core.doc.transact().encode_state_as_update_v1(&sv);
             vec![Effect::Reply(encode(Message::Sync(SyncMessage::SyncStep2(update))))]
         }
         Message::Sync(SyncMessage::SyncStep2(update) | SyncMessage::Update(update)) => on_update(core, update, editor),
-        Message::Awareness(update) => {
-            clients.extend(update.clients.keys().copied());
+        Message::Awareness(mut update) => {
+            update.clients.retain(|id, _| clients.claim(*id));
+            if update.clients.is_empty() {
+                return Vec::new();
+            }
             match core.awareness.apply_update(update.clone()) {
                 Ok(()) => vec![Effect::Broadcast(encode(Message::Awareness(update)))],
                 Err(_) => Vec::new(),
@@ -106,8 +110,8 @@ fn on_message(core: &mut Core, message: Message, editor: bool, clients: &mut Has
 }
 
 /// Handles one binary frame from a member. A viewer's document updates are dropped; its
-/// presence is relayed. Processing stops at the first refusal.
-pub fn handle(core: &mut Core, frame: &[u8], editor: bool, clients: &mut HashSet<ClientID>) -> Vec<Effect> {
+/// presence is relayed, for the ids it owns only. Processing stops at the first refusal.
+pub fn handle(core: &mut Core, frame: &[u8], editor: bool, clients: &mut Clients) -> Vec<Effect> {
     let mut decoder = DecoderV1::from(frame);
     let mut effects = Vec::new();
     for message in yrs::sync::protocol::MessageReader::new(&mut decoder) {
