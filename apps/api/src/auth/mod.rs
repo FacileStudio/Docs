@@ -5,7 +5,6 @@ mod picture;
 mod retire;
 mod routes;
 mod spaces;
-mod store;
 
 use std::sync::Arc;
 use std::time::Duration;
@@ -21,7 +20,6 @@ pub use deletions::{AppData, DeletionState};
 pub use picture::Pictures;
 pub use routes::routes;
 pub use spaces::SpacesApply;
-pub use store::SpaceStore;
 
 use crate::env::Config;
 use crate::modules::rooms::Hub;
@@ -75,7 +73,7 @@ impl Kits {
             client_secret: cfg.porte.client_secret.clone(),
             http: HttpClient::new(),
         };
-        let apply = Arc::new(SpacesApply::new(pool.clone(), hub.clone()));
+        let apply = Arc::new(SpacesApply::new(pool.clone(), hub.clone(), cfg.porte.issuer.clone()));
         self.syncer = Some(Syncer::new(client.clone(), apply, Duration::ZERO));
         let data = Arc::new(AppData::new(pool.clone(), hub.clone()));
         let state = Arc::new(DeletionState::new(pool.clone()));

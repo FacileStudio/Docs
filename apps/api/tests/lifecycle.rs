@@ -11,7 +11,7 @@ async fn a_space_missing_from_a_snapshot_is_retired_and_its_pages_trashed_until_
     let app = common::app(pool.clone()).await;
     let roles = fixture::roles(&app).await;
     let doc = fixture::id(&fixture::page(&app, &roles.owner, Some(&roles.space), "kept safe").await);
-    let apply = SpacesApply::new(pool.clone(), app.state.hub.clone());
+    let apply = SpacesApply::new(pool.clone(), app.state.hub.clone(), common::ISSUER.to_owned());
     let version = base();
     assert!(apply.apply_snapshot(&snapshot(version, vec![space("other", &[])])).await.unwrap());
     let trashed: Option<time::OffsetDateTime> =
@@ -38,7 +38,7 @@ async fn an_empty_snapshot_is_refused_while_spaces_exist() {
     let Some(pool) = common::pool("docs_dir_empty").await else { return };
     let app = common::app(pool.clone()).await;
     let roles = fixture::roles(&app).await;
-    let apply = SpacesApply::new(pool.clone(), app.state.hub.clone());
+    let apply = SpacesApply::new(pool.clone(), app.state.hub.clone(), common::ISSUER.to_owned());
     assert!(apply.apply_snapshot(&snapshot(base(), vec![])).await.is_err());
     let live: Option<time::OffsetDateTime> = sqlx::query_scalar("SELECT deleted_at FROM spaces WHERE id = $1")
         .bind(&roles.space)

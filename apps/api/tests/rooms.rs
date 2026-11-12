@@ -175,7 +175,7 @@ async fn a_space_removed_by_the_directory_closes_its_sockets_and_refuses_reconne
     let url = format!("{}/api/documents/{id}/ws", app.serve().await);
     let mut peer = Peer::new();
     peer.connect(&url, &roles.member.token).await;
-    let apply = api::auth::SpacesApply::new(pool, app.state.hub.clone());
+    let apply = api::auth::SpacesApply::new(pool, app.state.hub.clone(), common::ISSUER.to_owned());
     let version = time::OffsetDateTime::now_utc().unix_timestamp_nanos() as i64;
     let other = porte::directory::Space { id: "elsewhere".into(), ..Default::default() };
     let snapshot = porte::directory::Snapshot { version, spaces: vec![other], ..Default::default() };
