@@ -12,8 +12,15 @@
 		node,
 		depth = 0,
 		manage = false,
-		edit = false
-	}: { node: TreeNode; depth?: number; manage?: boolean; edit?: boolean } = $props();
+		edit = false,
+		oncontextmenu
+	}: {
+		node: TreeNode;
+		depth?: number;
+		manage?: boolean;
+		edit?: boolean;
+		oncontextmenu?: (e: MouseEvent, node: TreeNode) => void;
+	} = $props();
 
 	let zone = $state<DropZone | null>(null);
 
@@ -82,6 +89,11 @@
 		ondragover={over}
 		ondragleave={() => (zone = null)}
 		ondrop={drop}
+		oncontextmenu={(event) => {
+			event.preventDefault();
+			event.stopPropagation();
+			oncontextmenu?.(event, node);
+		}}
 	>
 		{#if zone === 'before'}<span class="pointer-events-none absolute inset-x-1 top-0 h-0.5 rounded-fc-pill bg-fc-accent"
 			></span>{/if}
@@ -126,7 +138,7 @@
 	</div>
 	{#if open && kids.length}
 		<ul role="group">
-			{#each kids as child (child.id)}<TreeRow node={child} depth={depth + 1} {manage} {edit} />{/each}
+			{#each kids as child (child.id)}<TreeRow node={child} depth={depth + 1} {manage} {edit} {oncontextmenu} />{/each}
 		</ul>
 	{/if}
 </li>

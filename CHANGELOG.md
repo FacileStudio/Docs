@@ -4,6 +4,19 @@ All notable changes to Docs. Versions follow SemVer.
 
 ## [Unreleased]
 
+## [0.7.2] - 2026-11-12
+
+### Added
+
+- Right-click context menu on the sidebar document tree: open, create sub-page, copy link, and
+  move to trash, with keyboard navigation and edge clamping
+
+### Security
+
+- encre v0.10.0 on both sides (`tag = "v0.10.0"`, `#v0.10.0`), on typst 0.15.1. A
+  `[patch.crates-io]` pin of `citationberg` drops quick-xml 0.38 and its advisories from the
+  tree. encre's API is unchanged; a wasm trap in the editor now recovers on its own
+
 ## [0.7.1] - 2026-11-12
 
 ### Security
