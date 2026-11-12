@@ -102,7 +102,7 @@
 			></span>{/if}
 		<button
 			type="button"
-			class="flex size-6 shrink-0 items-center justify-center rounded-fc-sm {kids.length ? '' : 'invisible'}"
+			class="flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-fc-sm {kids.length ? '' : 'invisible'}"
 			aria-label={open ? 'Replier' : 'Déplier'}
 			onclick={() => tree.toggle(node.id)}
 		>

@@ -166,7 +166,7 @@
 				>
 					<Card
 						href="/d/{node.id}"
-						class="flex h-full flex-col gap-3 p-3 transition-[background-color,translate] duration-300 hover:-translate-y-1 motion-reduce:transition-none"
+						class="flex h-full cursor-pointer flex-col gap-3 p-3 transition-[background-color,translate] duration-300 hover:-translate-y-1 motion-reduce:transition-none"
 					>
 						<DocumentPreview icon={node.icon} />
 						<span class="flex min-w-0 flex-col gap-1 px-1 pb-1">
@@ -190,7 +190,7 @@
 						type="button"
 						onclick={() => run(() => tree.create())}
 						disabled={busy}
-						class="group flex h-full min-h-[220px] w-full flex-col items-center justify-center gap-3 rounded-fc-lg bg-fc-surface/50 p-4 text-center transition-[background-color,translate] duration-300 hover:-translate-y-1 hover:bg-fc-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fc-ring motion-reduce:transition-none"
+						class="group flex h-full min-h-[220px] w-full cursor-pointer flex-col items-center justify-center gap-3 rounded-fc-lg bg-fc-surface/50 p-4 text-center transition-[background-color,translate] duration-300 hover:-translate-y-1 hover:bg-fc-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fc-ring disabled:cursor-not-allowed motion-reduce:transition-none"
 						aria-label="Nouveau document"
 					>
 						<span

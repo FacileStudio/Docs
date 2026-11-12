@@ -52,7 +52,7 @@
 				{#each PICKABLE as choice (choice.value)}
 					<button
 						type="button"
-						class="flex size-11 items-center justify-center rounded-fc-md text-fc-fg hover:bg-fc-surface {choice.value ===
+						class="flex size-11 cursor-pointer items-center justify-center rounded-fc-md text-fc-fg hover:bg-fc-surface {choice.value ===
 						value
 							? 'bg-fc-surface'
 							: ''}"
@@ -66,7 +66,7 @@
 				{#each choices as icon (icon)}
 					<button
 						type="button"
-						class="flex size-11 items-center justify-center rounded-fc-md text-xl hover:bg-fc-surface {icon === value
+						class="flex size-11 cursor-pointer items-center justify-center rounded-fc-md text-xl hover:bg-fc-surface {icon === value
 							? 'bg-fc-surface'
 							: ''}"
 						aria-label="Choisir {icon}"
