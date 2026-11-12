@@ -88,13 +88,20 @@ pub async fn move_to(state: &AppState, user_id: i64, id: Uuid, request: MoveRequ
         check_parent(state, user_id, id, parent).await?;
     }
     let position = position(&siblings(state, user_id, id, request.parent_id).await?, request.before)?;
-    sqlx::query("UPDATE documents SET parent_id = $2, position = $3, updated_at = now() WHERE id = $1")
-        .bind(id)
-        .bind(request.parent_id)
-        .bind(position)
-        .execute(&state.pool)
-        .await
-        .map_err(db)?;
+    let moved = sqlx::query(
+        "WITH parent AS (SELECT id FROM documents WHERE id = $2 AND trashed_at IS NULL FOR SHARE) \
+         UPDATE documents SET parent_id = $2, position = $3, updated_at = now() WHERE id = $1 \
+         AND trashed_at IS NULL AND ($2::uuid IS NULL OR EXISTS (SELECT 1 FROM parent))",
+    )
+    .bind(id)
+    .bind(request.parent_id)
+    .bind(position)
+    .execute(&state.pool)
+    .await
+    .map_err(db)?;
+    if moved.rows_affected() == 0 {
+        return Err(Error::failed("the page or its new parent is in the trash"));
+    }
     answer(fetch(state, id).await?, have, false)
 }
 

@@ -7,6 +7,7 @@ pub mod env;
 pub mod extract;
 pub mod mcp;
 pub mod modules;
+pub mod operator;
 pub mod router;
 pub mod security;
 pub mod server;

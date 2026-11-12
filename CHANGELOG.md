@@ -4,6 +4,33 @@ All notable changes to Docs. Versions follow SemVer.
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-11-12
+
+### Security
+
+- porte-rs v0.7.0 and tronc-rs v0.4.0 (one tronc crate). The deletion receiver now holds
+  erased subjects: a sign-in, a bearer provisioning or a profile sync for a person Registre
+  erased is refused before the account is written, and an account that raced the erasure is
+  erased again on the next push or poll
+- A member can no longer rewrite another member's presence. The room tracks which Yjs client
+  ids each connection claimed first and drops awareness entries for ids another connection owns
+- Evicting members who left a space matches the identity provider as well as the subject
+
+### Fixed
+
+- A create or a move under a page that is being trashed can no longer leave a live page under a
+  trashed parent, which the 30-day purge would then delete. The write locks the parent and
+  re-checks it in the same statement, and the trash locks the whole subtree before it marks it
+
+### Added
+
+- `api ops <document-id> <ops.json | ->`: applies encre operations to one page through its
+  room, for operator fixes in the container (`docker exec -i docs-api /api ops <id> -`)
+
+### Removed
+
+- The unused `SpaceStore` (porte `spaces` store) and its conformance test
+
 ## [0.7.0] - 2026-11-11
 
 ### Changed

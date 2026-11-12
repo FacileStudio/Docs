@@ -131,3 +131,23 @@ async fn search_ranks_and_highlights_inside_the_scope() {
     assert!(hits[0]["snippet"].as_str().unwrap().contains("<b>deployment</b>"), "{hits}");
     assert_eq!(app.call("GET", "/api/search?q=", Some(&roles.member), None).await.status, 400);
 }
+
+#[tokio::test]
+async fn the_ops_subcommand_edits_a_page_through_its_room() {
+    let Some(pool) = common::pool("docs_operator_ops").await else { return };
+    let app = common::app(pool.clone()).await;
+    let roles = fixture::roles(&app).await;
+    let doc = fixture::id(&fixture::page(&app, &roles.owner, Some(&roles.space), "old link").await);
+    let file = common::data_dir().join(format!("ops-{doc}.json"));
+    std::fs::create_dir_all(file.parent().unwrap()).unwrap();
+    std::fs::write(&file, r#"[{"op": "patch", "find": "old", "replace": "new", "expect": 1}]"#).unwrap();
+    let config =
+        api::env::Config::from_vars(&tronc::env::Vars::from_pairs(vec![("DATABASE_URL", "postgres://x/y")])).unwrap();
+    let argv: Vec<String> = ["api", "ops", &doc, file.to_str().unwrap()].map(String::from).to_vec();
+    api::operator::command(&argv, &config, &pool).await.unwrap().unwrap();
+    let page = app.call("GET", &format!("/api/documents/{doc}?format=markdown"), Some(&roles.owner), None).await;
+    assert!(page.text().contains("new link"), "{}", page.text());
+    let usage = ["api", "ops", &doc].map(String::from).to_vec();
+    assert!(api::operator::command(&usage, &config, &pool).await.unwrap().is_err());
+    assert!(api::operator::command(&["api".to_owned()], &config, &pool).await.is_none());
+}

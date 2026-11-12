@@ -8,7 +8,7 @@ How to run the API locally, test it, and pass the gate before a commit.
 - Docker, for Postgres 16, and `pg_isready` (psql 16 or later)
 - bun 1.4 for the client, `filet` 0.18 or later, `mise` and `lefthook`
 - Network access to GitHub: `tronc-rs`, `porte-rs` and `encre` come from their public repos by
-  tag (`v0.3.0`, `v0.5.2`, `v0.9.4`)
+  tag (`v0.4.0`, `v0.7.0`, `v0.9.4`)
 
 ## Setup
 
@@ -44,8 +44,10 @@ against Postgres through `tronc::testdb`, one schema per test prefix, kept betwe
 |---|---|
 | `authorization.rs` | Every document route, for each role and the member of another space |
 | `scopes.rs` | Lists, creates and search never cross a space; personal pages |
-| `documents.rs` | Markdown round trip, ops, trash, move, revisions, search snippets |
-| `directory.rs` | porte's spaces conformance suite, snapshot apply, GDPR erase |
+| `documents.rs` | Markdown round trip, ops, trash, move, revisions, search snippets, `api ops` |
+| `races.rs` | A create racing a trash of its parent, and a trash racing a create under it |
+| `directory.rs` | Snapshot apply, GDPR erase |
+| `erased.rs` | An erased subject cannot sign in again, and an account that raced the erasure is erased again |
 | `lifecycle.rs` | Retired and returning spaces, the empty-snapshot refusal, the 30-day purge |
 | `attachments.rs`, `share.rs` | Sniffing, SVG refusal, sandbox headers, sweep, links, rate limit |
 | `rooms.rs` | Two yrs peers converge after offline edits; schema-breaking update reverted with 1008; viewers; origin; 1009 |

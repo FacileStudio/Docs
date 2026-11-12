@@ -77,10 +77,12 @@ pub async fn create(state: &AppState, user_id: i64, request: CreateRequest) -> R
     let node: Node = content::from_input(request.markdown, request.content, state.markdown_max).await?;
     let Prepared { json, text, .. } = content::prepare(node)?;
     let row = sqlx::query_as::<_, DocumentRow>(concat!(
-        "INSERT INTO documents (space_id, owner_id, parent_id, position, title, schema_version, content, text, \
+        "WITH parent AS (SELECT id FROM documents WHERE id = $3 AND trashed_at IS NULL FOR SHARE) \
+         INSERT INTO documents (space_id, owner_id, parent_id, position, title, schema_version, content, text, \
          created_by, updated_by) SELECT $1, $2, $3, coalesce(max(position), 0) + 1, $4, $5, $6, $7, $2, $2 \
          FROM documents WHERE space_id IS NOT DISTINCT FROM $1 AND parent_id IS NOT DISTINCT FROM $3 \
-         AND (space_id IS NOT NULL OR owner_id = $2) AND trashed_at IS NULL RETURNING ",
+         AND (space_id IS NOT NULL OR owner_id = $2) AND trashed_at IS NULL \
+         HAVING $3::uuid IS NULL OR EXISTS (SELECT 1 FROM parent) RETURNING ",
         columns!()
     ))
     .bind(&space_id)
@@ -90,9 +92,10 @@ pub async fn create(state: &AppState, user_id: i64, request: CreateRequest) -> R
     .bind(encre::SCHEMA_VERSION as i32)
     .bind(Json(json))
     .bind(text)
-    .fetch_one(&state.pool)
+    .fetch_optional(&state.pool)
     .await
-    .map_err(db)?;
+    .map_err(db)?
+    .ok_or_else(|| Error::failed("the parent document is in the trash"))?;
     answer(row, have, false)
 }
 

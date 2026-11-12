@@ -17,7 +17,7 @@ Internet ──▶ Traefik ──▶ api (:4000, one replica) ─┬──▶ /h
 | Path | Role |
 |---|---|
 | `src/server.rs` | Boot in the order of the plan: env, logger, pool, `migrate`, migrations, kits, loops, router |
-| `src/auth/` | porte wiring: sessions, Registre sign-in, the spaces store, directory apply, GDPR erase |
+| `src/auth/` | porte wiring: sessions, Registre sign-in, directory apply, GDPR erase and the erased-subject hold |
 | `src/modules/documents/` | The tree, content, trash, revisions, and the one `access()` function |
 | `src/modules/rooms/` | One in-memory Yjs room per open page, the y-sync WebSocket |
 | `src/modules/search/` | Full-text search, scope-filtered in the same statement |

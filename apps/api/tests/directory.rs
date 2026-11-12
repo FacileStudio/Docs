@@ -1,29 +1,15 @@
 mod common;
 
-use api::auth::{AppData, SpaceStore, SpacesApply};
+use api::auth::{AppData, SpacesApply};
 use common::directory::{snapshot, space};
 use common::fixture;
 use porte::directory::PersonDeleted;
 use serde_json::json;
 
 #[tokio::test]
-async fn the_space_store_passes_porte_conformance() {
-    let Some(pool) = common::pool("docs_conformance").await else { return };
-    let result = porte::spaces::conformance::run(|| {
-        let pool = pool.clone();
-        async move {
-            sqlx::query("TRUNCATE spaces CASCADE").execute(&pool).await.unwrap();
-            SpaceStore::new(pool)
-        }
-    })
-    .await;
-    assert!(result.is_ok(), "{:#?}", result.unwrap_err());
-}
-
-#[tokio::test]
 async fn a_snapshot_replaces_spaces_and_members_once_per_version() {
     let Some(pool) = common::pool("docs_directory").await else { return };
-    let apply = SpacesApply::new(pool.clone(), api::modules::rooms::Hub::default());
+    let apply = SpacesApply::new(pool.clone(), api::modules::rooms::Hub::default(), common::ISSUER.to_owned());
     let base = time::OffsetDateTime::now_utc().unix_timestamp_nanos() as i64;
     assert!(
         apply.apply_snapshot(&snapshot(base, vec![space("a", &[("s1", "owner")]), space("b", &[])])).await.unwrap()

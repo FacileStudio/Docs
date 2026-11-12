@@ -26,7 +26,7 @@ fn fail(error: &dyn std::fmt::Display) -> ExitCode {
     ExitCode::FAILURE
 }
 
-/// Runs the binary: a `migrate` subcommand, or the server until a signal.
+/// Runs the binary: a `migrate` or operator subcommand, or the server until a signal.
 pub async fn run() -> ExitCode {
     let config = match Config::load() {
         Ok(config) => config,
@@ -39,6 +39,9 @@ pub async fn run() -> ExitCode {
     };
     let argv: Vec<String> = std::env::args().collect();
     if let Some(result) = tronc::migrate::command(&argv, &pool, &crate::MIGRATOR).await {
+        return result.map_or_else(|error| fail(&error), |()| ExitCode::SUCCESS);
+    }
+    if let Some(result) = crate::operator::command(&argv, &config, &pool).await {
         return result.map_or_else(|error| fail(&error), |()| ExitCode::SUCCESS);
     }
     match serve(config, pool).await {

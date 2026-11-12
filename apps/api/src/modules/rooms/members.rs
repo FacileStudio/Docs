@@ -1,6 +1,7 @@
 use tokio::time::Instant;
 
 use super::blocking::handle_owned;
+use super::clients::Clients;
 use super::command::{Command, Member, Out};
 use super::room::{Conn, Room};
 use super::sync::{Core, departure};
@@ -41,9 +42,11 @@ impl Room {
     /// Applies one frame off the async threads: an update re-reads and re-validates the whole
     /// document, which must not stall the runtime on a large page.
     async fn message(&mut self, conn: u64, frame: Vec<u8>) {
+        let taken =
+            self.conns.iter().filter(|(id, _)| **id != conn).flat_map(|(_, c)| c.clients.iter().copied()).collect();
         let Some(member) = self.conns.get_mut(&conn) else { return };
         let (user_id, editor) = (member.user_id, member.editor);
-        let clients = std::mem::take(&mut member.clients);
+        let clients = Clients { own: std::mem::take(&mut member.clients), taken };
         let core = std::mem::replace(&mut self.core, Core::empty());
         let Ok((core, clients, effects)) =
             tokio::task::spawn_blocking(move || handle_owned(core, &frame, editor, clients)).await
@@ -53,7 +56,7 @@ impl Room {
         };
         self.core = core;
         if let Some(member) = self.conns.get_mut(&conn) {
-            member.clients = clients;
+            member.clients = clients.own;
         }
         self.apply_effects(conn, user_id, effects);
     }
