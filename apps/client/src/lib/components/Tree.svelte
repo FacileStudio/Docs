@@ -1,8 +1,11 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { Icon, IconButton, Skeleton, icons, toast } from '@facile/muse';
+	import { backend } from '$lib/backend';
 	import { session } from '$lib/session.svelte';
 	import { tree } from '$lib/tree.svelte';
+	import type { TreeNode } from '$lib/types';
+	import ContextMenu, { type ContextMenuItem } from './ContextMenu.svelte';
 	import TreeRow from './TreeRow.svelte';
 
 	const roots = $derived(tree.children(null));
@@ -11,6 +14,7 @@
 	const edit = $derived(access !== 'viewer');
 
 	let rootOver = $state(false);
+	let contextMenu = $state<{ x: number; y: number; node: TreeNode } | null>(null);
 
 	async function create() {
 		try {
@@ -33,6 +37,65 @@
 			toast.danger(error instanceof Error ? error.message : 'Déplacement impossible');
 		}
 	}
+
+	async function createSubPage(parentId: string) {
+		try {
+			const created = await tree.create(parentId);
+			await goto(`/d/${created.id}`);
+		} catch (error) {
+			toast.danger(error instanceof Error ? error.message : 'Création impossible');
+		}
+	}
+
+	async function copyLink(docId: string) {
+		try {
+			if (navigator.clipboard?.writeText) {
+				await navigator.clipboard.writeText(`${window.location.origin}/d/${docId}`);
+			}
+			toast.success('Lien copié');
+		} catch (error) {
+			toast.danger(error instanceof Error ? error.message : 'Copie impossible');
+		}
+	}
+
+	async function trashDocument(docId: string) {
+		try {
+			await backend.trash(docId);
+			tree.remove(docId);
+			toast.success('Document placé dans la corbeille');
+		} catch (error) {
+			toast.danger(error instanceof Error ? error.message : 'Suppression impossible');
+		}
+	}
+
+	function makeItems(node: TreeNode): ContextMenuItem[] {
+		return [
+			{
+				label: 'Ouvrir',
+				href: `/d/${node.id}`,
+				icon: icons.arrow
+			},
+			{
+				label: 'Nouvelle sous-page',
+				icon: icons.plus,
+				onselect: () => void createSubPage(node.id)
+			},
+			{
+				label: 'Copier le lien',
+				icon: icons.copy,
+				onselect: () => void copyLink(node.id)
+			},
+			{ separator: true },
+			{
+				label: 'Supprimer',
+				icon: icons.remove,
+				tone: 'danger',
+				onselect: () => void trashDocument(node.id)
+			}
+		];
+	}
+
+	const menuItems = $derived(contextMenu ? makeItems(contextMenu.node) : []);
 </script>
 
 <div class="flex h-full min-h-0 flex-col gap-2 p-3">
@@ -55,7 +118,16 @@
 			<p class="px-2 py-4 text-fc-sm text-fc-fg-muted">Aucun document pour l'instant.</p>
 		{:else}
 			<ul role="tree" aria-label="Documents" class="flex flex-col gap-0.5">
-				{#each roots as node (node.id)}<TreeRow {node} {manage} {edit} />{/each}
+				{#each roots as node (node.id)}
+					<TreeRow
+						{node}
+						{manage}
+						{edit}
+						oncontextmenu={(event, targetNode) => {
+							contextMenu = { x: event.clientX, y: event.clientY, node: targetNode };
+						}}
+					/>
+				{/each}
 			</ul>
 		{/if}
 		{#if manage && tree.dragging}
@@ -75,3 +147,12 @@
 		{/if}
 	</div>
 </div>
+
+{#if contextMenu}
+	<ContextMenu
+		x={contextMenu.x}
+		y={contextMenu.y}
+		items={menuItems}
+		onclose={() => (contextMenu = null)}
+	/>
+{/if}
