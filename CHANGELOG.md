@@ -4,6 +4,14 @@ All notable changes to Docs. Versions follow SemVer.
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-12
+
+### Added
+
+- Responsive document card grid on the home page with document preview mockups and hover lifts
+- Dynamic grid column tracking with a trailing quick-create card button to fill incomplete rows
+- Context menu and actions menu on document cards (open, new sub-page, copy link, and trash)
+
 ## [0.7.2] - 2026-11-12
 
 ### Added
