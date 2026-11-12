@@ -1,8 +1,13 @@
-import { icons, registerIcons } from '@facile/muse';
+import { icons as museIcons, registerIcons } from '@facile/muse';
 import { documentIcon } from './brand';
 import { SOLAR } from './icon-data';
 
 registerIcons(SOLAR);
+
+export const icons = {
+	...museIcons,
+	more: 'solar:menu-dots-linear'
+} as const;
 
 /** How a page icon draws: an emoji as text, anything else as a muse glyph. */
 export type PageIcon = { emoji: string } | { glyph: string };

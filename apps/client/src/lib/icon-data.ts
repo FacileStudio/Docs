@@ -106,6 +106,11 @@ export const SOLAR: Record<string, IconData> = {
 		width: 24,
 		height: 24
 	},
+	'solar:menu-dots-linear': {
+		body: '<g fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></g>',
+		width: 24,
+		height: 24
+	},
 	'solar:notebook-linear': {
 		body: '<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.5"><path d="M9 22H15C17.8284 22 19.2426 22 20.1213 21.1213C21 20.2426 21 18.8284 21 16V8C21 5.17157 21 3.75736 20.1213 2.87868C19.2426 2 17.8284 2 15 2H9C6.17157 2 4.75736 2 3.87868 2.87868C3 3.75736 3 5.17157 3 8V16C3 18.8284 3 20.2426 3.87868 21.1213C4.75736 22 6.17157 22 9 22Z"/><path d="M8 2.5V22"/><path d="M2 12H4"/><path d="M2 16H4"/><path d="M2 8H4"/><path d="M11.5 6.5H16.5"/><path d="M11.5 10H16.5"/></g>',
 		width: 24,
