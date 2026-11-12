@@ -61,7 +61,7 @@ the trash listing.
 | `GET /auth/me` | session | `{"email","name"?,"avatar_url"?}` or 401 |
 | `GET /auth/session` | optional | `{"user":{"email","name"?,"avatar_url"?}|null}`, always 200 |
 | `POST /registre/sync` | none | 202: Registre's nudge; the app pulls the snapshot |
-| `POST /registre/deletions` | Registre-signed | 202 once erased |
+| `POST /registre/deletions` | Registre-signed | 202 once erased; the subject then cannot sign in or get an account again |
 
 ## Spaces and documents
 

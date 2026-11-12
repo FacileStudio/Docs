@@ -77,7 +77,10 @@ impl Kits {
         self.syncer = Some(Syncer::new(client.clone(), apply, Duration::ZERO));
         let data = Arc::new(AppData::new(pool.clone(), hub.clone()));
         let state = Arc::new(DeletionState::new(pool.clone()));
-        self.deletions = Some(Deletions::new(client, data, Some(Arc::new(store)), Some(state), Duration::ZERO));
+        let deletions = Deletions::new(client, data, Some(Arc::new(store.clone())), Some(state), Duration::ZERO)
+            .with_holds(Arc::new(store));
+        self.oidc = self.oidc.clone().with_erased(Arc::new(deletions.clone()));
+        self.deletions = Some(deletions);
     }
 }
 
