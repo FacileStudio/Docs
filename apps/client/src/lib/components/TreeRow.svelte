@@ -110,7 +110,7 @@
 		</button>
 		<a
 			href="/d/{node.id}"
-			class="flex min-w-0 flex-1 items-center gap-2 py-1.5 outline-none"
+			class="flex min-w-0 flex-1 items-center gap-2 rounded-fc-sm py-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fc-ring"
 			draggable={manage}
 			aria-current={active ? 'page' : undefined}
 			aria-keyshortcuts={manage ? 'Alt+ArrowUp Alt+ArrowDown Alt+ArrowLeft Alt+ArrowRight' : undefined}

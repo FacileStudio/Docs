@@ -4,6 +4,14 @@ All notable changes to Docs. Versions follow SemVer.
 
 ## [Unreleased]
 
+### Fixed
+
+- A room that opens a page whose stored Yjs state is from an older encre schema migrates it
+  inside that same Yjs document and stores it with the current `schema_version`. It used to
+  trust the stored Yjs state as is, so a future schema migration would have skipped every page
+  that had been opened once
+- Tree links and the quick-create card show the muse focus outline when reached by keyboard
+
 ## [0.8.0] - 2026-11-12
 
 ### Added

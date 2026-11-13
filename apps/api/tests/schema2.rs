@@ -71,3 +71,24 @@ async fn a_new_page_stores_schema_2_and_keeps_every_schema_2_construct() {
         assert!(md.contains(wanted), "{wanted} missing from {md}");
     }
 }
+
+#[tokio::test]
+async fn a_room_opening_a_schema_1_ydoc_migrates_it_and_stores_schema_2() {
+    let Some(pool) = common::pool("docs_schema_ydoc").await else { return };
+    let app = common::app(pool).await;
+    let roles = fixture::roles(&app).await;
+    let prepared = content::prepare(markdown::from_markdown(V1).unwrap()).unwrap();
+    let id = insert_v1(&app, roles.member.user_id, &prepared.json).await;
+    sqlx::query("UPDATE documents SET ydoc = $2 WHERE id = $1::uuid")
+        .bind(&id)
+        .bind(encre::yjs::to_update(&prepared.node).unwrap())
+        .execute(&app.pool)
+        .await
+        .unwrap();
+    let url = format!("{}/api/documents/{id}/ws", app.serve().await);
+    let mut peer = common::ysync::Peer::new();
+    peer.connect(&url, &roles.member.token).await;
+    assert_eq!(common::typing::read(&peer.doc), prepared.node);
+    assert_eq!(schema_of(&app, &id).await, encre::SCHEMA_VERSION as i32);
+    peer.disconnect();
+}
