@@ -1,4 +1,4 @@
-/// The Facile Markdown and operations short form, from encre `docs/agents.md` at v0.9.0, as
+/// The Facile Markdown and operations short form, from encre `docs/agents.md` at v0.11.0, as
 /// every read and write tool description carries it.
 pub const SHORT_FORM: &str = r#"Documents are Facile Markdown: CommonMark with GFM tables, task lists (- [ ] / - [x]) and
 strikethrough (~~a~~). Raw HTML is plain text, except <br> as a line break. Headings go to
@@ -41,6 +41,10 @@ More to read
   as columns.
 - stat and chart hold one JSON object. chart kind is bar or line; every series has one number
   per label.
+- embed holds one JSON object {"url": "https://…", "kind": "link", "title": ""}: kind is link,
+  toile, feuilles, vision, docs or nuage, and Toile, Feuilles, Vision and Docs pages show live.
+  file holds {"src": "/api/attachments/<id>", "name": "…", "size": 0, "mime": "…"} for a file
+  already attached to the page.
 - Attribute values use double quotes; \" and \\ are the only escapes. A malformed custom block
   stays a code block.
 - Inline: ==highlight==, [badge:success Shipped] (tones neutral, accent, info, success, warning,
@@ -62,7 +66,7 @@ refused operation changes nothing, and its error says what matched and how to na
 request. Writes answer the ids of the blocks they inserted. Block ids never appear in markdown.
 Prefer insert_after, replace_block and patch over replace_all: they keep other people's cursors."#;
 
-/// The limits Docs and encre v0.9.0 enforce, for every tool description.
+/// The limits Docs and encre v0.11.0 enforce, for every tool description.
 pub const LIMITS: &str = "Limits: one call parses at most 1 MiB of markdown by default; a larger body \
 is refused, so split it over several append calls. Blocks and inline spans nest at most 64 levels in \
 markdown and 48 in the document, and one path holds at most 8 callout, columns and column blocks; deeper \
@@ -76,9 +80,11 @@ pub fn described(what: &str) -> String {
 #[cfg(test)]
 mod tests {
     #[test]
-    fn descriptions_teach_the_schema_2_syntax_and_the_limits() {
+    fn descriptions_teach_the_schema_3_syntax_and_the_limits() {
         let text = super::described("Edit a page.");
-        for wanted in ["==highlight==", "[badge:success", "[status:done]", "[!NOTE]", "```mermaid", "````columns"] {
+        for wanted in
+            ["==highlight==", "[badge:success", "[status:done]", "[!NOTE]", "```mermaid", "````columns", "embed"]
+        {
             assert!(text.contains(wanted), "{wanted} missing");
         }
         assert!(text.contains("1 MiB") && text.contains("at most 8 callout"));

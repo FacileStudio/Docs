@@ -42,7 +42,7 @@ default is 8080, as in Go tronc; the image and `mise run dev` set 4000.
 | Link preview | 5 s, 1 MiB of HTML, 3 redirects, reused 5 minutes per URL | `modules/embeds/` |
 | Document JSON | 5 MiB | `modules/documents/content.rs` |
 | Request JSON body | 1 MiB (tronc), MCP request 4 MiB | `tronc::json`, `tronc::mcp` |
-| Markdown nesting | 64 levels in markdown, 48 in the document, 8 `callout`, `columns` and `column` nodes on one path | encre v0.9.0 |
+| Markdown nesting | 64 levels in markdown, 48 in the document, 8 `callout`, `columns` and `column` nodes on one path | encre v0.11.0 |
 | WebSocket frame | 2 MiB, closed with 1009 | `modules/rooms/ws.rs` |
 | Room persist debounce, unload | 2 s, 60 s | `modules/rooms/room.rs` |
 | Revisions | one per 10 minutes of activity | `modules/documents/write.rs` |

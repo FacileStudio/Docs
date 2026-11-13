@@ -36,10 +36,10 @@ With `?format=markdown`, `markdown` (Facile Markdown) replaces `content`. `versi
 on every content change; `replace_all` checks it.
 
 `schema_version` is the encre schema the stored `content` was written in. Every page Docs creates
-or rewrites is stored at encre's current schema, 2 since encre v0.8.0 (highlight, badges and
-status dots, diagrams, columns, stat subtitles). A schema 1 row keeps its `content` and
-`schema_version` byte for byte until its next write; encre migrates 1 to 2 as the identity, so a
-schema 2 reader reads it as is.
+or rewrites is stored at encre's current schema: 3 since encre v0.11.0 (`embed` and `file`
+blocks), 2 since v0.8.0 (highlight, badges and status dots, diagrams, columns, stat subtitles).
+An older row keeps its `content` and `schema_version` byte for byte until its next write; encre
+migrates 1 and 2 to 3 as the identity, so a schema 3 reader reads it as is.
 
 `TreeEntry`: `{"id","parent_id","position","title","icon","updated_at"}`, plus `trashed_at` in
 the trash listing.
@@ -192,7 +192,7 @@ A viewer's (or a trashed page's) updates are dropped; its awareness is relayed. 
 `MCP_RESOURCE` is set. Registre access tokens for that resource, scopes `docs.read` and
 `docs.write`; metadata at `/.well-known/oauth-protected-resource/mcp`. Never plan-gated. Every
 description embeds encre's Facile Markdown and operations short form (`src/mcp/format.rs`, from
-encre v0.9.0 `docs/agents.md`: highlight, badges, status, GFM alerts, diagram fences, columns)
+encre v0.11.0 `docs/agents.md`: highlight, badges, status, GFM alerts, diagram fences, columns, plus the `embed` and `file` fences)
 and the limits above. A refusal reaches the agent as an `isError` result with the same message.
 
 | Tool | Scope | Arguments | Answer |

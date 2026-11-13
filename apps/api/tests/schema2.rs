@@ -33,7 +33,7 @@ async fn schema_of(app: &common::App, id: &str) -> i32 {
 }
 
 #[tokio::test]
-async fn a_schema_1_row_is_served_unchanged_until_a_write_stores_it_as_schema_2() {
+async fn a_schema_1_row_is_served_unchanged_until_a_write_stores_it_at_the_current_schema() {
     let Some(pool) = common::pool("docs_schema_v1").await else { return };
     let app = common::app(pool).await;
     let roles = fixture::roles(&app).await;
@@ -47,14 +47,14 @@ async fn a_schema_1_row_is_served_unchanged_until_a_write_stores_it_as_schema_2(
     let ops = json!({"ops": [{"op": "append", "markdown": "Added ==later==."}]});
     let path = format!("/api/documents/{id}/ops");
     assert_eq!(app.call("POST", &path, Some(&roles.member), Some(ops)).await.status, 200);
-    assert_eq!(schema_of(&app, &id).await, 2);
+    assert_eq!(schema_of(&app, &id).await, encre::SCHEMA_VERSION as i32);
     let after = app.call("GET", &format!("/api/documents/{id}"), Some(&roles.member), None).await.json();
     let blocks = after["content"]["content"].as_array().unwrap();
     assert_eq!(blocks[..blocks.len() - 1], prepared.json["content"].as_array().unwrap()[..]);
 }
 
 #[tokio::test]
-async fn a_new_page_stores_schema_2_and_keeps_every_schema_2_construct() {
+async fn a_new_page_stores_the_current_schema_and_keeps_every_schema_2_construct() {
     let Some(pool) = common::pool("docs_schema_v2").await else { return };
     let app = common::app(pool).await;
     let roles = fixture::roles(&app).await;
@@ -73,7 +73,7 @@ async fn a_new_page_stores_schema_2_and_keeps_every_schema_2_construct() {
 }
 
 #[tokio::test]
-async fn a_room_opening_a_schema_1_ydoc_migrates_it_and_stores_schema_2() {
+async fn a_room_opening_a_schema_1_ydoc_migrates_it_and_stores_the_current_schema() {
     let Some(pool) = common::pool("docs_schema_ydoc").await else { return };
     let app = common::app(pool).await;
     let roles = fixture::roles(&app).await;
@@ -91,4 +91,21 @@ async fn a_room_opening_a_schema_1_ydoc_migrates_it_and_stores_schema_2() {
     assert_eq!(common::typing::read(&peer.doc), prepared.node);
     assert_eq!(schema_of(&app, &id).await, encre::SCHEMA_VERSION as i32);
     peer.disconnect();
+}
+
+#[tokio::test]
+async fn a_page_keeps_schema_3_embed_and_file_blocks() {
+    let Some(pool) = common::pool("docs_schema_v3").await else { return };
+    let app = common::app(pool).await;
+    let roles = fixture::roles(&app).await;
+    let source = "```embed\n{\"url\": \"https://toile.facile.studio/b/1\", \"kind\": \"toile\", \"title\": \"Plan\"}\n```\n\n\
+                  ```file\n{\"src\": \"/api/attachments/x\", \"name\": \"devis.zip\", \"size\": 12, \"mime\": \"application/zip\"}\n```";
+    let doc = fixture::page(&app, &roles.member, Some(&roles.space), source).await;
+    let types = doc["content"]["content"].as_array().unwrap().iter().map(|b| b["type"].clone()).collect::<Vec<_>>();
+    assert_eq!(types, [json!("embed"), json!("file")]);
+    assert_eq!(doc["content"]["content"][0]["attrs"]["kind"], json!("toile"));
+    let id = fixture::id(&doc);
+    let md = app.call("GET", &format!("/api/documents/{id}?format=markdown"), Some(&roles.member), None).await;
+    let md = md.json()["markdown"].as_str().unwrap().to_owned();
+    assert!(md.contains("```embed") && md.contains("```file"), "{md}");
 }
