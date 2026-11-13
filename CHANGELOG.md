@@ -4,6 +4,8 @@ All notable changes to Docs. Versions follow SemVer.
 
 ## [Unreleased]
 
+## [0.9.2] - 2026-11-13
+
 ### Changed
 
 - encre v0.12.0 (still schema 3): every `/` entry has an icon, the Toile, Feuilles, Vision, Docs
