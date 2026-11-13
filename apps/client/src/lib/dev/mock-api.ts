@@ -172,7 +172,8 @@ export class MockApi {
 			/^\/documents\/(?<id>[^/]+)\/attachments$/,
 			this.withDoc(() => {
 				const id = this.next();
-				return json({ id, url: `/api/attachments/${id}` }, 201);
+				const src = `/api/attachments/${id}`;
+				return json({ id, url: src, src, name: 'fichier', size: 0, mime: 'application/octet-stream' }, 201);
 			})
 		],
 		[

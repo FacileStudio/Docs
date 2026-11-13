@@ -44,6 +44,8 @@ async function open(editable: boolean) {
 			documentId: 'doc-1',
 			editable,
 			user: { name: 'Camille' },
+			assistant: 'Nova',
+			onask: () => undefined,
 			events: {
 				onconnection: (state: string) => states.push(state),
 				onstop: () => undefined
@@ -65,6 +67,7 @@ describe('CollabEditor', () => {
 		expect(prose).not.toBeNull();
 		expect(prose?.getAttribute('contenteditable')).toBe('true');
 		expect(target.querySelector('[aria-label="Editing now"]')).toBeNull();
+		expect(target.querySelector('[role="toolbar"]')).toBeNull();
 		const paragraph = new Y.XmlElement('paragraph');
 		paragraph.insert(0, [new Y.XmlText('Bonjour depuis le serveur')]);
 		opened[0].doc.getXmlFragment('default').insert(0, [paragraph]);

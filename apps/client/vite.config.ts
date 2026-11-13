@@ -14,7 +14,7 @@ async function devMock(): Promise<PluginOption[]> {
 export default defineConfig(async () => ({
 	plugins: [tailwindcss(), sveltekit(), ...(await devMock())],
 	optimizeDeps: {
-		exclude: ['@facile/muse', '@facile/encre']
+		exclude: ['@facile/muse', '@facile/encre', '@facile/blob']
 	},
 	resolve: process.env.VITEST ? { conditions: ['browser'] } : {},
 	server: {

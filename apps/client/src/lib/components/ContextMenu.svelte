@@ -6,6 +6,8 @@
 		tone?: 'default' | 'danger';
 		disabled?: boolean;
 		onselect?: () => void;
+		/** Opens these entries in place of the menu, with a way back. */
+		items?: ContextMenuItem[];
 	};
 
 	export type ContextMenuSeparator = { separator: true };
@@ -24,6 +26,10 @@
 	import { Icon } from '@facile/muse';
 
 	let { x, y, items, onclose }: ContextMenuProps = $props();
+
+	let submenu = $state<ContextMenuAction | null>(null);
+	const back = $derived<ContextMenuAction | null>(submenu ? { label: `‹ ${submenu.label}` } : null);
+	const shown = $derived<ContextMenuItem[]>(submenu && back ? [back, ...(submenu.items ?? [])] : items);
 
 	let menuEl = $state<HTMLElement | null>(null);
 	let measured = $state<{ width: number; height: number } | null>(null);
@@ -57,6 +63,10 @@
 
 	function choose(action: ContextMenuAction) {
 		if (action.disabled) return;
+		if (action === back || action.items) {
+			submenu = action === back ? null : action;
+			return;
+		}
 		action.onselect?.();
 		onclose();
 	}
@@ -95,6 +105,8 @@
 	});
 
 	$effect(() => {
+		void shown;
+		measure();
 		const focusable = getFocusable();
 		if (focusable.length > 0) {
 			focusable[0]?.focus();
@@ -149,7 +161,7 @@
 	{onkeydown}
 	oncontextmenu={(event) => event.preventDefault()}
 >
-	{#each items as item, i (i)}
+	{#each shown as item, i (`${submenu?.label ?? ''}:${i}`)}
 		{#if 'separator' in item}
 			<div role="separator" class="my-1 h-px bg-fc-surface"></div>
 		{:else}
@@ -174,6 +186,7 @@
 				>
 					{#if item.icon}<Icon icon={item.icon} size={15} />{/if}
 					<span class="min-w-0 flex-1 truncate">{item.label}</span>
+					{#if item.items}<span aria-hidden="true" class="text-fc-fg-muted">›</span>{/if}
 				</button>
 			{/if}
 		{/if}

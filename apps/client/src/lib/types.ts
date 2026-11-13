@@ -100,3 +100,28 @@ export interface Placement {
 	parent_id: string | null;
 	before: string | null;
 }
+
+/** What `POST /documents/{id}/attachments` answers: `src` is what an image or file block holds. */
+export interface Uploaded {
+	id: string;
+	url: string;
+	src: string;
+	name: string;
+	size: number;
+	mime: string;
+}
+
+/** What `GET /embeds/resolve` answers for a link card. */
+export interface EmbedAnswer {
+	title: string;
+	description: string | null;
+	image: string | null;
+	site: string | null;
+	favicon: string | null;
+}
+
+/** The person's Bulle assistant, from `GET /assistant`. */
+export interface AssistantProfile {
+	name: string;
+	accent: string | null;
+}

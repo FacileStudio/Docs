@@ -10,12 +10,7 @@ afterEach(() => {
 	document.body.innerHTML = '';
 });
 
-function renderMenu(props: {
-	x: number;
-	y: number;
-	items: ContextMenuItem[];
-	onclose: () => void;
-}) {
+function renderMenu(props: { x: number; y: number; items: ContextMenuItem[]; onclose: () => void }) {
 	const target = document.createElement('div');
 	document.body.append(target);
 	app = mount(ContextMenu, { target, props });
@@ -76,11 +71,7 @@ describe('ContextMenu', () => {
 
 	it('navigates with ArrowDown and ArrowUp', async () => {
 		const onclose = vi.fn();
-		const items: ContextMenuItem[] = [
-			{ label: 'First' },
-			{ label: 'Second' },
-			{ label: 'Third' }
-		];
+		const items: ContextMenuItem[] = [{ label: 'First' }, { label: 'Second' }, { label: 'Third' }];
 		const target = renderMenu({ x: 50, y: 50, items, onclose });
 		const focusables = Array.from(target.querySelectorAll<HTMLElement>('[role="menuitem"]'));
 
@@ -112,5 +103,25 @@ describe('ContextMenu', () => {
 		await tick();
 
 		expect(onclose).toHaveBeenCalledOnce();
+	});
+
+	it('opens a submenu in place and comes back from it', async () => {
+		const pick = vi.fn();
+		const onclose = vi.fn();
+		const items: ContextMenuItem[] = [{ label: 'Transformer en', items: [{ label: 'Titre 1', onselect: pick }] }];
+		const target = renderMenu({ x: 0, y: 0, items, onclose });
+		const entries = () => Array.from(target.querySelectorAll<HTMLButtonElement>('[role="menuitem"]'));
+		entries()[0].click();
+		flushSync();
+		expect(entries().map((entry) => entry.textContent?.trim())).toEqual(['‹ Transformer en', 'Titre 1']);
+		entries()[0].click();
+		flushSync();
+		expect(entries()[0].textContent).toContain('Transformer en');
+		entries()[0].click();
+		flushSync();
+		entries()[1].click();
+		expect(pick).toHaveBeenCalledOnce();
+		expect(onclose).toHaveBeenCalledOnce();
+		await tick();
 	});
 });
