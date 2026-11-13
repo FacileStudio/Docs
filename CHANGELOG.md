@@ -4,6 +4,13 @@ All notable changes to Docs. Versions follow SemVer.
 
 ## [Unreleased]
 
+## [0.8.2] - 2026-11-13
+
+### Fixed
+
+- Buttons, `role="button"` elements, the tree toggles, the icon chooser and the home cards show
+  a pointer cursor, and a disabled button shows `not-allowed`
+
 ## [0.8.1] - 2026-11-13
 
 ### Fixed
