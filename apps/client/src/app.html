@@ -26,6 +26,17 @@
 		<meta name="twitter:title" content="Docs · Documents written together" />
 		<meta name="twitter:description" content="A tree of pages per space, real-time co-editing, search and PDF export. Agents read and write them over MCP." />
 		<meta name="twitter:image" content="https://docs.facile.studio/og-image.png" />
+		<script>
+			(function () {
+				if (location.hostname !== 'docs.facile.studio') return;
+				if (location.pathname.indexOf('/s/') === 0) return;
+				var s = document.createElement('script');
+				s.async = true;
+				s.src = 'https://vision.facile.studio/s.js';
+				s.setAttribute('data-mask', '');
+				document.head.appendChild(s);
+			})();
+		</script>
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">

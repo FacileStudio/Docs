@@ -14,10 +14,10 @@ pub const FRAMED: [&str; 6] = [
 
 /// The CSP sources Docs' client needs on top of tronc's policy: the inline scripts
 /// adapter-static writes, hashed from the build the binary serves, `'wasm-unsafe-eval'` for
-/// encre's markdown WebAssembly, and the suite apps it frames. tronc's `img-src` already takes
-/// any `https:` image, so unfurled previews and favicons need nothing more.
+/// encre's markdown WebAssembly, Vision's tracker script, and the suite apps it frames. tronc's
+/// `img-src` already takes any `https:` image, so unfurled previews and favicons need nothing more.
 pub fn sources(client_dir: &Path) -> Sources {
-    let mut scripts = vec!["'wasm-unsafe-eval'".to_owned()];
+    let mut scripts = vec!["'wasm-unsafe-eval'".to_owned(), "https://vision.facile.studio".to_owned()];
     if tronc::spa::available(client_dir) {
         match tronc::spa::inline_script_hashes(client_dir) {
             Ok(hashes) => scripts.extend(hashes),
