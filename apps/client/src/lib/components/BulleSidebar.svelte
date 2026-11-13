@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { Icon, IconButton, icons } from '@facile/muse';
 	import { untrack } from 'svelte';
 	import { BULLE_ORIGIN, bulleMessage, embedUrl, trustedOrigin, type PageContext } from '$lib/bulle';
 
@@ -59,7 +58,12 @@
 	}
 </script>
 
-<svelte:window {onmessage} />
+<svelte:window
+	{onmessage}
+	onkeydown={(event) => {
+		if (open && event.key === 'Escape' && !event.defaultPrevented) open = false;
+	}}
+/>
 
 {#if shown}
 	<aside
@@ -68,11 +72,6 @@
 		aria-label={assistant}
 		data-testid="bulle-sidebar"
 	>
-		<div class="flex h-12 shrink-0 items-center justify-end px-2">
-			<IconButton variant="ghost" aria-label="Fermer {assistant}" onclick={() => (open = false)}>
-				<Icon icon={icons.close} size={18} />
-			</IconButton>
-		</div>
 		<iframe bind:this={frame} title={assistant} {src} class="min-h-0 w-full flex-1 bg-fc-bg" allow="clipboard-write"
 		></iframe>
 	</aside>

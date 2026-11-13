@@ -58,10 +58,16 @@ test('a selection shows the bubble menu and asks the assistant in the sidebar', 
 	expect(src.startsWith(BULLE)).toBe(true);
 	const query = new URL(src).searchParams;
 	expect([query.get('app'), query.get('id'), query.get('url')]).toEqual(['docs', id, `${stack.base}/d/${id}`]);
-	await alice.getByRole('button', { name: 'Fermer Bulle' }).click();
-	await alice.getByTestId('bulle-sidebar').waitFor({ state: 'hidden' });
+	const sidebar = alice.getByTestId('bulle-sidebar');
+	expect(await sidebar.getAttribute('aria-label')).toBe('Bulle');
+	expect(await sidebar.getByRole('button').count()).toBe(0);
+	await alice.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+	await alice.keyboard.press('Escape');
+	await sidebar.waitFor({ state: 'hidden' });
 	await alice.getByTestId('bulle-toggle').click();
-	await alice.getByTestId('bulle-sidebar').waitFor();
+	await sidebar.waitFor();
+	await alice.getByTestId('bulle-toggle').click();
+	await sidebar.waitFor({ state: 'hidden' });
 	await alice.context().close();
 }, 60_000);
 

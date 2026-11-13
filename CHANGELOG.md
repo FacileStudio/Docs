@@ -14,6 +14,11 @@ All notable changes to Docs. Versions follow SemVer.
 - A menu opened with the mouse no longer draws a focus ring on its first entry; the ring shows
   only when the keyboard moves through it
 
+### Removed
+
+- The Docs close button above the Bulle sidebar: Bulle's own header closes it. Escape outside the
+  editor and the header button still close it too
+
 ## [0.9.0] - 2026-11-13
 
 ### Added
