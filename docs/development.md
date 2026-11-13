@@ -69,7 +69,7 @@ mise run e2e
 ```
 
 `scripts/e2e.sh` builds the debug `api` binary and the test-only `e2e_seed` example, builds the
-client, then runs `apps/client/e2e/docs.e2e.ts` with `bun test` and `playwright-core` driving
+client, then runs `apps/client/e2e/docs.e2e.ts` and `minimal.e2e.ts` with `bun test` and `playwright-core` driving
 headless Chromium. No Registre: `e2e/stack.ts` recreates the `docs_e2e` database on the local
 Postgres (`E2E_ADMIN_URL`, default port 5654), starts the API on a free port with
 `CLIENT_DIR=apps/client/build` and a scratch `DATA_DIR`, then runs `e2e_seed`. The seed writes
@@ -82,7 +82,12 @@ The run proves, against the real API and rooms: each member sees the other's typ
 second; a callout inserted by one appears for the other; a pasted image uploads and renders for
 both; a reload keeps text, callout and image, and the stored markdown holds them; the PDF export
 downloads a real PDF; a share link opens the public page with no cookie, image included; carol
-gets "Document introuvable" and a 404.
+gets "Document introuvable" and a 404. `minimal.e2e.ts` proves the editor has no toolbar and the
+page icon no tile; `/` turns a paragraph into a heading; a selection shows "Transformer en" and
+"Demander à Bulle", which opens the Bulle sidebar framing `bulle.facile.studio/embed/chat` for the
+page; a right click opens the Docs menu; a pasted https link becomes an embed; presence is hidden
+alone and shows the other person once they join. Wait for the room with `[data-connection="live"]`
+on the page header.
 
 It needs Playwright's Chromium headless shell under `~/.cache/ms-playwright` (revision 1248 for
 `playwright-core` 1.64.1): `cd apps/client && bunx playwright-core install chromium-headless-shell`.

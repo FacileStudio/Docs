@@ -2,6 +2,7 @@ import { afterAll, beforeAll, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { chromium, type Browser, type Page } from 'playwright-core';
 import { editor, imageLoaded, insertCallout, live, pasteImage, pasteMarkdown, seesWithin, typeAtEnd } from './editor';
+import { apiAs, pageAs as pagesAs } from './pages';
 import { startStack, type Person, type Stack } from './stack';
 
 let stack: Stack;
@@ -17,23 +18,8 @@ afterAll(async () => {
 	await stack?.stop();
 });
 
-async function pageAs(who: Person | null, path: string): Promise<Page> {
-	const context = await browser.newContext({ acceptDownloads: true, locale: 'fr-FR' });
-	if (who) await context.addCookies([{ name: 'session', value: stack.cookies[who], url: stack.base }]);
-	const page = await context.newPage();
-	await page.goto(`${stack.base}${path}`);
-	return page;
-}
-
-async function api<T>(path: string, init: { method?: string; body?: unknown } = {}): Promise<T> {
-	const answer = await fetch(`${stack.base}/api${path}`, {
-		method: init.method ?? 'GET',
-		headers: { cookie: `session=${stack.cookies.alice}`, 'content-type': 'application/json', 'x-facile-csrf': '1' },
-		body: init.body === undefined ? undefined : JSON.stringify(init.body)
-	});
-	if (!answer.ok) throw new Error(`${path}: ${answer.status} ${await answer.text()}`);
-	return (await answer.json()) as T;
-}
+const pageAs = (who: Person | null, path: string) => pagesAs(browser, stack, who, path);
+const api = <T>(path: string, init: { method?: string; body?: unknown } = {}) => apiAs<T>(stack, path, init);
 
 const SCHEMA_2 = [
 	'````columns',
