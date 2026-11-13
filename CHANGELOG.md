@@ -4,6 +4,8 @@ All notable changes to Docs. Versions follow SemVer.
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-11-13
+
 ### Changed
 
 - muse v0.21.2: every icon-only control shows a muse tooltip, including the tree's fold toggle,
