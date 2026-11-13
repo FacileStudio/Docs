@@ -10,11 +10,12 @@
 	import { tree } from '$lib/tree.svelte';
 	import type { TreeNode } from '$lib/types';
 	import ContextMenu, { type ContextMenuItem } from '$lib/components/ContextMenu.svelte';
+	import { fromKeyboard } from '$lib/menu-keys';
 	import DocumentPreview from '$lib/components/DocumentPreview.svelte';
 
 	let picker: HTMLInputElement | undefined = $state();
 	let busy = $state(false);
-	let contextMenu = $state<{ x: number; y: number; node: TreeNode } | null>(null);
+	let contextMenu = $state<{ x: number; y: number; keyboard: boolean; node: TreeNode } | null>(null);
 	let gridEl = $state<HTMLElement | null>(null);
 	let cols = $state(1);
 
@@ -161,7 +162,7 @@
 					class="group/doc relative"
 					oncontextmenu={(e) => {
 						e.preventDefault();
-						contextMenu = { x: e.clientX, y: e.clientY, node };
+						contextMenu = { x: e.clientX, y: e.clientY, keyboard: fromKeyboard(e), node };
 					}}
 				>
 					<Card
@@ -213,6 +214,7 @@
 	<ContextMenu
 		x={contextMenu.x}
 		y={contextMenu.y}
+		keyboard={contextMenu.keyboard}
 		items={actions(contextMenu.node)}
 		onclose={() => (contextMenu = null)}
 	/>

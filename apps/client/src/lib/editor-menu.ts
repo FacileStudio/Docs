@@ -1,5 +1,6 @@
 import { blockCommands, labelsFor, type Labels } from '@facile/encre';
 import type { Editor } from '@tiptap/core';
+import { blockIcon, icons } from './icons';
 import type { ContextMenuAction, ContextMenuItem } from './components/ContextMenu.svelte';
 
 /** The encre editor methods the right-click menu calls. */
@@ -37,39 +38,54 @@ function running(editor: MenuEditor, go: (chain: Chain) => Chain): () => void {
 	};
 }
 
+type Run = (go: (chain: Chain) => Chain) => () => void;
+
+function tableMenu(run: Run): ContextMenuAction {
+	return {
+		label: LABELS.table,
+		icon: icons.table,
+		items: [
+			{ label: LABELS.addRow, icon: icons.plus, onselect: run((c) => c.addRowAfter()) },
+			{ label: LABELS.addColumn, icon: icons.plus, onselect: run((c) => c.addColumnAfter()) },
+			{ label: LABELS.deleteRow, icon: icons.remove, tone: 'danger', onselect: run((c) => c.deleteRow()) },
+			{ label: LABELS.deleteColumn, icon: icons.remove, tone: 'danger', onselect: run((c) => c.deleteColumn()) },
+			{ label: LABELS.deleteTable, icon: icons.remove, tone: 'danger', onselect: run((c) => c.deleteTable()) }
+		]
+	};
+}
+
+function columnsMenu(run: Run): ContextMenuAction {
+	return {
+		label: LABELS.columns,
+		icon: icons.columns,
+		items: [
+			{ label: LABELS.addSide, icon: icons.plus, onselect: run((c) => c.addSide()) },
+			{ label: LABELS.deleteSide, icon: icons.remove, tone: 'danger', onselect: run((c) => c.deleteSide()) }
+		]
+	};
+}
+
+function badgeMenu(run: Run): ContextMenuAction {
+	const tones = Object.keys(LABELS.tones) as (keyof Labels['tones'])[];
+	return {
+		label: LABELS.badge,
+		icon: icons.badge,
+		items: tones.map((tone) => ({
+			label: LABELS.tones[tone],
+			icon: icons.badge,
+			onselect: run((c) => c.setBadge({ tone }))
+		}))
+	};
+}
+
 function structure(context: MenuContext): ContextMenuAction[] {
 	const tiptap = context.editor.instance();
 	if (!tiptap || !context.editable) return [];
-	const run = (go: (chain: Chain) => Chain) => running(context.editor, go);
+	const run: Run = (go) => running(context.editor, go);
 	const found: ContextMenuAction[] = [];
-	if (tiptap.isActive('table')) {
-		found.push({
-			label: LABELS.table,
-			items: [
-				{ label: LABELS.addRow, onselect: run((c) => c.addRowAfter()) },
-				{ label: LABELS.addColumn, onselect: run((c) => c.addColumnAfter()) },
-				{ label: LABELS.deleteRow, tone: 'danger', onselect: run((c) => c.deleteRow()) },
-				{ label: LABELS.deleteColumn, tone: 'danger', onselect: run((c) => c.deleteColumn()) },
-				{ label: LABELS.deleteTable, tone: 'danger', onselect: run((c) => c.deleteTable()) }
-			]
-		});
-	}
-	if (tiptap.isActive('columns')) {
-		found.push({
-			label: LABELS.columns,
-			items: [
-				{ label: LABELS.addSide, onselect: run((c) => c.addSide()) },
-				{ label: LABELS.deleteSide, tone: 'danger', onselect: run((c) => c.deleteSide()) }
-			]
-		});
-	}
-	if (tiptap.isActive('badge')) {
-		const tones = Object.keys(LABELS.tones) as (keyof Labels['tones'])[];
-		found.push({
-			label: LABELS.badge,
-			items: tones.map((tone) => ({ label: LABELS.tones[tone], onselect: run((c) => c.setBadge({ tone })) }))
-		});
-	}
+	if (tiptap.isActive('table')) found.push(tableMenu(run));
+	if (tiptap.isActive('columns')) found.push(columnsMenu(run));
+	if (tiptap.isActive('badge')) found.push(badgeMenu(run));
 	return found;
 }
 
@@ -78,19 +94,27 @@ export function editorMenu(context: MenuContext): ContextMenuItem[] {
 	const { editor, editable, empty } = context;
 	const turn = blockCommands(LABELS).map((command) => ({
 		label: command.label,
+		icon: blockIcon(command.id),
 		onselect: () => void editor.turnInto(command.id)
 	}));
 	return [
-		{ label: 'Couper', disabled: !editable || empty, onselect: () => context.oncopy(true) },
-		{ label: 'Copier', disabled: empty, onselect: () => context.oncopy(false) },
-		{ label: 'Coller', disabled: !editable, onselect: context.onpaste },
+		{ label: 'Couper', icon: icons.cut, disabled: !editable || empty, onselect: () => context.oncopy(true) },
+		{ label: 'Copier', icon: icons.copy, disabled: empty, onselect: () => context.oncopy(false) },
+		{ label: 'Coller', icon: icons.paste, disabled: !editable, onselect: context.onpaste },
 		{ separator: true },
-		{ label: 'Transformer en', disabled: !editable, items: turn },
+		{ label: 'Transformer en', icon: icons.refresh, disabled: !editable, items: turn },
 		...structure(context),
-		{ label: 'Dupliquer', disabled: !editable, onselect: () => void editor.duplicateBlock() },
-		{ label: 'Supprimer', tone: 'danger', disabled: !editable, onselect: () => void editor.deleteSelection() },
+		{ label: 'Dupliquer', icon: icons.copy, disabled: !editable, onselect: () => void editor.duplicateBlock() },
+		{
+			label: 'Supprimer',
+			icon: icons.remove,
+			tone: 'danger',
+			disabled: !editable,
+			onselect: () => void editor.deleteSelection()
+		},
 		{
 			label: 'Copier le lien du bloc',
+			icon: icons.link,
 			onselect: () => {
 				if (editor.copyBlockLink(context.pageUrl)) context.oncopied();
 			}

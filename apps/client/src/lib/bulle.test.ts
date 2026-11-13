@@ -93,6 +93,16 @@ describe('editorMenu', () => {
 		expect(editor.copyBlockLink).toHaveBeenCalledWith('https://docs.facile.studio/d/d1');
 	});
 
+	it('draws an icon, or the assistant blob, on every entry', () => {
+		const entries = editorMenu({ ...base, editable: true }).flatMap((item) =>
+			'separator' in item ? [] : [item, ...(item.items ?? [])]
+		);
+		for (const item of entries) {
+			if (!('separator' in item)) expect(item.icon ?? item.blob, item.label).toBeTruthy();
+		}
+		expect(entries.length).toBeGreaterThan(15);
+	});
+
 	it('disables writes on a read-only page', () => {
 		const items = editorMenu({ ...base, editable: false, empty: true, markdown: '' });
 		expect(labels(items)).toContain('Couper (off)');

@@ -6,6 +6,7 @@
 	import { tree } from '$lib/tree.svelte';
 	import type { TreeNode } from '$lib/types';
 	import ContextMenu, { type ContextMenuItem } from './ContextMenu.svelte';
+	import { fromKeyboard } from '$lib/menu-keys';
 	import TreeRow from './TreeRow.svelte';
 
 	const roots = $derived(tree.children(null));
@@ -14,7 +15,7 @@
 	const edit = $derived(access !== 'viewer');
 
 	let rootOver = $state(false);
-	let contextMenu = $state<{ x: number; y: number; node: TreeNode } | null>(null);
+	let contextMenu = $state<{ x: number; y: number; keyboard: boolean; node: TreeNode } | null>(null);
 
 	async function create() {
 		try {
@@ -124,7 +125,7 @@
 						{manage}
 						{edit}
 						oncontextmenu={(event, targetNode) => {
-							contextMenu = { x: event.clientX, y: event.clientY, node: targetNode };
+							contextMenu = { x: event.clientX, y: event.clientY, keyboard: fromKeyboard(event), node: targetNode };
 						}}
 					/>
 				{/each}
@@ -152,6 +153,7 @@
 	<ContextMenu
 		x={contextMenu.x}
 		y={contextMenu.y}
+		keyboard={contextMenu.keyboard}
 		items={menuItems}
 		onclose={() => (contextMenu = null)}
 	/>

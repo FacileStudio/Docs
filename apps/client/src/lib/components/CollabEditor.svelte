@@ -10,6 +10,7 @@
 	import { MAX_BYTES, fileUploader, uploader } from '$lib/images';
 	import { EDITOR_COPY, browserLocale } from '$lib/locale';
 	import ContextMenu, { type ContextMenuItem } from './ContextMenu.svelte';
+	import { fromKeyboard } from '$lib/menu-keys';
 
 	let {
 		documentId,
@@ -39,7 +40,7 @@
 	const copy = EDITOR_COPY[locale];
 
 	let editor = $state<ReturnType<typeof Editor>>();
-	let menu = $state<{ x: number; y: number; items: ContextMenuItem[] } | null>(null);
+	let menu = $state<{ x: number; y: number; keyboard: boolean; items: ContextMenuItem[] } | null>(null);
 
 	provider = collab.provider;
 
@@ -86,7 +87,7 @@
 			oncopy: clipboard,
 			oncopied: () => toast.success('Lien du bloc copié')
 		});
-		menu = { x: info.event.clientX, y: info.event.clientY, items };
+		menu = { x: info.event.clientX, y: info.event.clientY, keyboard: fromKeyboard(info.event), items };
 	}
 </script>
 
@@ -124,5 +125,5 @@
 </Editor>
 
 {#if menu}
-	<ContextMenu x={menu.x} y={menu.y} items={menu.items} onclose={() => (menu = null)} />
+	<ContextMenu x={menu.x} y={menu.y} keyboard={menu.keyboard} items={menu.items} onclose={() => (menu = null)} />
 {/if}

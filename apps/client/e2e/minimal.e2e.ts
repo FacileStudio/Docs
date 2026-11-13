@@ -80,6 +80,28 @@ test('a right click opens the Docs menu, and a pasted link becomes an embed', as
 	await alice.context().close();
 }, 60_000);
 
+test('the right-click menu opens without a ring and arrows scroll its last entry into view', async () => {
+	const { alice } = await page('Clavier');
+	await typeAtEnd(alice, 'Bloc à transformer');
+	await editor(alice).getByText('Bloc à transformer').click({ button: 'right' });
+	const menu = alice.getByRole('menu');
+	await menu.getByRole('menuitem', { name: 'Transformer en' }).click();
+	const entries = menu.getByRole('menuitem');
+	const count = await entries.count();
+	expect(await alice.evaluate(() => document.activeElement?.getAttribute('role'))).toBe('menu');
+	for (let i = 0; i < count; i++) await alice.keyboard.press('ArrowDown');
+	const last = entries.last();
+	expect(await last.evaluate((node) => node === document.activeElement)).toBe(true);
+	const visible = await last.evaluate((node) => {
+		const box = node.getBoundingClientRect();
+		const frame = (node.closest('[role="menu"]') as HTMLElement).getBoundingClientRect();
+		return box.top >= frame.top && box.bottom <= frame.bottom && box.bottom <= window.innerHeight;
+	});
+	expect(visible).toBe(true);
+	expect(await menu.evaluate((node) => node.scrollTop > 0)).toBe(true);
+	await alice.context().close();
+}, 60_000);
+
 test('presence shows nobody alone and the other person once they join', async () => {
 	const { id, alice } = await page('Ensemble');
 	const region = alice.getByRole('group', { name: 'Personnes connectées' });
