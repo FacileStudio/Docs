@@ -1,78 +1,108 @@
 use tronc::mcp::{Annotations, Confirmations, Tool, ToolSpec, tool};
 
 use super::format::described;
-use super::{read, replace, write};
+use super::{manage, read, replace, write};
 use crate::state::AppState;
 
-fn spec(name: &str, title: &str, what: &str, annotations: Annotations) -> ToolSpec {
-    ToolSpec { name: name.into(), title: title.into(), description: described(what), annotations: Some(annotations) }
+const SEARCH: &str = "Full-text search over the pages of one space (or your personal pages). Call it to find a \
+page by its words when you do not know its id.";
+const LIST_TREE: &str = "The live pages of one space (or your personal pages), parents first, siblings in order, \
+50 at a time by default. Call it to browse a space or to find a parent for docs_create or docs_move; pass \
+next_cursor as cursor for the next window.";
+const LIST_TRASH: &str = "The trashed pages of one space (or your personal pages), 50 at a time by default. Call \
+it to find a page to bring back with docs_restore. The trash empties itself 30 days after a page went in.";
+const READ: &str = "One page as Facile Markdown, with its version. Call it before you rewrite a page.";
+const READ_BLOCKS: &str = "Top-level blocks with their ids. Call it before docs_edit, which addresses blocks by id.";
+const CREATE: &str = "A new page from Facile Markdown. Call it once per page: each call adds another page.";
+const EDIT: &str = "Applies operations (not replace_all) in order, all or nothing. Call it for any change inside a \
+page; replace_block and delete_block remove what they replace.";
+const REPLACE: &str = "Overwrites the whole page. Call it only when most of the page changes; the person confirms \
+first and nothing changes until they do.";
+const UPDATE: &str = "Changes a page's title, its icon or both; the content is not touched. Call it to rename a \
+page. The old title is replaced.";
+const MOVE: &str = "Moves a page and its subtree under another parent of the same space, or to the top, before a \
+given sibling or last. Call it to reorganize the tree; a page cannot move into another space or inside itself.";
+const TRASH: &str = "Moves a page and its subtree to the trash and closes it for everyone editing it. Call it to \
+delete a page; docs_restore brings it back within 30 days, after which it is gone for good.";
+const RESTORE: &str = "Brings a trashed page back with what was trashed with it; it goes to the top when its \
+parent is still in the trash. Call it to undo docs_trash. A page that is not in the trash is answered unchanged.";
+
+fn spec(name: &str, title: &str, description: impl Into<String>, annotations: Annotations) -> ToolSpec {
+    ToolSpec { name: name.into(), title: title.into(), description: description.into(), annotations: Some(annotations) }
 }
 
-fn reading() -> Annotations {
-    Annotations { read_only: true, destructive: false, idempotent: true, open_world: false }
+fn hints(read_only: bool, destructive: bool, idempotent: bool) -> Annotations {
+    Annotations { read_only, destructive, idempotent, open_world: false }
 }
 
-fn writing(destructive: bool) -> Annotations {
-    Annotations { read_only: false, destructive, idempotent: false, open_world: false }
+fn browse(state: &AppState) -> Vec<Tool> {
+    let (a, b, c) = (state.clone(), state.clone(), state.clone());
+    vec![
+        tool(spec("docs_search", "Search pages", SEARCH, hints(true, false, true)), move |call, input| {
+            read::search(a.clone(), call, input)
+        }),
+        tool(spec("docs_list_tree", "List the page tree", LIST_TREE, hints(true, false, true)), move |call, input| {
+            read::list_tree(b.clone(), call, input)
+        }),
+        tool(spec("docs_list_trash", "List the trash", LIST_TRASH, hints(true, false, true)), move |call, input| {
+            manage::list_trash(c.clone(), call, input)
+        }),
+    ]
 }
 
 fn reads(state: &AppState) -> Vec<Tool> {
-    let (a, b, c, d) = (state.clone(), state.clone(), state.clone(), state.clone());
+    let (a, b) = (state.clone(), state.clone());
     vec![
+        tool(spec("docs_read", "Read a page", described(READ), hints(true, false, true)), move |call, input| {
+            read::read(a.clone(), call, input)
+        }),
         tool(
-            spec(
-                "docs_search",
-                "Search pages",
-                "Full-text search over the pages of one space (or your personal pages).",
-                reading(),
-            ),
-            move |call, input| read::search(a.clone(), call, input),
-        ),
-        tool(
-            spec(
-                "docs_list_tree",
-                "List the page tree",
-                "Every page of one space, parents first, siblings in order.",
-                reading(),
-            ),
-            move |call, input| read::list_tree(b.clone(), call, input),
-        ),
-        tool(
-            spec("docs_read", "Read a page", "One page as Facile Markdown, with its version.", reading()),
-            move |call, input| read::read(c.clone(), call, input),
-        ),
-        tool(
-            spec("docs_read_blocks", "Read a page's blocks", "Top-level blocks with ids, for docs_edit.", reading()),
-            move |call, input| read::read_blocks(d.clone(), call, input),
+            spec("docs_read_blocks", "Read a page's blocks", described(READ_BLOCKS), hints(true, false, true)),
+            move |call, input| read::read_blocks(b.clone(), call, input),
         ),
     ]
 }
 
-/// The seven tools.
-pub fn all(state: &AppState, confirmations: &Confirmations) -> Vec<Tool> {
+fn content(state: &AppState, confirmations: &Confirmations) -> Vec<Tool> {
     let (a, b, c, confirm) = (state.clone(), state.clone(), state.clone(), confirmations.clone());
-    let mut tools = reads(state);
-    tools.push(tool(
-        spec("docs_create", "Create a page", "A new page from Facile Markdown.", writing(false)),
-        move |call, input| write::create(a.clone(), call, input),
-    ));
-    tools.push(tool(
-        spec(
-            "docs_edit",
-            "Edit a page",
-            "Applies operations (not replace_all) in order, all or nothing.",
-            writing(false),
+    vec![
+        tool(
+            spec("docs_create", "Create a page", described(CREATE), hints(false, false, false)),
+            move |call, input| write::create(a.clone(), call, input),
         ),
-        move |call, input| write::edit(b.clone(), call, input),
-    ));
-    tools.push(tool(
-        spec(
-            "docs_replace",
-            "Replace a whole page",
-            "Overwrites the whole page. The person confirms first; nothing changes until they do.",
-            writing(true),
+        tool(spec("docs_edit", "Edit a page", described(EDIT), hints(false, true, false)), move |call, input| {
+            write::edit(b.clone(), call, input)
+        }),
+        tool(
+            spec("docs_replace", "Replace a whole page", described(REPLACE), hints(false, true, false)),
+            move |call, input| replace::replace(c.clone(), confirm.clone(), call, input),
         ),
-        move |call, input| replace::replace(c.clone(), confirm.clone(), call, input),
-    ));
+    ]
+}
+
+fn organize(state: &AppState) -> Vec<Tool> {
+    let (a, b, c, d) = (state.clone(), state.clone(), state.clone(), state.clone());
+    vec![
+        tool(spec("docs_update", "Rename a page", UPDATE, hints(false, true, true)), move |call, input| {
+            manage::update(a.clone(), call, input)
+        }),
+        tool(spec("docs_move", "Move a page", MOVE, hints(false, true, true)), move |call, input| {
+            manage::move_to(b.clone(), call, input)
+        }),
+        tool(spec("docs_trash", "Trash a page", TRASH, hints(false, true, true)), move |call, input| {
+            manage::trash(c.clone(), call, input)
+        }),
+        tool(spec("docs_restore", "Restore a page", RESTORE, hints(false, false, true)), move |call, input| {
+            manage::restore(d.clone(), call, input)
+        }),
+    ]
+}
+
+/// The twelve tools.
+pub fn all(state: &AppState, confirmations: &Confirmations) -> Vec<Tool> {
+    let mut tools = browse(state);
+    tools.extend(reads(state));
+    tools.extend(content(state, confirmations));
+    tools.extend(organize(state));
     tools
 }

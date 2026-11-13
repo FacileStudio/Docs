@@ -1,6 +1,8 @@
-//! `/mcp`: seven curated tools over the documents, `docs_replace` behind a confirmation.
+//! `/mcp`: twelve curated tools over the documents, `docs_replace` behind a confirmation.
 
 pub mod format;
+mod manage;
+mod page;
 mod read;
 mod replace;
 mod tools;
