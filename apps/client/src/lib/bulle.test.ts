@@ -86,6 +86,7 @@ describe('editorMenu', () => {
 		]);
 		const ask = items.at(-1);
 		if (ask && !('separator' in ask)) ask.onselect?.();
+		expect(ask && !('separator' in ask) && ask.blob).toBe('Nova');
 		expect(base.onask).toHaveBeenCalledWith('Bonjour');
 		const link = items[7];
 		if (!('separator' in link)) link.onselect?.();

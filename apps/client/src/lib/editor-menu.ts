@@ -98,6 +98,7 @@ export function editorMenu(context: MenuContext): ContextMenuItem[] {
 		{ separator: true },
 		{
 			label: `Demander à ${context.assistant}`,
+			blob: context.assistant,
 			disabled: context.markdown.trim() === '',
 			onselect: () => context.onask(context.markdown)
 		}

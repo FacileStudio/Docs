@@ -2,6 +2,8 @@
 	export type ContextMenuAction = {
 		label: string;
 		icon?: string;
+		/** Draws this assistant's Bulle blob in place of an icon. */
+		blob?: string;
 		href?: string;
 		tone?: 'default' | 'danger';
 		disabled?: boolean;
@@ -23,6 +25,7 @@
 </script>
 
 <script lang="ts">
+	import { Blob } from '@facile/blob';
 	import { Icon } from '@facile/muse';
 
 	let { x, y, items, onclose }: ContextMenuProps = $props();
@@ -184,7 +187,7 @@
 					class="flex min-h-8 w-full cursor-pointer items-center gap-2 rounded-fc-sm px-2.5 py-1.5 text-left text-fc-sm transition-colors hover:bg-fc-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fc-ring disabled:cursor-not-allowed disabled:opacity-50 {tone}"
 					onclick={() => choose(item)}
 				>
-					{#if item.icon}<Icon icon={item.icon} size={15} />{/if}
+					{#if item.blob}<Blob name={item.blob} size={16} />{:else if item.icon}<Icon icon={item.icon} size={15} />{/if}
 					<span class="min-w-0 flex-1 truncate">{item.label}</span>
 					{#if item.items}<span aria-hidden="true" class="text-fc-fg-muted">›</span>{/if}
 				</button>
