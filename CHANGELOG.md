@@ -4,6 +4,8 @@ All notable changes to Docs. Versions follow SemVer.
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-11-13
+
 ### Fixed
 
 - A room that opens a page whose stored Yjs state is from an older encre schema migrates it
