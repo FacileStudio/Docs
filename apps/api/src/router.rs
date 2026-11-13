@@ -3,7 +3,7 @@ use axum::routing::get;
 use tronc::health::{self, Check};
 
 use crate::auth::{self, Kits};
-use crate::modules::{attachments, documents, export, pending, rooms, search, share, spaces};
+use crate::modules::{assistant, attachments, documents, embeds, export, pending, rooms, search, share, spaces};
 use crate::state::AppState;
 
 async fn api_not_found() -> tronc::Error {
@@ -19,14 +19,16 @@ fn protected(kits: &Kits) -> Router<AppState> {
         .merge(rooms::routes())
         .merge(export::routes())
         .merge(pending::routes())
+        .merge(embeds::routes())
+        .merge(assistant::routes())
         .route_layer(kits.sessions.require_auth())
 }
 
-fn api(kits: &Kits) -> Router<AppState> {
+fn api(kits: &Kits, file_max: usize) -> Router<AppState> {
     let mut api = Router::new()
         .merge(auth::routes(kits))
         .merge(protected(kits))
-        .merge(attachments::routes(&kits.sessions))
+        .merge(attachments::routes(&kits.sessions, file_max))
         .merge(share::public_routes());
     if let Some(syncer) = &kits.syncer {
         api = api.route("/registre/sync", syncer.nudge_route());
@@ -43,7 +45,7 @@ pub fn build_router(state: AppState, kits: &Kits, mcp: Option<tronc::mcp::Option
     let pool = state.pool.clone();
     let mut root = health::routes(vec![Check::db(pool)])
         .route("/version", get(crate::version::handler))
-        .nest("/api", api(kits))
+        .nest("/api", api(kits, state.attachment_max))
         .with_state(state.clone())
         .merge(tronc::apiref::routes(&crate::apiref::config(), crate::apiref::document())?);
     if let (Some(options), Some(confirmations)) = (mcp, state.confirmations.clone()) {

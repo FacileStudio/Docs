@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Button, Popover } from '@facile/muse';
+	import { Button } from '@facile/muse';
 	import { PICKABLE } from '$lib/icons';
 	import PageGlyph from './PageGlyph.svelte';
 
@@ -10,6 +10,23 @@
 	}: { value: string; disabled?: boolean; onpick: (icon: string) => void } = $props();
 
 	let open = $state(false);
+	let root = $state<HTMLElement | null>(null);
+
+	$effect(() => {
+		if (!open) return;
+		const outside = (event: PointerEvent) => {
+			if (root && event.target instanceof Node && !root.contains(event.target)) open = false;
+		};
+		const escape = (event: KeyboardEvent) => {
+			if (event.key === 'Escape') open = false;
+		};
+		window.addEventListener('pointerdown', outside, true);
+		window.addEventListener('keydown', escape);
+		return () => {
+			window.removeEventListener('pointerdown', outside, true);
+			window.removeEventListener('keydown', escape);
+		};
+	});
 
 	const choices = [
 		'📄',
@@ -41,43 +58,61 @@
 </script>
 
 {#if disabled}
-	<span class="flex size-11 items-center justify-center"><PageGlyph {value} size={28} /></span>
+	<span class="flex size-11 shrink-0 items-center justify-center" data-testid="page-icon"
+		><PageGlyph {value} size={28} /></span
+	>
 {:else}
-	<Popover label="Icône du document" bind:open align="start">
-		{#snippet trigger()}
-			<span class="flex size-8 items-center justify-center"><PageGlyph {value} size={28} /></span>
-		{/snippet}
-		<div class="flex w-64 flex-col gap-2 p-2">
-			<div class="grid grid-cols-5 gap-1">
-				{#each PICKABLE as choice (choice.value)}
-					<button
-						type="button"
-						class="flex size-11 cursor-pointer items-center justify-center rounded-fc-md text-fc-fg hover:bg-fc-surface {choice.value ===
-						value
-							? 'bg-fc-surface'
-							: ''}"
-						aria-label="Choisir {choice.label}"
-						aria-pressed={choice.value === value}
-						onclick={() => pick(choice.value)}
-					>
-						<PageGlyph value={choice.value} size={20} />
-					</button>
-				{/each}
-				{#each choices as icon (icon)}
-					<button
-						type="button"
-						class="flex size-11 cursor-pointer items-center justify-center rounded-fc-md text-xl hover:bg-fc-surface {icon === value
-							? 'bg-fc-surface'
-							: ''}"
-						aria-label="Choisir {icon}"
-						aria-pressed={icon === value}
-						onclick={() => pick(icon)}
-					>
-						{icon}
-					</button>
-				{/each}
+	<div bind:this={root} class="relative shrink-0">
+		<button
+			type="button"
+			class="flex size-11 cursor-pointer items-center justify-center rounded-fc-md text-fc-fg hover:bg-fc-surface
+				focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fc-ring"
+			aria-label="Icône du document"
+			aria-haspopup="dialog"
+			aria-expanded={open}
+			data-testid="page-icon"
+			onclick={() => (open = !open)}
+		>
+			<PageGlyph {value} size={28} />
+		</button>
+		{#if open}
+			<div
+				role="dialog"
+				aria-label="Icône du document"
+				class="absolute top-full left-0 z-30 mt-1 flex w-64 flex-col gap-2 rounded-fc-md bg-fc-bg p-2 text-fc-fg shadow-lg"
+			>
+				<div class="grid grid-cols-5 gap-1">
+					{#each PICKABLE as choice (choice.value)}
+						<button
+							type="button"
+							class="flex size-11 cursor-pointer items-center justify-center rounded-fc-md text-fc-fg hover:bg-fc-surface {choice.value ===
+							value
+								? 'bg-fc-surface'
+								: ''}"
+							aria-label="Choisir {choice.label}"
+							aria-pressed={choice.value === value}
+							onclick={() => pick(choice.value)}
+						>
+							<PageGlyph value={choice.value} size={20} />
+						</button>
+					{/each}
+					{#each choices as icon (icon)}
+						<button
+							type="button"
+							class="flex size-11 cursor-pointer items-center justify-center rounded-fc-md text-xl hover:bg-fc-surface {icon ===
+							value
+								? 'bg-fc-surface'
+								: ''}"
+							aria-label="Choisir {icon}"
+							aria-pressed={icon === value}
+							onclick={() => pick(icon)}
+						>
+							{icon}
+						</button>
+					{/each}
+				</div>
+				{#if value}<Button variant="ghost" size="sm" onclick={() => pick('')}>Retirer l'icône</Button>{/if}
 			</div>
-			{#if value}<Button variant="ghost" size="sm" onclick={() => pick('')}>Retirer l'icône</Button>{/if}
-		</div>
-	</Popover>
+		{/if}
+	</div>
 {/if}

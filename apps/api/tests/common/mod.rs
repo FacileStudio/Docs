@@ -69,6 +69,10 @@ pub async fn app_with(pool: PgPool, vars: &[(&str, &str)]) -> App {
         markdown_max: config.markdown_max,
         confirmations: None,
         socket_recheck: std::time::Duration::from_millis(200),
+        attachment_max: config.attachment_max,
+        previews: Default::default(),
+        exchanger: kits.exchanger.clone(),
+        bulle: config.bulle.clone(),
     };
     let router = api::router::build_router(state.clone(), &kits, None).unwrap();
     App { router, state, kits, pool }

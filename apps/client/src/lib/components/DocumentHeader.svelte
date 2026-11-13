@@ -1,7 +1,19 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { Presence, type AwarenessProvider } from '@facile/encre';
-	import { Button, ConfirmModal, Icon, IconButton, Menu, StatusDot, icons, toast } from '@facile/muse';
+	import { Blob } from '@facile/blob';
+	import { caretColor, peers, type AwarenessProvider } from '@facile/encre';
+	import {
+		Button,
+		ConfirmModal,
+		ConnectionHint,
+		Icon,
+		IconButton,
+		Menu,
+		Presence,
+		icons,
+		toast,
+		type PresencePeer
+	} from '@facile/muse';
 	import { backend } from '$lib/backend';
 	import { shareIcon } from '$lib/brand';
 	import type { Connection } from '$lib/collab';
@@ -14,8 +26,43 @@
 	let {
 		doc = $bindable(),
 		connection,
-		provider
-	}: { doc: DocumentRecord; connection: Connection; provider?: AwarenessProvider } = $props();
+		provider,
+		assistant,
+		bulleOpen,
+		ontogglebulle
+	}: {
+		doc: DocumentRecord;
+		connection: Connection;
+		provider?: AwarenessProvider;
+		/** The name of the person's Bulle assistant. */
+		assistant: string;
+		bulleOpen: boolean;
+		ontogglebulle: () => void;
+	} = $props();
+
+	let others = $state<PresencePeer[]>([]);
+
+	$effect(() => {
+		if (!provider) return;
+		const source = provider;
+		const refresh = () => {
+			const self = source.awareness.clientID;
+			others = peers(source)
+				.filter((peer) => peer.clientId !== self)
+				.map((peer) => ({
+					id: peer.clientId,
+					name: peer.name,
+					color: peer.color ?? caretColor(peer.clientId),
+					picture: peer.avatar
+				}));
+		};
+		refresh();
+		source.awareness.on('change', refresh);
+		return () => {
+			source.awareness.off('change', refresh);
+			others = [];
+		};
+	});
 
 	const access = $derived(doc.access);
 	const locked = $derived(access === 'viewer' || doc.trashed_at !== null);
@@ -27,15 +74,6 @@
 	$effect(() => {
 		title = doc.title;
 	});
-
-	const status = $derived(
-		{
-			live: { tone: 'success', label: 'En ligne', pulse: false },
-			connecting: { tone: 'warning', label: 'Reconnexion…', pulse: true },
-			offline: { tone: 'danger', label: 'Hors ligne : vos modifications partiront au retour du réseau', pulse: false },
-			stopped: { tone: 'danger', label: 'Déconnecté', pulse: false }
-		}[connection] as { tone: 'success' | 'warning' | 'danger'; label: string; pulse: boolean }
-	);
 
 	async function save(patch: { title?: string; icon?: string }) {
 		try {
@@ -75,14 +113,27 @@
 	]);
 </script>
 
-<header class="flex flex-col gap-3">
+<header class="flex flex-col gap-3" data-connection={connection}>
 	<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
 		<div class="flex min-w-0 flex-1 items-center gap-2">
-			<StatusDot tone={status.tone} label={status.label} pulse={status.pulse} />
-			{#if provider}<Presence {provider} />{/if}
+			<ConnectionHint state={connection} />
+			<Presence peers={others} />
 			{#if access === 'viewer'}<span class="text-fc-xs whitespace-nowrap text-fc-fg-muted">Lecture seule</span>{/if}
 		</div>
 		<div class="ml-auto flex shrink-0 items-center gap-1">
+			<button
+				type="button"
+				class="flex min-h-11 items-center gap-2 rounded-fc-md px-2 text-fc-sm text-fc-fg hover:bg-fc-surface
+					focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fc-ring
+					{bulleOpen ? 'bg-fc-surface' : ''}"
+				aria-pressed={bulleOpen}
+				aria-label="Ouvrir {assistant}"
+				data-testid="bulle-toggle"
+				onclick={ontogglebulle}
+			>
+				<Blob name={assistant} size={24} />
+				<span class="hidden sm:inline">{assistant}</span>
+			</button>
 			<Button variant="ghost" size="sm" icon={icons.history} href="/d/{doc.id}/history" aria-label="Historique"
 				><span class="hidden sm:inline">Historique</span></Button
 			>
@@ -123,8 +174,7 @@
 					if (event.key !== 'Enter') return;
 					event.preventDefault();
 					(event.currentTarget as HTMLTextAreaElement).blur();
-				}}
-			></textarea>
+				}}></textarea>
 		</div>
 	</div>
 </header>

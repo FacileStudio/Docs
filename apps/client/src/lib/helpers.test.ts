@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { backend } from './backend';
 import { connectionOf, socketBase, stopOf } from './collab';
-import { uploader } from './images';
+import { fileUploader, uploader } from './images';
 import { titleOf } from './import';
 import { scopeAccess } from './session.svelte';
 import { snippetParts } from './snippet';
@@ -47,10 +47,26 @@ describe('helpers', () => {
 	});
 
 	it('uploads an image to the page and names it after the file', async () => {
-		const upload = vi.spyOn(backend, 'upload').mockResolvedValue({ id: 'a1', url: '/api/attachments/a1' });
+		const src = '/api/attachments/a1';
+		const answer = { id: 'a1', url: src, src, name: 'Schéma v2.png', size: 1, mime: 'image/png' };
+		const upload = vi.spyOn(backend, 'upload').mockResolvedValue(answer);
 		const file = new File(['a'], 'Schéma v2.png', { type: 'image/png' });
-		await expect(uploader('d1')(file)).resolves.toEqual({ src: '/api/attachments/a1', alt: 'Schéma v2' });
+		await expect(uploader('d1')(file)).resolves.toEqual({ src, alt: 'Schéma v2' });
 		expect(upload).toHaveBeenCalledWith('d1', file);
+		upload.mockRestore();
+	});
+
+	it('uploads any other file and answers its file block', async () => {
+		const src = '/api/attachments/f1';
+		const answer = { id: 'f1', url: src, src, name: 'devis.zip', size: 12, mime: 'application/zip' };
+		const upload = vi.spyOn(backend, 'upload').mockResolvedValue(answer);
+		const file = new File(['a'], 'devis.zip', { type: 'application/zip' });
+		await expect(fileUploader('d1')(file)).resolves.toEqual({
+			src,
+			name: 'devis.zip',
+			size: 12,
+			mime: 'application/zip'
+		});
 		upload.mockRestore();
 	});
 

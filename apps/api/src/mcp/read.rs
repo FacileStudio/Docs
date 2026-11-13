@@ -2,6 +2,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use tronc::mcp::{Answer, Call, RESULT_BUDGET, ToolError, clip};
 
+use super::page::{Listed, Window, window};
 use super::user;
 use crate::extract::id;
 use crate::modules::documents::access::{self, Access};
@@ -46,6 +47,10 @@ pub async fn search(state: AppState, call: Call, input: SearchIn) -> Result<Answ
 pub struct TreeIn {
     /// The space; personal pages when absent.
     pub space_id: Option<String>,
+    /// The `next_cursor` of the previous call; the first pages when absent.
+    pub cursor: Option<String>,
+    /// How many pages, 1 to 200; 50 when absent.
+    pub limit: Option<usize>,
 }
 
 /// One page of the tree.
@@ -56,21 +61,16 @@ pub struct Page {
     pub title: String,
 }
 
-/// What `docs_list_tree` answers, parents before children, siblings in order.
-#[derive(Serialize, JsonSchema)]
-pub struct TreeOut {
-    pub pages: Vec<Page>,
-}
-
-/// `docs_list_tree`: every live page of a scope.
-pub async fn list_tree(state: AppState, call: Call, input: TreeIn) -> Result<Answer<TreeOut>, ToolError> {
+/// `docs_list_tree`: the live pages of a scope, parents before children, siblings in order, a
+/// window at a time.
+pub async fn list_tree(state: AppState, call: Call, input: TreeIn) -> Result<Answer<Listed<Page>>, ToolError> {
     let query = ScopeQuery { space_id: input.space_id, trashed: false };
     let entries = tree::list(&state, user(&call)?, &query).await?;
     let pages = entries
         .into_iter()
         .map(|e| Page { id: e.id.to_string(), parent_id: e.parent_id.map(|p| p.to_string()), title: e.title })
         .collect();
-    Ok(TreeOut { pages }.into())
+    Ok(window(pages, Window { cursor: input.cursor, limit: input.limit })?.into())
 }
 
 /// `docs_read` and `docs_read_blocks`.

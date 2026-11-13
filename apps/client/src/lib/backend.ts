@@ -1,6 +1,9 @@
 import type { EncreNode } from '@facile/encre';
 import type {
+	AssistantProfile,
 	Created,
+	EmbedAnswer,
+	Uploaded,
 	DocumentRecord,
 	PendingAction,
 	Placement,
@@ -140,7 +143,7 @@ export const backend = {
 	upload: (id: string, file: File) => {
 		const form = new FormData();
 		form.append('file', file);
-		return request<Created>(doc(id, '/attachments'), {
+		return request<Uploaded>(doc(id, '/attachments'), {
 			method: 'POST',
 			body: form
 		});
@@ -151,6 +154,8 @@ export const backend = {
 		const path = childId ? `${base}/documents/${encodeURIComponent(childId)}` : base;
 		return request<PublicPage>(path, { credentials: 'omit' });
 	},
+	resolveEmbed: (url: string) => request<EmbedAnswer>(`/embeds/resolve?${new URLSearchParams({ url })}`),
+	assistant: () => request<AssistantProfile>('/assistant'),
 	actions: () => request<PendingAction[]>('/mcp/actions'),
 	confirmAction: (id: string) => request<{ status: string }>(action(id, 'confirm'), send('POST')),
 	dismissAction: (id: string) => request<void>(action(id, 'dismiss'), send('POST'))

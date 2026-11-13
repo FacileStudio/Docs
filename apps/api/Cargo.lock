@@ -113,6 +113,7 @@ dependencies = [
  "tower",
  "tracing",
  "tronc",
+ "url",
  "utoipa",
  "uuid",
  "yrs",
@@ -1016,8 +1017,8 @@ dependencies = [
 
 [[package]]
 name = "encre"
-version = "0.10.0"
-source = "git+https://github.com/FacileStudio/encre?tag=v0.10.0#7bf6c33e84c31785e6e4772719f0f240d844a4b6"
+version = "0.11.0"
+source = "git+https://github.com/FacileStudio/encre?tag=v0.11.0#8cf807b1564a86c46ee9a511d58176d253eecfb8"
 dependencies = [
  "include_dir",
  "pulldown-cmark",

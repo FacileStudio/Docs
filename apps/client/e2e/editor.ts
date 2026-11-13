@@ -6,7 +6,7 @@ export const editor = (page: Page) => page.locator('.ProseMirror');
 /** Waits until the page shows its editor and the room is live. */
 export async function live(page: Page): Promise<void> {
 	await editor(page).waitFor();
-	await page.getByText('En ligne').waitFor({ timeout: 15_000 });
+	await page.locator('[data-connection="live"]').waitFor({ timeout: 15_000 });
 }
 
 /** Waits for `text` in the editor and answers how long it took, in milliseconds. */

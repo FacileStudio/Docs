@@ -36,10 +36,10 @@ With `?format=markdown`, `markdown` (Facile Markdown) replaces `content`. `versi
 on every content change; `replace_all` checks it.
 
 `schema_version` is the encre schema the stored `content` was written in. Every page Docs creates
-or rewrites is stored at encre's current schema, 2 since encre v0.8.0 (highlight, badges and
-status dots, diagrams, columns, stat subtitles). A schema 1 row keeps its `content` and
-`schema_version` byte for byte until its next write; encre migrates 1 to 2 as the identity, so a
-schema 2 reader reads it as is.
+or rewrites is stored at encre's current schema: 3 since encre v0.11.0 (`embed` and `file`
+blocks), 2 since v0.8.0 (highlight, badges and status dots, diagrams, columns, stat subtitles).
+An older row keeps its `content` and `schema_version` byte for byte until its next write; encre
+migrates 1 and 2 to 3 as the identity, so a schema 3 reader reads it as is.
 
 `TreeEntry`: `{"id","parent_id","position","title","icon","updated_at"}`, plus `trashed_at` in
 the trash listing.
@@ -119,11 +119,29 @@ nothing.
 
 | Method and path | Body | Answer | Access |
 |---|---|---|---|
-| `POST /documents/{id}/attachments` | multipart `file`, ≤ 20 MiB | 201 `{"id","url":"/api/attachments/{id}"}` | editor |
+| `POST /documents/{id}/attachments` | multipart `file`: an image or PDF ≤ 20 MiB, any other file ≤ `ATTACHMENT_MAX_BYTES` (25 MiB) | 201 `{"id","url","src","name","size","mime"}`, `src` = `url` = `/api/attachments/{id}` | editor |
 | `GET /attachments/{id}` | `?share=<token>` optional | the bytes, `Content-Security-Policy: sandbox`, `X-Content-Type-Options: nosniff` | viewer of its page, or a share token covering it |
 
-The type is sniffed from the bytes: PNG, JPEG, GIF, WebP and PDF are accepted; SVG and all else
-are 400.
+PNG, JPEG, GIF, WebP and PDF are typed by their magic number and served inline. Any other file
+keeps the `Content-Type` of its multipart part, lowercased and without parameters; a malformed
+type, HTML, XML, SVG, JavaScript, or an inline type the bytes do not have is stored as
+`application/octet-stream`. Those files are served with
+`Content-Disposition: attachment; filename*=UTF-8''<percent-encoded name>`, never inline.
+
+## Embeds and the assistant
+
+| Method and path | Answer | Access |
+|---|---|---|
+| `GET /embeds/resolve?url=<https link>` | `{"title","description","image","site","favicon"}`; `title` is the host when the page says nothing | session |
+| `GET /assistant` | `{"name","accent"}` of the person's Bulle assistant; `{"name":"Bulle","accent":null}` on any failure, never 402 | session |
+
+`/embeds/resolve` reads Open Graph, Twitter and `<title>` tags. The link must be `https`, at most
+2048 characters, without credentials, and not a private, loopback, link-local or metadata IP
+literal (400 otherwise). The fetch resolves names to public addresses only, follows at most 3
+redirects that pass the same checks, stops after 5 s and reads at most 1 MiB of HTML. A failed
+fetch answers the bare host. `image` and `favicon` are `https` only. One answer per URL is
+reused for 5 minutes. `/assistant` exchanges the session for a Bulle token (`bulle.read`) through
+Registre and calls Bulle's `GET /api/assistant`.
 
 ## Sharing
 
@@ -174,22 +192,31 @@ A viewer's (or a trashed page's) updates are dropped; its awareness is relayed. 
 `MCP_RESOURCE` is set. Registre access tokens for that resource, scopes `docs.read` and
 `docs.write`; metadata at `/.well-known/oauth-protected-resource/mcp`. Never plan-gated. Every
 description embeds encre's Facile Markdown and operations short form (`src/mcp/format.rs`, from
-encre v0.9.0 `docs/agents.md`: highlight, badges, status, GFM alerts, diagram fences, columns)
+encre v0.11.0 `docs/agents.md`: highlight, badges, status, GFM alerts, diagram fences, columns, plus the `embed` and `file` fences)
 and the limits above. A refusal reaches the agent as an `isError` result with the same message.
 
 | Tool | Scope | Arguments | Answer |
 |---|---|---|---|
 | `docs_search` | read | `query`, `space_id`? | `{"results":[{"id","title","snippet"}]}` |
-| `docs_list_tree` | read | `space_id`? | `{"pages":[{"id","parent_id","title"}]}` |
+| `docs_list_tree` | read | `space_id`?, `cursor`?, `limit`? (1 to 200, 50) | `{"pages":[{"id","parent_id","title"}],"next_cursor"?,"total"}` |
+| `docs_list_trash` | read | `space_id`?, `cursor`?, `limit`? (1 to 200, 50) | `{"pages":[{"id","parent_id","title","trashed_at"}],"next_cursor"?,"total"}` |
 | `docs_read` | read | `document_id` | `{"id","title","version","markdown","truncated"}` |
 | `docs_read_blocks` | read | `document_id`, `range`? | `{"version","blocks":[{"id","type","markdown"}]}` |
 | `docs_create` | write | `title`, `markdown`, `space_id`?, `parent_id`? | `{"id","version","markdown","saved"}` |
-| `docs_edit` | write | `document_id`, `ops` (no `replace_all`) | `{"id","version","markdown","saved"}` |
+| `docs_edit` | write, destructive | `document_id`, `ops` (no `replace_all`) | `{"id","version","markdown","saved"}` |
 | `docs_replace` | write, destructive | `document_id`, `markdown`, `expect_version` | `{"status","confirm_url"?}` |
+| `docs_update` | write, destructive, idempotent | `document_id`, `title`?, `icon`? | `{"id","parent_id","title","icon","version","trashed"}` |
+| `docs_move` | write, destructive, idempotent | `document_id`, `parent_id`?, `before_id`? | the same |
+| `docs_trash` | write, destructive, idempotent | `document_id` | the same |
+| `docs_restore` | write, idempotent | `document_id` | the same |
 
 `docs_replace` asks the person through MRTR elicitation when the client can; otherwise it
 answers `pending_confirmation` with a `confirm_url` to `https://<host>/pending?action=<id>`.
-Edits run in the page's room, so open editors see them live. There is no delete tool.
+Edits run in the page's room, so open editors see them live. `docs_trash` is the delete tool:
+the page and its subtree stay in the trash for 30 days, and `docs_restore` brings them back; a
+page that is not in the trash is answered unchanged. Only the REST API deletes for good. Every
+tool authorizes through `modules/documents/access.rs`, as the REST routes do. A list cursor is
+the opaque `next_cursor` of the previous call.
 
 ## Command line
 

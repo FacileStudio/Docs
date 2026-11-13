@@ -29,8 +29,9 @@
 		"vitest": "^5.1.0"
 	},
 	"dependencies": {
-		"@facile/encre": "github:FacileStudio/encre#v0.10.0",
-		"@facile/muse": "github:FacileStudio/muse#v0.17.1",
+		"@facile/blob": "github:FacileStudio/blob#v0.2.2",
+		"@facile/encre": "github:FacileStudio/encre#v0.11.0",
+		"@facile/muse": "github:FacileStudio/muse#v0.20.0",
 		"mermaid": "^12.3.0",
 		"y-protocols": "^1.0.7",
 		"y-websocket": "^3.1.0",

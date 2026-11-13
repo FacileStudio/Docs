@@ -13,5 +13,5 @@ fi
   cd apps/client
   [ -d node_modules ] || bun install --frozen-lockfile >/dev/null
   bun run build
-  bun test --timeout 180000 ./e2e/docs.e2e.ts
+  bun test --timeout 180000 ./e2e/docs.e2e.ts ./e2e/minimal.e2e.ts
 )

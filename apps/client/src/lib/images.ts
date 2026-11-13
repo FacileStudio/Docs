@@ -1,4 +1,4 @@
-import type { UploadedImage } from '@facile/encre';
+import type { FileAttrs, UploadedImage } from '@facile/encre';
 import { backend } from './backend';
 
 /** The largest attachment the API accepts. */
@@ -12,7 +12,15 @@ export function altOf(name: string): string {
 /** The encre `onimage` hook of document `documentId`: uploads the file to its attachments. */
 export function uploader(documentId: string): (file: File) => Promise<UploadedImage> {
 	return async (file) => {
-		const { url } = await backend.upload(documentId, file);
-		return { src: url, alt: altOf(file.name) };
+		const { src } = await backend.upload(documentId, file);
+		return { src, alt: altOf(file.name) };
+	};
+}
+
+/** The encre `onfile` hook of document `documentId`: uploads any file and answers its file block. */
+export function fileUploader(documentId: string): (file: File) => Promise<FileAttrs> {
+	return async (file) => {
+		const { src, name, size, mime } = await backend.upload(documentId, file);
+		return { src, name, size, mime };
 	};
 }
