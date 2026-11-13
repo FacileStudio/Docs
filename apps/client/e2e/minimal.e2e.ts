@@ -58,10 +58,16 @@ test('a selection shows the bubble menu and asks the assistant in the sidebar', 
 	expect(src.startsWith(BULLE)).toBe(true);
 	const query = new URL(src).searchParams;
 	expect([query.get('app'), query.get('id'), query.get('url')]).toEqual(['docs', id, `${stack.base}/d/${id}`]);
-	await alice.getByRole('button', { name: 'Fermer Bulle' }).click();
-	await alice.getByTestId('bulle-sidebar').waitFor({ state: 'hidden' });
+	const sidebar = alice.getByTestId('bulle-sidebar');
+	expect(await sidebar.getAttribute('aria-label')).toBe('Bulle');
+	expect(await sidebar.getByRole('button').count()).toBe(0);
+	await alice.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+	await alice.keyboard.press('Escape');
+	await sidebar.waitFor({ state: 'hidden' });
 	await alice.getByTestId('bulle-toggle').click();
-	await alice.getByTestId('bulle-sidebar').waitFor();
+	await sidebar.waitFor();
+	await alice.getByTestId('bulle-toggle').click();
+	await sidebar.waitFor({ state: 'hidden' });
 	await alice.context().close();
 }, 60_000);
 
@@ -77,6 +83,28 @@ test('a right click opens the Docs menu, and a pasted link becomes an embed', as
 	await alice.keyboard.press('Enter');
 	await pasteMarkdown(alice, 'https://example.com/article');
 	await editor(alice).locator('[data-encre-node="embed"]').waitFor({ timeout: 5_000 });
+	await alice.context().close();
+}, 60_000);
+
+test('the right-click menu opens without a ring and arrows scroll its last entry into view', async () => {
+	const { alice } = await page('Clavier');
+	await typeAtEnd(alice, 'Bloc à transformer');
+	await editor(alice).getByText('Bloc à transformer').click({ button: 'right' });
+	const menu = alice.getByRole('menu');
+	await menu.getByRole('menuitem', { name: 'Transformer en' }).click();
+	const entries = menu.getByRole('menuitem');
+	const count = await entries.count();
+	expect(await alice.evaluate(() => document.activeElement?.getAttribute('role'))).toBe('menu');
+	for (let i = 0; i < count; i++) await alice.keyboard.press('ArrowDown');
+	const last = entries.last();
+	expect(await last.evaluate((node) => node === document.activeElement)).toBe(true);
+	const visible = await last.evaluate((node) => {
+		const box = node.getBoundingClientRect();
+		const frame = (node.closest('[role="menu"]') as HTMLElement).getBoundingClientRect();
+		return box.top >= frame.top && box.bottom <= frame.bottom && box.bottom <= window.innerHeight;
+	});
+	expect(visible).toBe(true);
+	expect(await menu.evaluate((node) => node.scrollTop > 0)).toBe(true);
 	await alice.context().close();
 }, 60_000);
 

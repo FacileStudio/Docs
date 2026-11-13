@@ -20,18 +20,25 @@
 		x: number;
 		y: number;
 		items: ContextMenuItem[];
+		/** Opened from the keyboard: the first entry takes focus and shows its ring. */
+		keyboard?: boolean;
 		onclose: () => void;
 	}
 </script>
 
 <script lang="ts">
 	import { Blob } from '@facile/blob';
-	import { Icon } from '@facile/muse';
+	import { Icon, icons } from '@facile/muse';
+	import { untrack } from 'svelte';
+	import { step } from '$lib/menu-keys';
 
-	let { x, y, items, onclose }: ContextMenuProps = $props();
+	let { x, y, items, keyboard = false, onclose }: ContextMenuProps = $props();
+
+	let keys = $state(untrack(() => keyboard));
+	const opener = typeof document !== 'undefined' ? (document.activeElement as HTMLElement | null) : null;
 
 	let submenu = $state<ContextMenuAction | null>(null);
-	const back = $derived<ContextMenuAction | null>(submenu ? { label: `‹ ${submenu.label}` } : null);
+	const back = $derived<ContextMenuAction | null>(submenu ? { label: submenu.label, icon: icons.chevronLeft } : null);
 	const shown = $derived<ContextMenuItem[]>(submenu && back ? [back, ...(submenu.items ?? [])] : items);
 
 	let menuEl = $state<HTMLElement | null>(null);
@@ -74,33 +81,31 @@
 		onclose();
 	}
 
+	function dismiss() {
+		onclose();
+		opener?.focus({ preventScroll: true });
+	}
+
 	function onkeydown(event: KeyboardEvent) {
+		keys = true;
 		if (event.key === 'Escape') {
 			event.preventDefault();
 			event.stopPropagation();
-			onclose();
+			dismiss();
 			return;
 		}
 		const focusable = getFocusable();
-		if (focusable.length === 0) return;
 		const current = document.activeElement as HTMLElement | null;
-		const index = current ? focusable.indexOf(current) : -1;
-
 		if (event.key === ' ' && current?.tagName === 'A') {
 			event.preventDefault();
 			current.click();
 			return;
 		}
-
-		if (event.key === 'ArrowDown') {
-			event.preventDefault();
-			const next = index < focusable.length - 1 ? index + 1 : 0;
-			focusable[next]?.focus();
-		} else if (event.key === 'ArrowUp') {
-			event.preventDefault();
-			const prev = index > 0 ? index - 1 : focusable.length - 1;
-			focusable[prev]?.focus();
-		}
+		const next = step(event.key, current ? focusable.indexOf(current) : -1, focusable.length);
+		if (next === null || focusable.length === 0) return;
+		event.preventDefault();
+		focusable[next].focus({ preventScroll: true });
+		focusable[next].scrollIntoView?.({ block: 'nearest' });
 	}
 
 	$effect(() => {
@@ -110,12 +115,9 @@
 	$effect(() => {
 		void shown;
 		measure();
-		const focusable = getFocusable();
-		if (focusable.length > 0) {
-			focusable[0]?.focus();
-		} else {
-			menuEl?.focus();
-		}
+		const first = getFocusable()[0];
+		if (untrack(() => keys) && first) first.focus();
+		else menuEl?.focus();
 	});
 
 	$effect(() => {
@@ -125,14 +127,9 @@
 				onclose();
 			}
 		}
-		function onWindowScroll() {
+		function onWindowScroll(event: Event) {
+			if (menuEl && event.target instanceof Node && menuEl.contains(event.target)) return;
 			onclose();
-		}
-		function onWindowKeydown(event: KeyboardEvent) {
-			if (event.key === 'Escape') {
-				event.preventDefault();
-				onclose();
-			}
 		}
 		function onWindowResize() {
 			winWidth = window.innerWidth;
@@ -142,13 +139,11 @@
 
 		window.addEventListener('pointerdown', onPointerDown, true);
 		window.addEventListener('scroll', onWindowScroll, { capture: true, passive: true });
-		window.addEventListener('keydown', onWindowKeydown);
 		window.addEventListener('resize', onWindowResize);
 
 		return () => {
 			window.removeEventListener('pointerdown', onPointerDown, true);
 			window.removeEventListener('scroll', onWindowScroll, true);
-			window.removeEventListener('keydown', onWindowKeydown);
 			window.removeEventListener('resize', onWindowResize);
 		};
 	});
@@ -158,10 +153,11 @@
 	bind:this={menuEl}
 	role="menu"
 	tabindex="-1"
-	class="fixed z-50 min-w-48 rounded-fc-md bg-fc-component p-1 text-fc-fg shadow-lg outline-none"
+	class="fixed z-50 max-h-[min(28rem,calc(100dvh-1rem))] min-w-48 overflow-y-auto overscroll-contain rounded-fc-md bg-fc-component p-1 text-fc-fg shadow-lg outline-none"
 	style:left="{left}px"
 	style:top="{top}px"
 	{onkeydown}
+	onpointerdown={() => (keys = false)}
 	oncontextmenu={(event) => event.preventDefault()}
 >
 	{#each shown as item, i (`${submenu?.label ?? ''}:${i}`)}

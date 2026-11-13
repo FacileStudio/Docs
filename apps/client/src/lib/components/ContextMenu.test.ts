@@ -10,7 +10,13 @@ afterEach(() => {
 	document.body.innerHTML = '';
 });
 
-function renderMenu(props: { x: number; y: number; items: ContextMenuItem[]; onclose: () => void }) {
+function renderMenu(props: {
+	x: number;
+	y: number;
+	items: ContextMenuItem[];
+	keyboard?: boolean;
+	onclose: () => void;
+}) {
 	const target = document.createElement('div');
 	document.body.append(target);
 	app = mount(ContextMenu, { target, props });
@@ -69,6 +75,19 @@ describe('ContextMenu', () => {
 		expect(onclose).toHaveBeenCalledOnce();
 	});
 
+	it('focuses the menu, not its first entry, when a pointer opens it', () => {
+		const target = renderMenu({ x: 0, y: 0, items: [{ label: 'First' }, { label: 'Second' }], onclose: vi.fn() });
+		const menu = target.querySelector<HTMLElement>('[role="menu"]');
+		expect(document.activeElement).toBe(menu);
+		menu?.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+		expect(document.activeElement?.textContent).toContain('First');
+	});
+
+	it('focuses the first entry when the keyboard opens it', () => {
+		renderMenu({ x: 0, y: 0, items: [{ label: 'First' }], keyboard: true, onclose: vi.fn() });
+		expect(document.activeElement?.textContent).toContain('First');
+	});
+
 	it('navigates with ArrowDown and ArrowUp', async () => {
 		const onclose = vi.fn();
 		const items: ContextMenuItem[] = [{ label: 'First' }, { label: 'Second' }, { label: 'Third' }];
@@ -92,6 +111,32 @@ describe('ContextMenu', () => {
 		expect(document.activeElement).toBe(focusables[2]);
 	});
 
+	it('jumps with Home and End, skips disabled entries and scrolls the active one into view', () => {
+		const items: ContextMenuItem[] = [{ label: 'First' }, { label: 'Second' }, { label: 'Off', disabled: true }];
+		const target = renderMenu({ x: 0, y: 0, items, onclose: vi.fn() });
+		const scrolled = vi.fn();
+		for (const entry of target.querySelectorAll<HTMLElement>('[role="menuitem"]')) entry.scrollIntoView = scrolled;
+		const menu = target.querySelector<HTMLElement>('[role="menu"]');
+		menu?.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
+		expect(document.activeElement?.textContent).toContain('Second');
+		expect(scrolled).toHaveBeenCalledWith({ block: 'nearest' });
+		menu?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true }));
+		expect(document.activeElement?.textContent).toContain('First');
+	});
+
+	it('gives focus back to the opener on Escape', () => {
+		const opener = document.createElement('button');
+		document.body.append(opener);
+		opener.focus();
+		const onclose = vi.fn();
+		const target = renderMenu({ x: 0, y: 0, items: [{ label: 'First' }], onclose });
+		target
+			.querySelector('[role="menu"]')
+			?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+		expect(onclose).toHaveBeenCalledOnce();
+		expect(document.activeElement).toBe(opener);
+	});
+
 	it('closes when pointerdown happens outside', async () => {
 		const onclose = vi.fn();
 		const items: ContextMenuItem[] = [{ label: 'Inside' }];
@@ -113,7 +158,7 @@ describe('ContextMenu', () => {
 		const entries = () => Array.from(target.querySelectorAll<HTMLButtonElement>('[role="menuitem"]'));
 		entries()[0].click();
 		flushSync();
-		expect(entries().map((entry) => entry.textContent?.trim())).toEqual(['‹ Transformer en', 'Titre 1']);
+		expect(entries().map((entry) => entry.textContent?.trim())).toEqual(['Transformer en', 'Titre 1']);
 		entries()[0].click();
 		flushSync();
 		expect(entries()[0].textContent).toContain('Transformer en');

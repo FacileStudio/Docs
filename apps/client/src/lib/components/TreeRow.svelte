@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { Icon, IconButton, icons, toast } from '@facile/muse';
+	import { Icon, IconButton, Tooltip, icons, toast } from '@facile/muse';
 	import { tree } from '$lib/tree.svelte';
 	import { canPlace, dropPlacement, shiftPlacement, type DropZone, type Shift } from '$lib/tree-order';
 	import type { Placement, TreeNode } from '$lib/types';
@@ -100,14 +100,18 @@
 		{#if zone === 'after'}<span
 				class="pointer-events-none absolute inset-x-1 bottom-0 h-0.5 rounded-fc-pill bg-fc-accent"
 			></span>{/if}
-		<button
-			type="button"
-			class="flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-fc-sm {kids.length ? '' : 'invisible'}"
-			aria-label={open ? 'Replier' : 'Déplier'}
-			onclick={() => tree.toggle(node.id)}
-		>
-			<Icon icon={open ? icons.chevronDown : icons.arrow} size={14} />
-		</button>
+		<Tooltip text={open ? 'Replier' : 'Déplier'} describe={false} disabled={!kids.length} class="contents">
+			<button
+				type="button"
+				class="flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-fc-sm {kids.length
+					? ''
+					: 'invisible'}"
+				aria-label={open ? 'Replier' : 'Déplier'}
+				onclick={() => tree.toggle(node.id)}
+			>
+				<Icon icon={open ? icons.chevronDown : icons.arrow} size={14} />
+			</button>
+		</Tooltip>
 		<a
 			href="/d/{node.id}"
 			class="flex min-w-0 flex-1 items-center gap-2 rounded-fc-sm py-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fc-ring"
