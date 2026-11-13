@@ -4,6 +4,15 @@ All notable changes to Docs. Versions follow SemVer.
 
 ## [Unreleased]
 
+## [0.9.3] - 2026-11-14
+
+### Added
+
+- The client loads Vision's tracker (`https://vision.facile.studio/s.js`, with `data-mask`) on
+  `docs.facile.studio` only, and not on a share page (`/s/<token>`), whose path is the share
+  token. The API adds `https://vision.facile.studio` to `script-src`; the loader's hash comes
+  with the other inline scripts of the build
+
 ## [0.9.2] - 2026-11-13
 
 ### Changed
