@@ -6,7 +6,7 @@ All notable changes to Docs. Versions follow SemVer.
 
 ### Changed
 
-- muse v0.21.0: every icon-only control shows a muse tooltip, including the tree's fold toggle,
+- muse v0.21.2: every icon-only control shows a muse tooltip, including the tree's fold toggle,
   the page icon chooser and, on narrow screens, the Bulle and history buttons
 - Every entry of the right-click menus has an icon, "Transformer en" included
 - Up, Down, Home and End move through a menu and scroll the active entry into view; disabled

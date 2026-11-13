@@ -7,7 +7,7 @@
       "dependencies": {
         "@facile/blob": "github:FacileStudio/blob#v0.2.2",
         "@facile/encre": "github:FacileStudio/encre#v0.11.0",
-        "@facile/muse": "github:FacileStudio/muse#v0.21.0",
+        "@facile/muse": "github:FacileStudio/muse#v0.21.2",
         "mermaid": "^12.3.0",
         "y-protocols": "^1.0.7",
         "y-websocket": "^3.1.0",
@@ -52,7 +52,7 @@
 
     "@facile/encre": ["@facile/encre@github:FacileStudio/encre#8cf807b", { "dependencies": { "@tiptap/core": "3.33.0", "@tiptap/extension-bubble-menu": "3.33.0", "@tiptap/extension-code": "3.33.0", "@tiptap/extension-code-block": "3.33.0", "@tiptap/extension-collaboration": "3.33.0", "@tiptap/extension-collaboration-caret": "3.33.0", "@tiptap/extension-hard-break": "3.33.0", "@tiptap/extension-image": "3.33.0", "@tiptap/extension-link": "3.33.0", "@tiptap/extension-list": "3.33.0", "@tiptap/extension-unique-id": "3.33.0", "@tiptap/extensions": "3.33.0", "@tiptap/pm": "3.33.0", "@tiptap/starter-kit": "3.33.0", "@tiptap/suggestion": "3.33.0", "@tiptap/y-tiptap": "3.3.0" }, "peerDependencies": { "@facile/muse": "github:FacileStudio/muse", "svelte": "^5.57.0", "y-protocols": "^1.0.7", "y-websocket": "^3.1.0", "yjs": "^13.6.33" } }, "FacileStudio-encre-8cf807b", "sha512-L1/VQ3ku7labp9dHMyW96Q1MV6N1Cx8GACDUIhNez1MQhD6SQzV6rnRPDX38yd1z9VYi1U9lECUfrU8TALtYMA=="],
 
-    "@facile/muse": ["@facile/muse@github:FacileStudio/muse#5a6c669", { "dependencies": { "gsap": "^3.13.0", "tailwind-merge": "^3.5.0" }, "peerDependencies": { "svelte": "^5.0.0", "tailwindcss": "^4.0.0" } }, "FacileStudio-muse-5a6c669", "sha512-Sv5uB1AdKGt8ndCqa8Xss0v51Zn208unEDN89+1l1a+LbmhZynj0wyDSS7mQlMzJoXS677sonfGDF79Thw6NnA=="],
+    "@facile/muse": ["@facile/muse@github:FacileStudio/muse#3526681", { "dependencies": { "gsap": "^3.13.0", "tailwind-merge": "^3.5.0" }, "peerDependencies": { "svelte": "^5.0.0", "tailwindcss": "^4.0.0" } }, "FacileStudio-muse-3526681", "sha512-+kSfSx/LaVWYoqcLMcXvVuryLUZmQy30QKu952CPs0w7wUV+8IlP34tkUazK4sgOfHDOqtVtE6DdN4BzJAP3Dw=="],
 
     "@floating-ui/core": ["@floating-ui/core@1.8.0", "", { "dependencies": { "@floating-ui/utils": "^0.2.12" } }, "sha512-0CIZ5itps/8x7BG8dEIhs53BvCUH2PCoogtakwRTut+Arm58sJooJ0AuZhLw2HJYIR5cMLNPBSS728sPho2khQ=="],
 

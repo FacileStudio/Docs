@@ -104,7 +104,7 @@
 		const next = step(event.key, current ? focusable.indexOf(current) : -1, focusable.length);
 		if (next === null || focusable.length === 0) return;
 		event.preventDefault();
-		focusable[next].focus();
+		focusable[next].focus({ preventScroll: true });
 		focusable[next].scrollIntoView?.({ block: 'nearest' });
 	}
 
