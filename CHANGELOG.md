@@ -4,6 +4,33 @@ All notable changes to Docs. Versions follow SemVer.
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-11-13
+
+### Added
+
+- Pasting a link creates an embed: Toile boards, Feuilles workbooks and Vision shares as live
+  frames, Nuage and other links as cards resolved by `/api/embeds/resolve`
+- Any file can be dropped into a page and is stored as a `file` block
+- A right-click menu in the editor: cut, copy, paste, turn into, duplicate, delete, copy block
+  link and "Demander à <assistant>"
+- The Bulle sidebar: a button with the user's Bulle blob opens Bulle's chat beside the page, and
+  "Demander à <assistant>" in the bubble or right-click menu sends the selected blocks to it
+- muse `Presence` shows the other people on a page, and `ConnectionHint` shows only when the
+  page is not live
+- MCP tools to rename, move, trash and restore pages
+- `GET /api/assistant` returns the user's Bulle assistant name
+
+### Changed
+
+- The editor has no toolbar: formatting comes from `/` and the selection bubble menu
+- The page icon has no background tile next to the title or in the tree
+- Pages are stored at encre schema 3 (encre v0.11.0), which adds `embed` and `file` blocks
+- The CSP `frame-src` allows Toile, Feuilles, Vision and Bulle
+
+### Removed
+
+- The "En ligne" status label
+
 ## [0.8.3] - 2026-11-13
 
 ### Changed
