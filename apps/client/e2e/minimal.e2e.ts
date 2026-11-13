@@ -47,6 +47,30 @@ test('the page has no toolbar and a bare icon; / turns a paragraph into a headin
 	await alice.context().close();
 }, 60_000);
 
+test('the / menu shows icons, scrolls to its last entry with the arrows and closes on an outside click', async () => {
+	const { alice } = await page('Barre oblique');
+	await typeAtEnd(alice, 'Avant ');
+	await alice.keyboard.type('/');
+	const list = alice.getByRole('listbox');
+	await list.waitFor({ timeout: 5_000 });
+	const options = list.getByRole('option');
+	const count = await options.count();
+	expect(await list.locator('[role="option"] svg').count()).toBeGreaterThanOrEqual(count);
+	for (let i = 1; i < count; i++) await alice.keyboard.press('ArrowDown');
+	const last = options.last();
+	expect(await last.getAttribute('aria-selected')).toBe('true');
+	const visible = await last.evaluate((node) => {
+		const box = node.getBoundingClientRect();
+		const frame = (node.closest('[role="listbox"]') as HTMLElement).getBoundingClientRect();
+		return box.top >= frame.top - 1 && box.bottom <= frame.bottom + 1;
+	});
+	expect(visible).toBe(true);
+	await alice.mouse.click(700, 600);
+	await list.waitFor({ state: 'detached', timeout: 5_000 });
+	await editor(alice).getByText('Avant /').waitFor();
+	await alice.context().close();
+}, 60_000);
+
 test('a selection shows the bubble menu and asks the assistant in the sidebar', async () => {
 	const { id, alice } = await page('Bulle');
 	await selectLine(alice, 'Une phrase à expliquer');

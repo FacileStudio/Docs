@@ -4,6 +4,13 @@ All notable changes to Docs. Versions follow SemVer.
 
 ## [Unreleased]
 
+### Changed
+
+- encre v0.12.0 (still schema 3): every `/` entry has an icon, the Toile, Feuilles, Vision, Docs
+  and Nuage embed entries show the app logo (`/toile`, `/feuilles`, ...), the arrow keys scroll
+  the `/` menu, and a click outside, a blur or a scroll closes it and keeps the typed text
+- The right-click "Transformer en" entries use encre's block icons
+
 ## [0.9.1] - 2026-11-13
 
 ### Changed

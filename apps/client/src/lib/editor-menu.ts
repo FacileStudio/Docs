@@ -1,6 +1,6 @@
 import { blockCommands, labelsFor, type Labels } from '@facile/encre';
 import type { Editor } from '@tiptap/core';
-import { blockIcon, icons } from './icons';
+import { icons } from './icons';
 import type { ContextMenuAction, ContextMenuItem } from './components/ContextMenu.svelte';
 
 /** The encre editor methods the right-click menu calls. */
@@ -94,7 +94,7 @@ export function editorMenu(context: MenuContext): ContextMenuItem[] {
 	const { editor, editable, empty } = context;
 	const turn = blockCommands(LABELS).map((command) => ({
 		label: command.label,
-		icon: blockIcon(command.id),
+		icon: command.icon,
 		onselect: () => void editor.turnInto(command.id)
 	}));
 	return [
