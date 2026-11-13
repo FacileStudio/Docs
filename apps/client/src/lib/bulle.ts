@@ -23,14 +23,13 @@ let asked: Promise<AssistantProfile> | null = null;
 
 /** The person's assistant, asked once per tab; the default when it cannot be read, and asked again next time. */
 export function assistant(): Promise<AssistantProfile> {
-	asked ??= backend
+	return (asked ??= backend
 		.assistant()
 		.then((found) => (found.name.trim() ? found : DEFAULT_ASSISTANT))
 		.catch(() => {
 			asked = null;
 			return DEFAULT_ASSISTANT;
-		});
-	return asked;
+		}));
 }
 
 /** The chat embed URL for `page`. */
