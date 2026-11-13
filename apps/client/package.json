@@ -30,7 +30,7 @@
 	},
 	"dependencies": {
 		"@facile/blob": "github:FacileStudio/blob#v0.2.2",
-		"@facile/encre": "github:FacileStudio/encre#v0.11.0",
+		"@facile/encre": "github:FacileStudio/encre#v0.12.0",
 		"@facile/muse": "github:FacileStudio/muse#v0.21.2",
 		"mermaid": "^12.3.0",
 		"y-protocols": "^1.0.7",
