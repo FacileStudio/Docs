@@ -23,6 +23,9 @@ porte's configuration. A missing required variable, or an inconsistent pair, exi
 | `PORTE_TOKEN_KEY` | prod | — | Seals stored OIDC tokens. Production refuses to boot without it |
 | `MCP_RESOURCE` | no | — | `https://<host>/mcp`. Its presence mounts `/mcp` |
 | `MCP_STATE_KEY` | with MCP | — | HMAC key of the confirmation flow; boot fails without it when MCP is on |
+| `ATTACHMENT_MAX_BYTES` | no | `26214400` | The largest attachment that is not an image or a PDF (those stay at 20 MiB). A positive byte count |
+| `BULLE_URL` | no | `https://bulle.facile.studio` | Bulle's origin, for `GET /api/assistant` |
+| `BULLE_CLIENT_ID` | no | `bulle` | Bulle's Registre client id: the audience Docs exchanges the person's token for |
 | `MARKDOWN_MAX_BYTES` | no | `1048576` | The largest markdown body one request, MCP call or imported page may ask the API to parse; above it, 413. A positive byte count. See [API, markdown limits](api.md#markdown-limits) |
 | `TEST_DATABASE_URL` | tests | — | Postgres the integration tests create their schemas in |
 | `APP_VERSION` | build | `dev` | Read at compile time; the Dockerfile stamps it from `apps/client/package.json` |
@@ -34,8 +37,9 @@ default is 8080, as in Go tronc; the image and `mise run dev` set 4000.
 
 | Limit | Value | Where |
 |---|---|---|
-| Attachment size | 20 MiB | `modules/attachments/sniff.rs` |
-| Attachment types | PNG, JPEG, GIF, WebP, PDF, by magic number | same |
+| Image and PDF size | 20 MiB | `modules/attachments/sniff.rs` |
+| Inline types | PNG, JPEG, GIF, WebP, PDF, by magic number; any other file is a download | same |
+| Link preview | 5 s, 1 MiB of HTML, 3 redirects, reused 5 minutes per URL | `modules/embeds/` |
 | Document JSON | 5 MiB | `modules/documents/content.rs` |
 | Request JSON body | 1 MiB (tronc), MCP request 4 MiB | `tronc::json`, `tronc::mcp` |
 | Markdown nesting | 64 levels in markdown, 48 in the document, 8 `callout`, `columns` and `column` nodes on one path | encre v0.9.0 |

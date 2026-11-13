@@ -10,6 +10,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use porte::directory::{self, Deletions, Syncer};
+use porte::exchange::{self, Exchanger};
 use porte::http_client::HttpClient;
 use porte::oidc::{self, Kit};
 use porte::session::{self, Manager};
@@ -37,6 +38,8 @@ pub struct Kits {
     pub deletions: Option<Deletions>,
     /// The MCP token verifier, when `MCP_RESOURCE` is set.
     pub mcp: Option<Arc<mcpauth::Verifier>>,
+    /// Token exchange to other suite apps, when Registre is configured.
+    pub exchanger: Option<Exchanger>,
 }
 
 type BootError = Box<dyn std::error::Error + Send + Sync>;
@@ -56,8 +59,9 @@ impl Kits {
             now: None,
         };
         let oidc = Kit::new(&cfg.porte, deps).await?;
-        let mut kits = Kits { sessions, oidc, syncer: None, deletions: None, mcp: None };
+        let mut kits = Kits { sessions, oidc, syncer: None, deletions: None, mcp: None, exchanger: None };
         if cfg.porte.enabled() {
+            kits.exchanger = Some(Exchanger::new(exchange::Config::from_porte(&cfg.porte, store.identities()))?);
             kits.directory(cfg, pool, hub, store.clone());
         }
         if !cfg.mcp_resource.is_empty() {

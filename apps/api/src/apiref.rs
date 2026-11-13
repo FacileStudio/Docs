@@ -41,6 +41,8 @@ const ROUTES: &[Row] = &[
     ("GET", "/documents/{id}/export.pdf", "export", "The page as a PDF", "200"),
     ("POST", "/documents/{id}/attachments", "attachments", "Uploads a file (multipart `file`)", "201"),
     ("GET", "/attachments/{id}", "attachments", "Serves a file, sandboxed (?share= for public pages)", "200"),
+    ("GET", "/embeds/resolve", "embeds", "Previews a public https link (?url=) from its Open Graph tags", "200"),
+    ("GET", "/assistant", "assistant", "The caller's Bulle assistant name and accent", "200"),
     ("GET", "/search", "search", "Full-text search in one scope (?q=&space_id=)", "200"),
     ("POST", "/documents/{id}/share", "share", "Creates a share link; the token is shown once", "201"),
     ("GET", "/documents/{id}/share", "share", "The live share links of a page", "200"),

@@ -2,10 +2,13 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 
+use porte::exchange::Exchanger;
 use porte::session::Manager;
 use tokio::sync::Semaphore;
 use tronc::mcp::Confirmations;
 
+use crate::modules::assistant::Bulle;
+use crate::modules::embeds::Previews;
 use crate::modules::rooms::Hub;
 use sqlx::PgPool;
 
@@ -30,4 +33,12 @@ pub struct AppState {
     pub confirmations: Option<Confirmations>,
     /// How often an open socket re-checks its session.
     pub socket_recheck: Duration,
+    /// The largest attachment that is not an image or a PDF.
+    pub attachment_max: usize,
+    /// Link previews for embeds.
+    pub previews: Previews,
+    /// Mints the person's tokens for other suite apps; `None` without Registre.
+    pub exchanger: Option<Exchanger>,
+    /// Where the person's assistant lives.
+    pub bulle: Bulle,
 }

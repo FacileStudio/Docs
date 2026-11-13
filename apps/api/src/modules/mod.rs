@@ -1,7 +1,9 @@
 //! The HTTP modules under `/api`.
 
+pub mod assistant;
 pub mod attachments;
 pub mod documents;
+pub mod embeds;
 pub mod export;
 pub mod pending;
 pub mod rooms;

@@ -64,4 +64,10 @@ Follow plan section 2.10: add the `Docs` client to `Registre/seed.yaml` (redirec
 `https://docs.facile.studio/mcp` with scopes `docs.read docs.write`), set the Dokploy
 environment with the `dokploy-env-safe` flow, deploy, verify.
 
+The assistant name in the Bulle sidebar (`GET /api/assistant`) needs Registre to grant the
+`Docs` client a `token_exchange` to the `bulle` audience with scope `bulle.read`. Until it does,
+the route answers the default name. `BULLE_URL` (default `https://bulle.facile.studio`) and
+`BULLE_CLIENT_ID` (default `bulle`) only need setting for another Bulle. The CSP lets the client
+frame Toile, Feuilles, Vision, Bulle and Docs itself (`frame-src`, `src/security.rs`).
+
 Back to the [documentation index](README.md).

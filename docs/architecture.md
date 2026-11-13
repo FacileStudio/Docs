@@ -21,11 +21,13 @@ Internet ──▶ Traefik ──▶ api (:4000, one replica) ─┬──▶ /h
 | `src/modules/documents/` | The tree, content, trash, revisions, and the one `access()` function |
 | `src/modules/rooms/` | One in-memory Yjs room per open page, the y-sync WebSocket |
 | `src/modules/search/` | Full-text search, scope-filtered in the same statement |
-| `src/modules/attachments/` | Content-addressed files, byte sniffing, the daily sweep |
+| `src/modules/attachments/` | Content-addressed files of any type, byte sniffing for inline ones, the daily sweep |
+| `src/modules/embeds/` | Link previews through an SSRF-guarded client, cached per URL |
+| `src/modules/assistant/` | The person's Bulle assistant name, through token exchange |
 | `src/modules/share/` | Share links and the public, rate-limited routes |
 | `src/modules/export/` | Facile Markdown, CommonMark and PDF exports |
 | `src/modules/pending/` | The confirm page's API for MCP actions |
-| `src/mcp/` | The seven MCP tools |
+| `src/mcp/` | The twelve MCP tools |
 | `src/apiref.rs` | The OpenAPI document served at `/docs` |
 
 ## Access

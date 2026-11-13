@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 use tronc::env::{Core, EnvError, Vars};
 
+use crate::modules::attachments::sniff::FILE_MAX_BYTES;
 use crate::modules::documents::markdown::MARKDOWN_MAX_BYTES;
 
 /// Everything the binary reads from its environment.
@@ -21,6 +22,10 @@ pub struct Config {
     pub mcp_state_key: String,
     /// `MARKDOWN_MAX_BYTES`: the largest markdown body one request may ask the API to parse.
     pub markdown_max: usize,
+    /// `ATTACHMENT_MAX_BYTES`: the largest attachment that is not an image or a PDF.
+    pub attachment_max: usize,
+    /// `BULLE_URL` and `BULLE_CLIENT_ID`: where the person's assistant lives.
+    pub bulle: crate::modules::assistant::Bulle,
 }
 
 impl Config {
@@ -40,7 +45,9 @@ impl Config {
             data_dir: PathBuf::from(vars.string("DATA_DIR", "/data")),
             mcp_resource: text("MCP_RESOURCE"),
             mcp_state_key: text("MCP_STATE_KEY"),
-            markdown_max: markdown_max(vars)?,
+            markdown_max: bytes(vars, "MARKDOWN_MAX_BYTES", MARKDOWN_MAX_BYTES)?,
+            attachment_max: bytes(vars, "ATTACHMENT_MAX_BYTES", FILE_MAX_BYTES)?,
+            bulle: crate::modules::assistant::Bulle::from_vars(vars),
             core,
         };
         config.check()?;
@@ -61,11 +68,11 @@ impl Config {
     }
 }
 
-fn markdown_max(vars: &Vars) -> Result<usize, EnvError> {
-    let raw = vars.int("MARKDOWN_MAX_BYTES", MARKDOWN_MAX_BYTES as i64)?;
+fn bytes(vars: &Vars, key: &str, default: usize) -> Result<usize, EnvError> {
+    let raw = vars.int(key, default as i64)?;
     match usize::try_from(raw) {
         Ok(max) if max > 0 => Ok(max),
-        _ => Err(EnvError(format!("MARKDOWN_MAX_BYTES must be a positive number of bytes, not {raw}"))),
+        _ => Err(EnvError(format!("{key} must be a positive number of bytes, not {raw}"))),
     }
 }
 
@@ -92,14 +99,25 @@ mod tests {
     }
 
     #[test]
-    fn defaults_are_sso_only_with_data_under_slash_data_and_a_positive_markdown_cap() {
+    fn defaults_are_sso_only_with_slash_data_positive_caps_and_the_suite_bulle() {
         let config = Config::from_vars(&vars(&[])).unwrap();
         assert!(config.porte.sso_only);
         assert_eq!(config.data_dir, PathBuf::from("/data"));
         assert_eq!(config.markdown_max, 1 << 20);
+        assert_eq!(config.attachment_max, 25 << 20);
+        assert_eq!(
+            (config.bulle.url.as_str(), config.bulle.audience.as_str()),
+            ("https://bulle.facile.studio", "bulle")
+        );
         let config = Config::from_vars(&vars(&[("MARKDOWN_MAX_BYTES", "4096")])).unwrap();
         assert_eq!(config.markdown_max, 4096);
         assert!(Config::from_vars(&vars(&[("MARKDOWN_MAX_BYTES", "0")])).is_err());
         assert!(Config::from_vars(&vars(&[("MARKDOWN_MAX_BYTES", "lots")])).is_err());
+        let custom =
+            [("ATTACHMENT_MAX_BYTES", "1024"), ("BULLE_URL", "https://bulle.test/"), ("BULLE_CLIENT_ID", "b2")];
+        let config = Config::from_vars(&vars(&custom)).unwrap();
+        assert_eq!((config.attachment_max, config.bulle.url.as_str()), (1024, "https://bulle.test"));
+        assert_eq!(config.bulle.audience, "b2");
+        assert!(Config::from_vars(&vars(&[("ATTACHMENT_MAX_BYTES", "-1")])).is_err());
     }
 }

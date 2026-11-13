@@ -49,10 +49,12 @@ against Postgres through `tronc::testdb`, one schema per test prefix, kept betwe
 | `directory.rs` | Snapshot apply, GDPR erase |
 | `erased.rs` | An erased subject cannot sign in again, and an account that raced the erasure is erased again |
 | `lifecycle.rs` | Retired and returning spaces, the empty-snapshot refusal, the 30-day purge |
-| `attachments.rs`, `share.rs` | Sniffing, SVG refusal, sandbox headers, sweep, links, rate limit |
+| `attachments.rs`, `share.rs` | Sniffing, downloads for any other file, sandbox headers, sweep, links, rate limit |
+| `embeds.rs` | Link preview SSRF refusals, and the assistant route against a fake Bulle |
 | `rooms.rs` | Two yrs peers converge after offline edits; schema-breaking update reverted with 1008; viewers; origin; 1009 |
 | `durability.rs` | Kills the real binary one second after an edit and proves nothing is lost |
-| `mcp.rs` | tronc's MCP conformance kit with `docs_replace` confirmed, and every tool |
+| `mcp.rs` | tronc's MCP conformance kit with `docs_replace` confirmed, and the content tools |
+| `mcp_tools.rs` | The tree tools (`docs_update`, `docs_move`, `docs_trash`, `docs_restore`, `docs_list_trash`) and every tool's annotations |
 | `exports.rs` | PDF text of a page with every component, markdown exports, OpenUI, the API reference drift test |
 
 Without `TEST_DATABASE_URL` the database tests print a skip banner and pass: read the output.

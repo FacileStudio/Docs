@@ -62,6 +62,10 @@ pub fn state(config: &Config, pool: PgPool, kits: &Kits, hub: Hub) -> AppState {
         markdown_max: config.markdown_max,
         confirmations: None,
         socket_recheck: crate::modules::rooms::SOCKET_RECHECK,
+        attachment_max: config.attachment_max,
+        previews: Default::default(),
+        exchanger: kits.exchanger.clone(),
+        bulle: config.bulle.clone(),
     }
 }
 

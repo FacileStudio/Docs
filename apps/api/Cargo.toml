@@ -11,13 +11,14 @@ name = "api"
 path = "src/main.rs"
 
 [dependencies]
-tronc = { git = "https://github.com/FacileStudio/tronc-rs", tag = "v0.4.0", features = ["http", "health", "spa", "migrate", "journal", "apiref", "mcp"] }
-porte = { git = "https://github.com/FacileStudio/porte-rs", tag = "v0.7.0", features = ["pg", "oidc", "directory", "mcp"] }
+tronc = { git = "https://github.com/FacileStudio/tronc-rs", tag = "v0.4.0", features = ["http", "health", "spa", "migrate", "journal", "apiref", "bulle", "mcp"] }
+porte = { git = "https://github.com/FacileStudio/porte-rs", tag = "v0.7.0", features = ["pg", "oidc", "directory", "exchange", "mcp"] }
 encre = { git = "https://github.com/FacileStudio/encre", tag = "v0.10.0", features = ["yjs", "pdf", "openui"] }
 async-trait = "0.1.92"
 axum = { version = "0.8.9", features = ["ws", "multipart", "macros"] }
 futures-util = { version = "0.3.34", default-features = false, features = ["std", "sink"] }
 http = "1.5.0"
+reqwest = { version = "0.13.5", default-features = false, features = ["rustls", "json"] }
 schemars = "1.2.3"
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.154"
@@ -29,6 +30,7 @@ tokio = { version = "1.54.1", features = ["rt-multi-thread", "macros", "signal",
 tokio-util = "0.7.20"
 tower = { version = "0.5.3", features = ["util"] }
 tracing = "0.1.44"
+url = "2.5.8"
 utoipa = "6.0.0"
 uuid = { version = "1.29.2", features = ["v4", "serde"] }
 yrs = { version = "0.28.1", features = ["sync"] }
