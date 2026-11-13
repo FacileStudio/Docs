@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { MediaQuery } from 'svelte/reactivity';
 	import { Blob } from '@facile/blob';
 	import { caretColor, peers, type AwarenessProvider } from '@facile/encre';
 	import {
@@ -10,6 +11,7 @@
 		IconButton,
 		Menu,
 		Presence,
+		Tooltip,
 		icons,
 		toast,
 		type PresencePeer
@@ -111,6 +113,8 @@
 		{ label: 'Markdown', icon: icons.download, onselect: exporting('markdown') },
 		{ label: 'CommonMark', icon: icons.download, onselect: exporting('commonmark') }
 	]);
+
+	const narrow = new MediaQuery('max-width: 639.98px');
 </script>
 
 <header class="flex flex-col gap-3" data-connection={connection}>
@@ -121,22 +125,26 @@
 			{#if access === 'viewer'}<span class="text-fc-xs whitespace-nowrap text-fc-fg-muted">Lecture seule</span>{/if}
 		</div>
 		<div class="ml-auto flex shrink-0 items-center gap-1">
-			<button
-				type="button"
-				class="flex min-h-11 items-center gap-2 rounded-fc-md px-2 text-fc-sm text-fc-fg hover:bg-fc-surface
-					focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fc-ring
-					{bulleOpen ? 'bg-fc-surface' : ''}"
-				aria-pressed={bulleOpen}
-				aria-label="Ouvrir {assistant}"
-				data-testid="bulle-toggle"
-				onclick={ontogglebulle}
-			>
-				<Blob name={assistant} size={24} />
-				<span class="hidden sm:inline">{assistant}</span>
-			</button>
-			<Button variant="ghost" size="sm" icon={icons.history} href="/d/{doc.id}/history" aria-label="Historique"
-				><span class="hidden sm:inline">Historique</span></Button
-			>
+			<Tooltip text="Ouvrir {assistant}" describe={false} disabled={!narrow.current} class="contents">
+				<button
+					type="button"
+					class="flex min-h-11 items-center gap-2 rounded-fc-md px-2 text-fc-sm text-fc-fg hover:bg-fc-surface
+						focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fc-ring
+						{bulleOpen ? 'bg-fc-surface' : ''}"
+					aria-pressed={bulleOpen}
+					aria-label="Ouvrir {assistant}"
+					data-testid="bulle-toggle"
+					onclick={ontogglebulle}
+				>
+					<Blob name={assistant} size={24} />
+					<span class="hidden sm:inline">{assistant}</span>
+				</button>
+			</Tooltip>
+			<Tooltip text="Historique" describe={false} disabled={!narrow.current} class="contents">
+				<Button variant="ghost" size="sm" icon={icons.history} href="/d/{doc.id}/history" aria-label="Historique"
+					><span class="hidden sm:inline">Historique</span></Button
+				>
+			</Tooltip>
 			<Menu label="Exporter" items={exports} align="end">
 				{#snippet trigger()}<span class="flex items-center gap-2"
 						><Icon icon={icons.download} size={16} /><span class="hidden sm:inline">Exporter</span></span

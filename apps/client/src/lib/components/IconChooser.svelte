@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Button } from '@facile/muse';
+	import { Button, Tooltip } from '@facile/muse';
 	import { PICKABLE } from '$lib/icons';
 	import PageGlyph from './PageGlyph.svelte';
 
@@ -63,18 +63,20 @@
 	>
 {:else}
 	<div bind:this={root} class="relative shrink-0">
-		<button
-			type="button"
-			class="flex size-11 cursor-pointer items-center justify-center rounded-fc-md text-fc-fg hover:bg-fc-surface
-				focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fc-ring"
-			aria-label="Icône du document"
-			aria-haspopup="dialog"
-			aria-expanded={open}
-			data-testid="page-icon"
-			onclick={() => (open = !open)}
-		>
-			<PageGlyph {value} size={28} />
-		</button>
+		<Tooltip text="Icône du document" describe={false} disabled={open} class="contents">
+			<button
+				type="button"
+				class="flex size-11 cursor-pointer items-center justify-center rounded-fc-md text-fc-fg hover:bg-fc-surface
+					focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fc-ring"
+				aria-label="Icône du document"
+				aria-haspopup="dialog"
+				aria-expanded={open}
+				data-testid="page-icon"
+				onclick={() => (open = !open)}
+			>
+				<PageGlyph {value} size={28} />
+			</button>
+		</Tooltip>
 		{#if open}
 			<div
 				role="dialog"
@@ -83,18 +85,20 @@
 			>
 				<div class="grid grid-cols-5 gap-1">
 					{#each PICKABLE as choice (choice.value)}
-						<button
-							type="button"
-							class="flex size-11 cursor-pointer items-center justify-center rounded-fc-md text-fc-fg hover:bg-fc-surface {choice.value ===
-							value
-								? 'bg-fc-surface'
-								: ''}"
-							aria-label="Choisir {choice.label}"
-							aria-pressed={choice.value === value}
-							onclick={() => pick(choice.value)}
-						>
-							<PageGlyph value={choice.value} size={20} />
-						</button>
+						<Tooltip text={choice.label} describe={false} class="contents">
+							<button
+								type="button"
+								class="flex size-11 cursor-pointer items-center justify-center rounded-fc-md text-fc-fg hover:bg-fc-surface {choice.value ===
+								value
+									? 'bg-fc-surface'
+									: ''}"
+								aria-label="Choisir {choice.label}"
+								aria-pressed={choice.value === value}
+								onclick={() => pick(choice.value)}
+							>
+								<PageGlyph value={choice.value} size={20} />
+							</button>
+						</Tooltip>
 					{/each}
 					{#each choices as icon (icon)}
 						<button
