@@ -3,6 +3,9 @@
 	import { backend } from '$lib/backend';
 	import { logoIcon } from '$lib/brand';
 	import DocsDemo from './DocsDemo.svelte';
+	import HistoryTile from './landing/HistoryTile.svelte';
+	import ShareTile from './landing/ShareTile.svelte';
+	import SlashTile from './landing/SlashTile.svelte';
 
 	const signInHref = backend.loginUrl();
 
@@ -49,6 +52,17 @@
 				<SignInWithFacile href={signInHref} size="lg" data-sveltekit-reload />
 			</div>
 			<div class="mt-12 w-full sm:mt-16"><DocsDemo /></div>
+		</section>
+
+		<section class="relative mx-auto max-w-5xl px-4 py-16 sm:px-6 sm:py-20">
+			<h2 class="mb-10 text-center font-fc-title text-2xl font-bold tracking-tight text-fc-fg sm:text-3xl">
+				Une page qui fait plus que du texte
+			</h2>
+			<div class="grid gap-6 md:grid-cols-3">
+				<SlashTile />
+				<HistoryTile />
+				<ShareTile />
+			</div>
 		</section>
 
 		<section class="mx-auto max-w-5xl px-4 py-16 sm:px-6 sm:py-20">
