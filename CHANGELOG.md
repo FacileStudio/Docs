@@ -4,6 +4,25 @@ All notable changes to Docs. Versions follow SemVer.
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-11-14
+
+### Added
+
+- The signed-out landing speaks French, English, Spanish and German: it follows the visitor's
+  language, and the footer switch remembers a choice
+- "Créer un compte gratuit" leads the hero and the closing call to action, with sign-in beside it
+- A plans section with the Docs note per plan and a link to every Facile price
+- A "works with" block for Feuilles, Toile, Vision and Bulle
+- A demo tile with a live Feuilles budget inside a Docs page
+- A developer block at the bottom: MCP, the API reference, the source and self-hosting
+
+### Changed
+
+- New slogan, subtitle, title and meta description; MCP left the feature list for the developer
+  block, and sharing moved from a demo tile into the feature list
+- The demos fade and slide instead of growing in height, so Léa's caret label never clips
+- `@facile/muse` v0.24.0
+
 ## [0.12.1] - 2026-11-14
 
 ### Changed
