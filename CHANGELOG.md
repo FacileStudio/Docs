@@ -4,6 +4,14 @@ All notable changes to Docs. Versions follow SemVer.
 
 ## [Unreleased]
 
+## [0.11.1] - 2026-11-14
+
+### Fixed
+
+- The header assistant button reads "Demander à <agent>" or "Ask <agent>" by browser language,
+  like the selection bubble and the right-click item
+- Clicking the ask button in the selection bubble collapses the selection, so the bubble closes
+
 ## [0.11.0] - 2026-11-14
 
 ### Changed
