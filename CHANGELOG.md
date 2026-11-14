@@ -4,6 +4,8 @@ All notable changes to Docs. Versions follow SemVer.
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-11-14
+
 ### Changed
 
 - **Breaking for the confirm page:** the API moves from `/api/mcp/actions` to tronc-rs
@@ -31,6 +33,10 @@ All notable changes to Docs. Versions follow SemVer.
   25,000 tokens, sets `truncated` and names `next_range`; a single block too long for one answer
   comes back clipped. `docs_list_tree` and `docs_list_trash` windows stop at the budget too, and
   their cursors are tronc's opaque offset cursors
+- The confirm page no longer says "Demande introuvable" for an action outside the newest 100
+  open ones: it asks the person to answer the newest first
+- The `docs_read_blocks` description tells an agent that `truncated` without `next_range` means
+  the last block was cut short, so it must not rewrite that block from the partial text
 
 ## [0.10.0] - 2026-11-14
 
