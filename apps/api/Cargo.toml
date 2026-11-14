@@ -11,8 +11,8 @@ name = "api"
 path = "src/main.rs"
 
 [dependencies]
-tronc = { git = "https://github.com/FacileStudio/tronc-rs", tag = "v0.4.0", features = ["http", "health", "spa", "migrate", "journal", "apiref", "bulle", "mcp"] }
-porte = { git = "https://github.com/FacileStudio/porte-rs", tag = "v0.7.0", features = ["pg", "oidc", "directory", "exchange", "mcp"] }
+tronc = { git = "https://github.com/FacileStudio/tronc-rs", tag = "v0.5.1", features = ["http", "health", "spa", "migrate", "journal", "apiref", "bulle", "mcp"] }
+porte = { git = "https://github.com/FacileStudio/porte-rs", tag = "v0.8.1", features = ["pg", "oidc", "directory", "exchange", "mcp"] }
 encre = { git = "https://github.com/FacileStudio/encre", tag = "v0.12.0", features = ["yjs", "pdf", "openui"] }
 async-trait = "0.1.92"
 axum = { version = "0.8.9", features = ["ws", "multipart", "macros"] }
@@ -36,7 +36,7 @@ uuid = { version = "1.29.2", features = ["v4", "serde"] }
 yrs = { version = "0.28.1", features = ["sync"] }
 
 [dev-dependencies]
-tronc = { git = "https://github.com/FacileStudio/tronc-rs", tag = "v0.4.0", features = ["testdb", "mcptest"] }
+tronc = { git = "https://github.com/FacileStudio/tronc-rs", tag = "v0.5.1", features = ["testdb", "mcptest"] }
 http-body-util = "0.1.5"
 pdf-extract = "0.12.1"
 reqwest = { version = "0.13.5", default-features = false, features = ["rustls", "json"] }

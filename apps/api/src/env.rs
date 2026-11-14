@@ -47,7 +47,7 @@ impl Config {
             mcp_state_key: text("MCP_STATE_KEY"),
             markdown_max: bytes(vars, "MARKDOWN_MAX_BYTES", MARKDOWN_MAX_BYTES)?,
             attachment_max: bytes(vars, "ATTACHMENT_MAX_BYTES", FILE_MAX_BYTES)?,
-            bulle: crate::modules::assistant::Bulle::from_vars(vars),
+            bulle: crate::modules::assistant::Bulle::from_vars(vars)?,
             core,
         };
         config.check()?;
@@ -119,5 +119,6 @@ mod tests {
         assert_eq!((config.attachment_max, config.bulle.url.as_str()), (1024, "https://bulle.test"));
         assert_eq!(config.bulle.audience, "b2");
         assert!(Config::from_vars(&vars(&[("ATTACHMENT_MAX_BYTES", "-1")])).is_err());
+        assert!(Config::from_vars(&vars(&[("BULLE_URL", "https://bulle.test/embed")])).is_err());
     }
 }

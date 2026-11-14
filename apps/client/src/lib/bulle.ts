@@ -2,8 +2,8 @@ import type { EmbedPreview } from '@facile/encre';
 import { backend } from './backend';
 import type { AssistantProfile } from './types';
 
-/** Where the Bulle chat embed lives. */
-export const BULLE_ORIGIN = 'https://bulle.facile.studio';
+/** The Bulle origin until the API names one with `bulle_url` (`BULLE_URL`). */
+export const DEFAULT_BULLE = 'https://bulle.facile.studio';
 
 /** The name shown until Bulle answers, or when it cannot. */
 export const DEFAULT_ASSISTANT: AssistantProfile = { name: 'Bulle', accent: null };
@@ -32,15 +32,15 @@ export function assistant(): Promise<AssistantProfile> {
 		}));
 }
 
-/** The chat embed URL for `page`. */
-export function embedUrl(page: PageContext, origin = BULLE_ORIGIN): string {
+/** The chat embed URL for `page` on the Bulle at `origin`. */
+export function embedUrl(page: PageContext, origin: string): string {
 	const query = new URLSearchParams({ app: page.app, id: page.id, title: page.title, url: page.url });
 	return `${origin}/embed/chat?${query}`;
 }
 
-/** Whether `origin` may speak for Bulle: Bulle itself, or a localhost Bulle while developing. */
-export function trustedOrigin(origin: string, dev = false): boolean {
-	if (origin === BULLE_ORIGIN) return true;
+/** Whether `origin` may speak for Bulle: the configured Bulle at `bulle`, or a localhost Bulle while developing. */
+export function trustedOrigin(origin: string, bulle: string, dev = false): boolean {
+	if (origin === bulle) return true;
 	return dev && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
 }
 

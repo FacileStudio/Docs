@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { BULLE_ORIGIN, bulleMessage, embedUrl, trustedOrigin, type PageContext } from '$lib/bulle';
+	import { bulleMessage, embedUrl, trustedOrigin, type PageContext } from '$lib/bulle';
+	import { session } from '$lib/session.svelte';
 
 	let {
 		open = $bindable(),
@@ -22,7 +23,8 @@
 
 	const src = $derived.by(() => {
 		const id = page.id;
-		return untrack(() => embedUrl({ ...page, id }));
+		const origin = session.bulle;
+		return untrack(() => embedUrl({ ...page, id }, origin));
 	});
 	const dev = import.meta.env.DEV;
 
@@ -37,7 +39,7 @@
 
 	function post(text: string) {
 		const message = { type: 'bulle:ask', text, context: { ...page } };
-		frame?.contentWindow?.postMessage(message, BULLE_ORIGIN);
+		frame?.contentWindow?.postMessage(message, session.bulle);
 	}
 
 	/** Opens the panel and asks the assistant about `text`, once its frame is ready. */
@@ -48,7 +50,7 @@
 	}
 
 	function onmessage(event: MessageEvent) {
-		if (!trustedOrigin(event.origin, dev) || event.source !== frame?.contentWindow) return;
+		if (!trustedOrigin(event.origin, session.bulle, dev) || event.source !== frame?.contentWindow) return;
 		const message = bulleMessage(event.data);
 		if (message?.type === 'bulle:close') open = false;
 		if (message?.type !== 'bulle:ready') return;

@@ -12,7 +12,10 @@ next_cursor as cursor for the next window.";
 const LIST_TRASH: &str = "The trashed pages of one space (or your personal pages), 50 at a time by default. Call \
 it to find a page to bring back with docs_restore. The trash empties itself 30 days after a page went in.";
 const READ: &str = "One page as Facile Markdown, with its version. Call it before you rewrite a page.";
-const READ_BLOCKS: &str = "Top-level blocks with their ids. Call it before docs_edit, which addresses blocks by id.";
+const READ_BLOCKS: &str = "Top-level blocks with their ids. Call it before docs_edit, which addresses blocks by id. \
+A long page comes back in parts: when truncated is true, pass next_range as range for the rest. When truncated \
+is true and next_range is absent, the last block was cut short: never rewrite it from that partial text; read it \
+whole with docs_read.";
 const CREATE: &str = "A new page from Facile Markdown. Call it once per page: each call adds another page.";
 const EDIT: &str = "Applies operations (not replace_all) in order, all or nothing. Call it for any change inside a \
 page; replace_block and delete_block remove what they replace.";
@@ -31,20 +34,16 @@ fn spec(name: &str, title: &str, description: impl Into<String>, annotations: An
     ToolSpec { name: name.into(), title: title.into(), description: description.into(), annotations: Some(annotations) }
 }
 
-fn hints(read_only: bool, destructive: bool, idempotent: bool) -> Annotations {
-    Annotations { read_only, destructive, idempotent, open_world: false }
-}
-
 fn browse(state: &AppState) -> Vec<Tool> {
     let (a, b, c) = (state.clone(), state.clone(), state.clone());
     vec![
-        tool(spec("docs_search", "Search pages", SEARCH, hints(true, false, true)), move |call, input| {
+        tool(spec("docs_search", "Search pages", SEARCH, Annotations::READ), move |call, input| {
             read::search(a.clone(), call, input)
         }),
-        tool(spec("docs_list_tree", "List the page tree", LIST_TREE, hints(true, false, true)), move |call, input| {
+        tool(spec("docs_list_tree", "List the page tree", LIST_TREE, Annotations::READ), move |call, input| {
             read::list_tree(b.clone(), call, input)
         }),
-        tool(spec("docs_list_trash", "List the trash", LIST_TRASH, hints(true, false, true)), move |call, input| {
+        tool(spec("docs_list_trash", "List the trash", LIST_TRASH, Annotations::READ), move |call, input| {
             manage::list_trash(c.clone(), call, input)
         }),
     ]
@@ -53,11 +52,11 @@ fn browse(state: &AppState) -> Vec<Tool> {
 fn reads(state: &AppState) -> Vec<Tool> {
     let (a, b) = (state.clone(), state.clone());
     vec![
-        tool(spec("docs_read", "Read a page", described(READ), hints(true, false, true)), move |call, input| {
+        tool(spec("docs_read", "Read a page", described(READ), Annotations::READ), move |call, input| {
             read::read(a.clone(), call, input)
         }),
         tool(
-            spec("docs_read_blocks", "Read a page's blocks", described(READ_BLOCKS), hints(true, false, true)),
+            spec("docs_read_blocks", "Read a page's blocks", described(READ_BLOCKS), Annotations::READ),
             move |call, input| read::read_blocks(b.clone(), call, input),
         ),
     ]
@@ -66,15 +65,14 @@ fn reads(state: &AppState) -> Vec<Tool> {
 fn content(state: &AppState, confirmations: &Confirmations) -> Vec<Tool> {
     let (a, b, c, confirm) = (state.clone(), state.clone(), state.clone(), confirmations.clone());
     vec![
-        tool(
-            spec("docs_create", "Create a page", described(CREATE), hints(false, false, false)),
-            move |call, input| write::create(a.clone(), call, input),
-        ),
-        tool(spec("docs_edit", "Edit a page", described(EDIT), hints(false, true, false)), move |call, input| {
+        tool(spec("docs_create", "Create a page", described(CREATE), Annotations::ADD), move |call, input| {
+            write::create(a.clone(), call, input)
+        }),
+        tool(spec("docs_edit", "Edit a page", described(EDIT), Annotations::REMOVE), move |call, input| {
             write::edit(b.clone(), call, input)
         }),
         tool(
-            spec("docs_replace", "Replace a whole page", described(REPLACE), hints(false, true, false)),
+            spec("docs_replace", "Replace a whole page", described(REPLACE), Annotations::REMOVE),
             move |call, input| replace::replace(c.clone(), confirm.clone(), call, input),
         ),
     ]
@@ -83,16 +81,16 @@ fn content(state: &AppState, confirmations: &Confirmations) -> Vec<Tool> {
 fn organize(state: &AppState) -> Vec<Tool> {
     let (a, b, c, d) = (state.clone(), state.clone(), state.clone(), state.clone());
     vec![
-        tool(spec("docs_update", "Rename a page", UPDATE, hints(false, true, true)), move |call, input| {
+        tool(spec("docs_update", "Rename a page", UPDATE, Annotations::OVERWRITE), move |call, input| {
             manage::update(a.clone(), call, input)
         }),
-        tool(spec("docs_move", "Move a page", MOVE, hints(false, true, true)), move |call, input| {
+        tool(spec("docs_move", "Move a page", MOVE, Annotations::OVERWRITE), move |call, input| {
             manage::move_to(b.clone(), call, input)
         }),
-        tool(spec("docs_trash", "Trash a page", TRASH, hints(false, true, true)), move |call, input| {
+        tool(spec("docs_trash", "Trash a page", TRASH, Annotations::OVERWRITE), move |call, input| {
             manage::trash(c.clone(), call, input)
         }),
-        tool(spec("docs_restore", "Restore a page", RESTORE, hints(false, false, true)), move |call, input| {
+        tool(spec("docs_restore", "Restore a page", RESTORE, Annotations::SET), move |call, input| {
             manage::restore(d.clone(), call, input)
         }),
     ]

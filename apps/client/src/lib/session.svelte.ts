@@ -1,4 +1,5 @@
 import { backend } from './backend';
+import { DEFAULT_BULLE } from './bulle';
 import type { Access, Role, SessionUser, Space } from './types';
 
 const SPACE_KEY = 'docs.space';
@@ -30,9 +31,10 @@ function remember(id: string | null): void {
 	}
 }
 
-/** The signed-in person, their spaces, and the active scope (`null` is personal). */
+/** The signed-in person, their spaces, the active scope (`null` is personal) and the Bulle origin from `BULLE_URL`. */
 class Session {
 	user = $state<SessionUser | null>(null);
+	bulle = $state(DEFAULT_BULLE);
 	spaces = $state<Space[]>([]);
 	spaceId = $state<string | null>(null);
 	ready = $state(false);
@@ -41,7 +43,9 @@ class Session {
 
 	async load(): Promise<void> {
 		try {
-			this.user = await backend.session();
+			const answer = await backend.session();
+			this.user = answer.user;
+			this.bulle = answer.bulle_url || DEFAULT_BULLE;
 			if (this.user) this.spaces = await backend.spaces();
 		} catch {
 			this.user = null;

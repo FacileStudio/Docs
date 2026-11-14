@@ -59,7 +59,7 @@ the trash listing.
 | `POST /auth/backchannel-logout` | Registre | form `logout_token` |
 | `POST /auth/logout` | session | `{"logged_out":true}` |
 | `GET /auth/me` | session | `{"email","name"?,"avatar_url"?}` or 401 |
-| `GET /auth/session` | optional | `{"user":{"email","name"?,"avatar_url"?}|null}`, always 200 |
+| `GET /auth/session` | optional | `{"user":{"email","name"?,"avatar_url"?}|null,"bulle_url"}`, always 200. `bulle_url` is `BULLE_URL`, the origin the client frames the Bulle sidebar from |
 | `POST /registre/sync` | none | 202: Registre's nudge; the app pulls the snapshot |
 | `POST /registre/deletions` | Registre-signed | 202 once erased; the subject then cannot sign in or get an account again |
 
@@ -182,9 +182,16 @@ A viewer's (or a trashed page's) updates are dropped; its awareness is relayed. 
 
 | Method and path | Answer | Access |
 |---|---|---|
-| `GET /mcp/actions` | `[{"id","kind","target","summary","client_id","created_at","expires_at","state"}]` | session, own actions |
-| `POST /mcp/actions/{id}/confirm` | `{"status":"done"}` | session, not a delegated token |
-| `POST /mcp/actions/{id}/dismiss` | 204 | session |
+| `GET /mcp/pending` | `{"actions":[{"id","kind","target","summary","client_id","created_at","expires_at","state"}],"truncated"?}`, newest first, at most 100 | own browser session |
+| `POST /mcp/pending/{id}/confirm` | `{"status":"done"}` | own browser session |
+| `POST /mcp/pending/{id}/dismiss` | `{"status":"dismissed"}` | own browser session |
+
+These are tronc-rs `PendingPage` on Go's paths. Only the person's own browser sign-in passes
+(porte-rs `require_own_session`): a bearer of any kind, a named API token or a CLI, device or
+mobile token sent as the session cookie, and a cookie minted before porte-rs 0.8.0 all get 403
+`permission_denied`; the person signs in again in the browser. MCP off answers 404. Pending
+actions older than 30 days after they closed are pruned every hour, and an account erasure
+deletes the person's actions.
 
 ## MCP
 
@@ -201,7 +208,7 @@ and the limits above. A refusal reaches the agent as an `isError` result with th
 | `docs_list_tree` | read | `space_id`?, `cursor`?, `limit`? (1 to 200, 50) | `{"pages":[{"id","parent_id","title"}],"next_cursor"?,"total"}` |
 | `docs_list_trash` | read | `space_id`?, `cursor`?, `limit`? (1 to 200, 50) | `{"pages":[{"id","parent_id","title","trashed_at"}],"next_cursor"?,"total"}` |
 | `docs_read` | read | `document_id` | `{"id","title","version","markdown","truncated"}` |
-| `docs_read_blocks` | read | `document_id`, `range`? | `{"version","blocks":[{"id","type","markdown"}]}` |
+| `docs_read_blocks` | read | `document_id`, `range`? | `{"version","blocks":[{"id","type","markdown"}],"truncated","next_range"?}`, cut at the result budget; pass `next_range` as `range` for the rest |
 | `docs_create` | write | `title`, `markdown`, `space_id`?, `parent_id`? | `{"id","version","markdown","saved"}` |
 | `docs_edit` | write, destructive | `document_id`, `ops` (no `replace_all`) | `{"id","version","markdown","saved"}` |
 | `docs_replace` | write, destructive | `document_id`, `markdown`, `expect_version` | `{"status","confirm_url"?}` |

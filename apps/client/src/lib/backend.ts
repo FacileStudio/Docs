@@ -111,11 +111,11 @@ const scoped = (spaceId: string | null, extra: Record<string, string> = {}) => {
 
 const doc = (id: string, rest = '') => `/documents/${encodeURIComponent(id)}${rest}`;
 
-const action = (id: string, verb: string) => `/mcp/actions/${encodeURIComponent(id)}/${verb}`;
+const action = (id: string, verb: string) => `/mcp/pending/${encodeURIComponent(id)}/${verb}`;
 
 /** Every call the client makes, one method per route of `docs/api.md`. */
 export const backend = {
-	session: () => request<{ user: SessionUser | null }>('/auth/session').then((r) => r.user),
+	session: () => request<{ user: SessionUser | null; bulle_url?: string }>('/auth/session'),
 	loginUrl: () => `${API}/auth/oidc`,
 	logout: () => request<unknown>('/auth/logout', send('POST')),
 	spaces: () => request<{ spaces: Space[] }>('/spaces').then((r) => r.spaces),
@@ -156,7 +156,7 @@ export const backend = {
 	},
 	resolveEmbed: (url: string) => request<EmbedAnswer>(`/embeds/resolve?${new URLSearchParams({ url })}`),
 	assistant: () => request<AssistantProfile>('/assistant'),
-	actions: () => request<PendingAction[]>('/mcp/actions'),
+	actions: () => request<{ actions: PendingAction[]; truncated?: boolean }>('/mcp/pending'),
 	confirmAction: (id: string) => request<{ status: string }>(action(id, 'confirm'), send('POST')),
-	dismissAction: (id: string) => request<void>(action(id, 'dismiss'), send('POST'))
+	dismissAction: (id: string) => request<{ status: string }>(action(id, 'dismiss'), send('POST'))
 };

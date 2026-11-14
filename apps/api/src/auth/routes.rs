@@ -20,6 +20,7 @@ struct SessionUser {
 #[derive(Serialize)]
 struct SessionAnswer {
     user: Option<SessionUser>,
+    bulle_url: String,
 }
 
 async fn account(state: &AppState, identity: &Identity) -> SessionUser {
@@ -50,11 +51,12 @@ async fn session(State(state): State<AppState>, identity: Option<Identity>) -> J
         Some(identity) => Some(account(&state, &identity).await),
         None => None,
     };
-    Json(SessionAnswer { user })
+    Json(SessionAnswer { user, bulle_url: state.bulle.url.clone() })
 }
 
 /// porte's routes, `GET /auth/me` for a CLI checking its token, and `GET /auth/session`, which
-/// answers 200 with `{"user": null}` for an anonymous browser.
+/// answers 200 with `{"user": null}` for an anonymous browser, and always names `bulle_url`, the
+/// origin the client frames the Bulle sidebar from.
 pub fn routes(kits: &Kits) -> Router<AppState> {
     Router::new()
         .merge(kits.sessions.routes())

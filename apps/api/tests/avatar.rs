@@ -42,6 +42,7 @@ async fn a_member_signed_in_before_gets_the_directory_picture() {
     let person = app.person("carol").await;
     let session = app.call("GET", "/api/auth/session", Some(&person), None).await;
     assert!(session.json()["user"].get("avatar_url").is_none());
+    assert_eq!(session.json()["bulle_url"], "https://bulle.facile.studio");
     let space = app.space(&[(&person, "member")]).await;
     sqlx::query("UPDATE space_members SET picture = 'https://sso.test/avatars/carol' WHERE space_id = $1")
         .bind(&space)

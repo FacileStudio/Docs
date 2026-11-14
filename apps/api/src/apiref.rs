@@ -18,7 +18,7 @@ const ROUTES: &[Row] = &[
     ("POST", "/auth/backchannel-logout", "auth", "Registre's back-channel logout", "200"),
     ("POST", "/auth/logout", "auth", "Ends the session", "200"),
     ("GET", "/auth/me", "auth", "The signed-in person, or 401", "200"),
-    ("GET", "/auth/session", "auth", "The signed-in person, or {\"user\": null}", "200"),
+    ("GET", "/auth/session", "auth", "The signed-in person, or {\"user\": null}, and bulle_url", "200"),
     ("POST", "/registre/sync", "registre", "Registre's directory nudge", "202"),
     ("POST", "/registre/deletions", "registre", "Registre's signed account deletion", "202"),
     ("GET", "/spaces", "spaces", "The caller's spaces and roles", "200"),
@@ -49,9 +49,9 @@ const ROUTES: &[Row] = &[
     ("DELETE", "/share/{id}", "share", "Revokes a share link", "204"),
     ("GET", "/public/{token}", "public", "A shared page, no session, rate limited", "200"),
     ("GET", "/public/{token}/documents/{id}", "public", "A page of a shared subtree", "200"),
-    ("GET", "/mcp/actions", "mcp", "The caller's pending agent actions", "200"),
-    ("POST", "/mcp/actions/{id}/confirm", "mcp", "Confirms and runs a pending agent action", "200"),
-    ("POST", "/mcp/actions/{id}/dismiss", "mcp", "Dismisses a pending agent action", "204"),
+    ("GET", "/mcp/pending", "mcp", "The person's pending agent actions, own browser session only", "200"),
+    ("POST", "/mcp/pending/{id}/confirm", "mcp", "Confirms and runs a pending agent action", "200"),
+    ("POST", "/mcp/pending/{id}/dismiss", "mcp", "Dismisses a pending agent action", "200"),
 ];
 
 fn method(name: &str) -> HttpMethod {

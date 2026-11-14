@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { backend } from './backend';
-import { assistant, bulleMessage, embedUrl, rememberSidebar, sidebarOpen, trustedOrigin } from './bulle';
+import { DEFAULT_BULLE, assistant, bulleMessage, embedUrl, rememberSidebar, sidebarOpen, trustedOrigin } from './bulle';
 import { editorMenu, type MenuEditor } from './editor-menu';
 
 afterEach(() => vi.restoreAllMocks());
@@ -8,7 +8,7 @@ afterEach(() => vi.restoreAllMocks());
 describe('bulle', () => {
 	it('builds the chat embed URL of a page', () => {
 		const url = new URL(
-			embedUrl({ app: 'docs', id: 'd1', title: 'Plan & co', url: 'https://docs.facile.studio/d/d1' })
+			embedUrl({ app: 'docs', id: 'd1', title: 'Plan & co', url: 'https://docs.facile.studio/d/d1' }, DEFAULT_BULLE)
 		);
 		expect(url.origin + url.pathname).toBe('https://bulle.facile.studio/embed/chat');
 		expect(Object.fromEntries(url.searchParams)).toEqual({
@@ -19,11 +19,13 @@ describe('bulle', () => {
 		});
 	});
 
-	it('trusts Bulle, and localhost only while developing', () => {
-		expect(trustedOrigin('https://bulle.facile.studio')).toBe(true);
-		expect(trustedOrigin('https://evil.example')).toBe(false);
-		expect(trustedOrigin('http://localhost:5173')).toBe(false);
-		expect(trustedOrigin('http://localhost:5173', true)).toBe(true);
+	it('trusts the configured Bulle, and localhost only while developing', () => {
+		expect(trustedOrigin('https://bulle.facile.studio', DEFAULT_BULLE)).toBe(true);
+		expect(trustedOrigin('https://bulle.facile.studio', 'https://bulle.test')).toBe(false);
+		expect(trustedOrigin('https://bulle.test', 'https://bulle.test')).toBe(true);
+		expect(trustedOrigin('https://evil.example', DEFAULT_BULLE)).toBe(false);
+		expect(trustedOrigin('http://localhost:5173', DEFAULT_BULLE)).toBe(false);
+		expect(trustedOrigin('http://localhost:5173', DEFAULT_BULLE, true)).toBe(true);
 	});
 
 	it('reads only the two messages Bulle sends', () => {

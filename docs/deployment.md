@@ -18,7 +18,7 @@ goes through the same router; Traefik forwards upgrades without configuration.
 
 Rooms are held in memory: two replicas would each hold a different copy of an open page, and
 edits made on one would never reach the other. `docker-compose.yml` pins `deploy.replicas: 1`
-and `update_config.order: stop-first`, so a deploy never runs two containers side by side. A
+and `container_name`, so a deploy never runs two containers side by side. A
 deploy disconnects every editor for a few seconds; y-websocket reconnects and resends what the
 server lacks. This holds until rooms get a pub/sub layer.
 

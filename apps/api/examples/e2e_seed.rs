@@ -1,8 +1,9 @@
 //! Test-only seeding for the browser end-to-end run (`apps/client/e2e`). Never shipped: the
 //! image builds the `api` binary only. It writes two members of one space and one outsider
 //! straight into a scratch database, with identities under `OIDC_ISSUER` (empty when unset, as
-//! the API reads it), and mints each a browser session through porte's own session store. It
-//! prints the space id and the session tokens as JSON.
+//! the API reads it), and mints each a browser login session (a `b~` token, as a real sign-in
+//! mints) through porte's own session store. It prints the space id and the session tokens as
+//! JSON.
 //!
 //! `DATABASE_URL=... cargo run --example e2e_seed`
 
@@ -35,9 +36,11 @@ async fn seed() -> Result<serde_json::Value, Box<dyn std::error::Error>> {
     let sessions = Manager::new(&config, Deps { sessions: Store::new(pool.clone()).sessions(), now: None });
     sqlx::query("INSERT INTO spaces (id, name) VALUES ($1, 'Partagé')").bind(SPACE).execute(&pool).await?;
     let mut cookies = serde_json::Map::new();
+    let (request, _) = http::Request::get("/").body(())?.into_parts();
     for (name, role) in [("alice", Some("owner")), ("bob", Some("member")), ("carol", None)] {
         let user = person(&pool, &issuer, name, role).await?;
-        let (token, _) = sessions.issue(user, "e2e").await?;
+        let template = porte::Session { user_id: user, ..porte::Session::default() };
+        let (token, _, _) = sessions.issue_cookie_for(&request, template).await?;
         cookies.insert(name.into(), token.into());
     }
     Ok(serde_json::json!({ "space": SPACE, "cookies": cookies }))

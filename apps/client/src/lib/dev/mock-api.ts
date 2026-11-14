@@ -64,7 +64,7 @@ export class MockApi {
 	}
 
 	private routes: [string, RegExp, Handler][] = [
-		['GET', /^\/auth\/session$/, () => json({ user: this.state.user })],
+		['GET', /^\/auth\/session$/, () => json({ user: this.state.user, bulle_url: 'https://bulle.facile.studio' })],
 		['POST', /^\/auth\/logout$/, () => ((this.state.user = null), json({ logged_out: true }))],
 		['GET', /^\/spaces$/, () => json({ spaces: this.state.spaces })],
 		[
