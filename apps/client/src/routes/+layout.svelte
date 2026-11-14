@@ -22,6 +22,7 @@
 	import { session } from '$lib/session.svelte';
 	import { restoreTheme, saveTheme } from '$lib/theme';
 	import { tree } from '$lib/tree.svelte';
+	import Landing from '$lib/components/Landing.svelte';
 	import Search from '$lib/components/Search.svelte';
 	import Tree from '$lib/components/Tree.svelte';
 
@@ -82,6 +83,8 @@
 	{@render children()}
 {:else if !session.ready}
 	<div class="flex h-dvh w-full items-center justify-center bg-fc-page"><Spinner /></div>
+{:else if !session.user && path === '/'}
+	<Landing />
 {:else if !session.user}
 	<AuthScreen appName="Docs" href={backend.loginUrl()} />
 {:else}

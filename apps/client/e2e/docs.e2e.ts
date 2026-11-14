@@ -115,3 +115,15 @@ test('two members write together, and the page survives a reload, a share, an ou
 	});
 	expect(denied.status).toBe(404);
 }, 180_000);
+
+test('a signed-out visitor sees the landing at / and the sign-in screen on a page link', async () => {
+	const home = await pageAs(null, '/');
+	await home.getByRole('heading', { level: 1, name: 'Des documents écrits à plusieurs' }).waitFor();
+	expect(await home.getByRole('link', { name: /Se connecter avec Facile/ }).count()).toBeGreaterThan(0);
+	await home.context().close();
+
+	const deep = await pageAs(null, '/trash');
+	await deep.getByRole('link', { name: /Se connecter avec Facile/ }).first().waitFor();
+	expect(await deep.getByRole('heading', { name: 'Des documents écrits à plusieurs' }).count()).toBe(0);
+	await deep.context().close();
+}, 60_000);
