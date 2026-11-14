@@ -143,7 +143,7 @@
 			<ForDevelopers
 				{rows}
 				description={t('landing.dev.line')}
-				selfHostHref="https://suite.facile.studio/auto-hebergement"
+				selfHostHref={`https://suite.facile.studio/${locale() === 'fr' ? '' : `${locale()}/`}auto-hebergement`}
 			/>
 		</div>
 	</main>
