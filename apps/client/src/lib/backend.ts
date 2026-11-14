@@ -156,7 +156,7 @@ export const backend = {
 	},
 	resolveEmbed: (url: string) => request<EmbedAnswer>(`/embeds/resolve?${new URLSearchParams({ url })}`),
 	assistant: () => request<AssistantProfile>('/assistant'),
-	actions: () => request<{ actions: PendingAction[]; truncated?: boolean }>('/mcp/pending').then((r) => r.actions),
+	actions: () => request<{ actions: PendingAction[]; truncated?: boolean }>('/mcp/pending'),
 	confirmAction: (id: string) => request<{ status: string }>(action(id, 'confirm'), send('POST')),
 	dismissAction: (id: string) => request<{ status: string }>(action(id, 'dismiss'), send('POST'))
 };

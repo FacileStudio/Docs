@@ -51,15 +51,21 @@ pub async fn raw(router: &Router, request: Request<Body>) -> Answer {
 }
 
 pub async fn with_cookie(router: &Router, method: &str, path: &str, token: &str) -> Answer {
-    let request = Request::builder()
+    let request = cookie_request(method, path, token).header(porte::CSRF_HEADER_NAME, "1");
+    raw(router, request.body(Body::empty()).unwrap()).await
+}
+
+/// A cookie request with no `X-Facile-CSRF` header, which porte refuses on a mutation.
+pub async fn without_csrf(router: &Router, method: &str, path: &str, token: &str) -> Answer {
+    raw(router, cookie_request(method, path, token).body(Body::empty()).unwrap()).await
+}
+
+fn cookie_request(method: &str, path: &str, token: &str) -> http::request::Builder {
+    Request::builder()
         .method(method)
         .uri(path)
         .header(header::HOST, "docs.test")
         .header(header::COOKIE, format!("{}={token}", porte::SESSION_COOKIE_NAME))
-        .header(porte::CSRF_HEADER_NAME, "1")
-        .body(Body::empty())
-        .unwrap();
-    raw(router, request).await
 }
 
 pub async fn browser_login(sessions: &porte::session::Manager, user_id: i64) -> String {

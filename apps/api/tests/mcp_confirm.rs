@@ -57,6 +57,8 @@ async fn only_a_browser_login_confirms_on_the_page() {
     let bearer = served.app.call("POST", &path, Some(&served.person), None).await;
     assert_eq!((bearer.status.as_u16(), version(&served.app, &id).await), (403, 1), "{}", bearer.text());
     let login = common::http::browser_login(&served.app.kits.sessions, served.person.user_id).await;
+    let forged = common::http::without_csrf(router, "POST", &path, &login).await;
+    assert_eq!((forged.status.as_u16(), version(&served.app, &id).await), (403, 1), "{}", forged.text());
     let done = with_cookie(router, "POST", &path, &login).await;
     assert_eq!(done.json(), json!({"status": "done"}), "{}", done.text());
     assert_eq!(version(&served.app, &id).await, 2);

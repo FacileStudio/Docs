@@ -13,6 +13,7 @@
 	let outcome = $state<'confirmed' | 'dismissed' | null>(null);
 	let busy = $state(false);
 	let browserOnly = $state(false);
+	let truncated = $state(false);
 
 	function failed(error: unknown, fallback: string) {
 		if (needsBrowserLogin(error)) browserOnly = true;
@@ -29,9 +30,13 @@
 		action = undefined;
 		outcome = null;
 		browserOnly = false;
+		truncated = false;
 		backend
 			.actions()
-			.then((list) => (action = list.find((item) => item.id === wanted) ?? null))
+			.then((list) => {
+				truncated = list.truncated === true;
+				action = list.actions.find((item) => item.id === wanted) ?? null;
+			})
 			.catch((error) => {
 				action = null;
 				failed(error, 'Demandes indisponibles');
@@ -87,6 +92,14 @@
 				: 'La page reste telle quelle.'}
 		>
 			{#if documentId && outcome === 'confirmed'}<Button href="/d/{documentId}">Ouvrir la page</Button>{/if}
+		</EmptyState>
+	{:else if (!action || !approval || !status) && truncated}
+		<EmptyState
+			icon={icons.warning}
+			title="Trop de demandes ouvertes"
+			description="Celle-ci n’est pas parmi les 100 plus récentes. Confirmez ou refusez d’abord les plus récentes, puis rouvrez ce lien."
+		>
+			<Button href="/">Retour à l’accueil</Button>
 		</EmptyState>
 	{:else if !action || !approval || !status}
 		<EmptyState

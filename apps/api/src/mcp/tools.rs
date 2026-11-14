@@ -13,7 +13,9 @@ const LIST_TRASH: &str = "The trashed pages of one space (or your personal pages
 it to find a page to bring back with docs_restore. The trash empties itself 30 days after a page went in.";
 const READ: &str = "One page as Facile Markdown, with its version. Call it before you rewrite a page.";
 const READ_BLOCKS: &str = "Top-level blocks with their ids. Call it before docs_edit, which addresses blocks by id. \
-A long page comes back in parts: when truncated is true, pass next_range as range for the rest.";
+A long page comes back in parts: when truncated is true, pass next_range as range for the rest. When truncated \
+is true and next_range is absent, the last block was cut short: never rewrite it from that partial text; read it \
+whole with docs_read.";
 const CREATE: &str = "A new page from Facile Markdown. Call it once per page: each call adds another page.";
 const EDIT: &str = "Applies operations (not replace_all) in order, all or nothing. Call it for any change inside a \
 page; replace_block and delete_block remove what they replace.";
