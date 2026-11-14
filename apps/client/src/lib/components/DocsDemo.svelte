@@ -7,10 +7,16 @@
 	import DemoTree from './DemoTree.svelte';
 
 	const LEA: PresencePeer = { id: 'lea', name: 'Léa Martin', color: 'var(--color-fc-chart-1)' };
+	const HUGO: PresencePeer = { id: 'hugo', name: 'Hugo Bernard', color: 'var(--color-fc-chart-2)' };
+	const HEADING = 'Ordre du jour';
+	const HUGO_HEADING = 'Programme de jeudi';
 	const LEA_LINE = 'Valider le budget avec Hugo';
-	const OWN_LINE = 'Réserver la salle jeudi';
+	const OWN_LINE = 'Réserver la salle';
 
 	let peers = $state<PresencePeer[]>([]);
+	let heading = $state(HEADING);
+	let hugoSel = $state(false);
+	let hugoTyping = $state(false);
 	let lea = $state('');
 	let own = $state('');
 	let leaTyping = $state(false);
@@ -20,6 +26,9 @@
 
 	function reset() {
 		peers = [];
+		heading = HEADING;
+		hugoSel = false;
+		hugoTyping = false;
 		lea = '';
 		own = '';
 		leaTyping = false;
@@ -28,36 +37,57 @@
 	}
 
 	function poster() {
-		peers = [LEA];
-		lea = LEA_LINE;
-		own = OWN_LINE;
+		reset();
+		peers = [LEA, HUGO];
+		heading = 'Programme de';
+		hugoTyping = true;
+		leaTyping = true;
+		lea = 'Valider le budget';
+		ownTyping = true;
+		own = 'Réserver la';
+	}
+
+	async function hugoEdits(act: Act) {
+		await act.wait(500);
+		hugoTyping = true;
+		await act.wait(700);
+		hugoSel = true;
+		await act.wait(800);
+		hugoSel = false;
+		await act.type(HUGO_HEADING, (value) => (heading = value), 110);
 	}
 
 	async function leaWrites(act: Act) {
-		await act.wait(900);
-		peers = [LEA];
-		await act.wait(900);
 		leaTyping = true;
 		await tick();
-		await act.wait(400);
-		await act.type(LEA_LINE, (value) => (lea = value), 70);
+		await act.wait(900);
+		await act.type(LEA_LINE, (value) => (lea = value), 100);
 	}
 
-	async function script(act: Act) {
-		await leaWrites(act);
-		await act.wait(500);
+	async function iWrite(act: Act) {
+		await act.wait(700);
 		cursor.visible = true;
 		await act.move(cursor, act.point(slot, 0.12, 0.5));
 		await act.click(cursor, () => (ownTyping = true));
-		await act.wait(250);
+		await act.wait(200);
 		cursor.visible = false;
-		await act.type(OWN_LINE, (value) => (own = value), 75);
-		ownTyping = false;
+		await act.type(OWN_LINE, (value) => (own = value), 105);
+	}
+
+	async function script(act: Act) {
+		await act.wait(600);
+		peers = [LEA, HUGO];
+		await act.wait(500);
+		await Promise.all([hugoEdits(act), leaWrites(act), iWrite(act)]);
 		await act.wait(2200);
 		reset();
-		await act.wait(700);
+		await act.wait(600);
 	}
 </script>
+
+{#snippet caret(peer: PresencePeer, name: string)}<span class="encre-caret" style:--encre-caret={peer.color}
+		><span class="encre-caret-label">{name}</span></span
+	>{/snippet}
 
 {#snippet page(compact: boolean)}
 	<div class="dd-page" class:dd-compact={compact}>
@@ -71,16 +101,17 @@
 			<Bar w="88%" h={8} />
 			<Bar w={compact ? '52%' : '64%'} h={8} />
 		</div>
-		<span class="dd-h2">Ordre du jour</span>
+		<span class="dd-h2"
+			><span class:encre-caret-selection={hugoSel} style:--encre-caret={HUGO.color}>{heading}</span
+			>{#if hugoTyping}{@render caret(HUGO, 'Hugo')}{/if}</span
+		>
 		<ul class="dd-list">
 			<li><Bar w={compact ? '70%' : '46%'} h={8} class="dd-bar" /></li>
 			<li><Bar w={compact ? '58%' : '38%'} h={8} class="dd-bar" /></li>
 			{#if leaTyping || lea}
 				<li transition:grow>
 					<span class="dd-text"
-						>{lea}{#if leaTyping}<span class="encre-caret" style:--encre-caret={LEA.color}
-								><span class="encre-caret-label">Léa</span></span
-							>{/if}</span
+						>{lea}{#if leaTyping}{@render caret(LEA, 'Léa')}{/if}</span
 					>
 				</li>
 			{/if}
@@ -111,7 +142,7 @@
 	{script}
 	{reset}
 	{poster}
-	label="Deux personnes écrivent dans le même document Docs : Léa ajoute une ligne, puis vous en ajoutez une autre."
+	label="Trois personnes écrivent en même temps dans le même document Docs : Hugo renomme un titre, Léa et vous ajoutez chacun une ligne."
 >
 	{#snippet children({ compact })}
 		{#if compact}
