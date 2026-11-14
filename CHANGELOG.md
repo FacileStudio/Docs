@@ -4,6 +4,13 @@ All notable changes to Docs. Versions follow SemVer.
 
 ## [Unreleased]
 
+## [0.12.1] - 2026-11-14
+
+### Changed
+
+- The landing feature section is a split: heading on the left, a list of four features with
+  icons on the right, so it no longer repeats the card grid of the demo tiles above it
+
 ## [0.12.0] - 2026-11-14
 
 ### Added
