@@ -4,6 +4,21 @@ All notable changes to Docs. Versions follow SemVer.
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-11-14
+
+### Added
+
+- A signed-out visitor on `/` sees a landing page (muse `LandingHeader` and `LandingFooter`, four
+  features, two "Se connecter avec Facile" buttons) instead of the sign-in screen. Every other
+  path still shows the sign-in screen
+- The landing hero plays a mise-en-scene demo: Léa joins a page, her caret types a line, then
+  the visitor adds one. Phones get a compact layout without the tree
+
+### Changed
+
+- muse v0.23.0 and mise-en-scene v0.2.1. The client no longer sets its own `font-family`, so
+  Magnetik from muse applies everywhere
+
 ## [0.9.3] - 2026-11-14
 
 ### Added
