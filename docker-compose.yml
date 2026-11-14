@@ -27,7 +27,6 @@ services:
     volumes:
     - attachments:/data
   docs-api:
-    container_name: docs-api
     restart: unless-stopped
     build:
       context: .
@@ -40,6 +39,7 @@ services:
     volumes:
     - attachments:/data
     labels:
+      journal.app: docs-api
       traefik.enable: 'true'
       traefik.docker.network: dokploy-network
       traefik.http.routers.docs-web.rule: "Host(`docs.facile.studio`)"
