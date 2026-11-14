@@ -4,6 +4,18 @@ All notable changes to Docs. Versions follow SemVer.
 
 ## [Unreleased]
 
+## [0.13.1] - 2026-11-14
+
+### Fixed
+
+- The link preview image and the manifest carry the new slogan and description instead of the
+  old English tagline; the static title ends with a full stop like the image
+- The "Self-host" link opens the Suite page in the visitor's language
+
+### Changed
+
+- `@facile/muse` v0.25.1: a long developer command wraps instead of scrolling
+
 ## [0.13.0] - 2026-11-14
 
 ### Added
