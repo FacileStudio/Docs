@@ -65,21 +65,26 @@
 			</div>
 		</section>
 
-		<section class="mx-auto max-w-5xl px-4 py-16 sm:px-6 sm:py-20">
-			<h2 class="text-center font-fc-title text-fc-2xl font-bold tracking-tight sm:text-fc-3xl">
-				Tout ce qu’il faut pour écrire ensemble
-			</h2>
-			<div class="mt-10 grid gap-4 sm:grid-cols-2">
+		<section class="mx-auto grid max-w-5xl gap-10 px-4 py-16 sm:px-6 sm:py-20 md:grid-cols-[2fr_3fr] md:gap-16">
+			<div>
+				<h2 class="font-fc-title text-fc-2xl font-bold tracking-tight sm:text-fc-3xl">
+					Tout ce qu’il faut pour écrire ensemble
+				</h2>
+				<p class="mt-3 text-fc-fg-muted">Une page, une équipe, et vos agents.</p>
+			</div>
+			<ul class="flex flex-col gap-6">
 				{#each features as feature (feature.title)}
-					<div class="rounded-fc-lg bg-fc-component p-6">
-						<span class="flex size-10 items-center justify-center rounded-fc-md bg-fc-surface">
+					<li class="flex gap-4">
+						<span class="flex size-10 shrink-0 items-center justify-center rounded-fc-md bg-fc-component">
 							<Icon icon={feature.icon} size={20} />
 						</span>
-						<h3 class="mt-4 text-fc-md font-bold">{feature.title}</h3>
-						<p class="mt-1.5 text-fc-sm text-fc-fg-muted">{feature.body}</p>
-					</div>
+						<div>
+							<h3 class="text-fc-md font-bold">{feature.title}</h3>
+							<p class="mt-1 text-fc-sm text-fc-fg-muted">{feature.body}</p>
+						</div>
+					</li>
 				{/each}
-			</div>
+			</ul>
 		</section>
 
 		<section class="mx-auto max-w-5xl px-4 py-16 text-center sm:px-6 sm:py-24">
