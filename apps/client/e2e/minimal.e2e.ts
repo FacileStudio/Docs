@@ -75,7 +75,8 @@ test('a selection shows the bubble menu and asks the assistant in the sidebar', 
 	const { id, alice } = await page('Bulle');
 	await selectLine(alice, 'Une phrase à expliquer');
 	await alice.getByRole('button', { name: 'Transformer en' }).waitFor({ timeout: 5_000 });
-	await alice.getByRole('button', { name: 'Demander à Bulle' }).click();
+	await alice.getByTestId('bulle-ask').click();
+	await alice.getByRole('button', { name: 'Transformer en' }).waitFor({ state: 'hidden', timeout: 5_000 });
 	const frame = alice.getByTestId('bulle-sidebar').locator('iframe');
 	await frame.waitFor({ timeout: 5_000 });
 	const src = (await frame.getAttribute('src')) ?? '';

@@ -1,6 +1,7 @@
 import { blockCommands, labelsFor, type Labels } from '@facile/encre';
 import type { Editor } from '@tiptap/core';
 import { icons } from './icons';
+import { askLabel } from './locale';
 import type { ContextMenuAction, ContextMenuItem } from './components/ContextMenu.svelte';
 
 /** The encre editor methods the right-click menu calls. */
@@ -121,7 +122,7 @@ export function editorMenu(context: MenuContext): ContextMenuItem[] {
 		},
 		{ separator: true },
 		{
-			label: `Demander à ${context.assistant}`,
+			label: askLabel(context.assistant),
 			blob: context.assistant,
 			disabled: context.markdown.trim() === '',
 			onselect: () => context.onask(context.markdown)

@@ -8,7 +8,7 @@
 	import { renderDiagram } from '$lib/diagrams';
 	import { editorMenu } from '$lib/editor-menu';
 	import { MAX_BYTES, fileUploader, uploader } from '$lib/images';
-	import { EDITOR_COPY, browserLocale } from '$lib/locale';
+	import { EDITOR_COPY, askLabel, browserLocale } from '$lib/locale';
 	import ContextMenu, { type ContextMenuItem } from './ContextMenu.svelte';
 	import { fromKeyboard } from '$lib/menu-keys';
 
@@ -51,6 +51,8 @@
 
 	function ask() {
 		const markdown = editor?.selectionMarkdown() ?? '';
+		const instance = editor?.instance();
+		instance?.commands.setTextSelection(instance.state.selection.to);
 		if (markdown.trim()) onask(markdown);
 	}
 
@@ -115,11 +117,12 @@
 			type="button"
 			class="flex h-8 shrink-0 items-center gap-1.5 rounded-fc-sm px-2 text-fc-sm whitespace-nowrap text-fc-fg hover:bg-fc-surface
 				focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fc-ring"
+			data-testid="bulle-ask"
 			onmousedown={(event) => event.preventDefault()}
 			onclick={ask}
 		>
 			<Blob name={assistant} size={18} />
-			Demander à {assistant}
+			{askLabel(assistant, locale)}
 		</button>
 	{/snippet}
 </Editor>

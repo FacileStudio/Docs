@@ -17,6 +17,7 @@
 		type PresencePeer
 	} from '@facile/muse';
 	import { backend } from '$lib/backend';
+	import { askLabel } from '$lib/locale';
 	import { shareIcon } from '$lib/brand';
 	import type { Connection } from '$lib/collab';
 	import { runExport, type ExportKind } from '$lib/export';
@@ -125,19 +126,19 @@
 			{#if access === 'viewer'}<span class="text-fc-xs whitespace-nowrap text-fc-fg-muted">Lecture seule</span>{/if}
 		</div>
 		<div class="ml-auto flex shrink-0 items-center gap-1">
-			<Tooltip text="Ouvrir {assistant}" describe={false} disabled={!narrow.current} class="contents">
+			<Tooltip text={askLabel(assistant)} describe={false} disabled={!narrow.current} class="contents">
 				<button
 					type="button"
 					class="flex min-h-11 items-center gap-2 rounded-fc-md px-2 text-fc-sm text-fc-fg hover:bg-fc-surface
 						focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fc-ring
 						{bulleOpen ? 'bg-fc-surface' : ''}"
 					aria-pressed={bulleOpen}
-					aria-label="Ouvrir {assistant}"
+					aria-label={askLabel(assistant)}
 					data-testid="bulle-toggle"
 					onclick={ontogglebulle}
 				>
 					<Blob name={assistant} size={24} />
-					<span class="hidden sm:inline">{assistant}</span>
+					<span class="hidden sm:inline">{askLabel(assistant)}</span>
 				</button>
 			</Tooltip>
 			<Tooltip text="Historique" describe={false} disabled={!narrow.current} class="contents">

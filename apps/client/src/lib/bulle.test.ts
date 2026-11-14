@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { backend } from './backend';
 import { DEFAULT_BULLE, assistant, bulleMessage, embedUrl, rememberSidebar, sidebarOpen, trustedOrigin } from './bulle';
 import { editorMenu, type MenuEditor } from './editor-menu';
+import { askLabel } from './locale';
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -84,7 +85,7 @@ describe('editorMenu', () => {
 			'Supprimer',
 			'Copier le lien du bloc',
 			'—',
-			'Demander à Nova'
+			askLabel('Nova')
 		]);
 		const ask = items.at(-1);
 		if (ask && !('separator' in ask)) ask.onselect?.();
@@ -111,6 +112,13 @@ describe('editorMenu', () => {
 		expect(labels(items)).toContain('Transformer en (off)');
 		expect(labels(items)).toContain('Supprimer (off)');
 		expect(labels(items)).toContain('Copier le lien du bloc');
-		expect(labels(items)).toContain('Demander à Nova (off)');
+		expect(labels(items)).toContain(`${askLabel('Nova')} (off)`);
+	});
+});
+
+describe('askLabel', () => {
+	it('names the assistant in the reader language', () => {
+		expect(askLabel('Pixel', 'fr')).toBe('Demander à Pixel');
+		expect(askLabel('Pixel', 'en')).toBe('Ask Pixel');
 	});
 });

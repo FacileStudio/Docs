@@ -27,3 +27,15 @@ export const EDITOR_COPY: Record<Locale, { placeholder: string; uploadFailed: st
 		uploadFailed: 'Das Bild konnte nicht hochgeladen werden'
 	}
 };
+
+const ASK: Record<Locale, (name: string) => string> = {
+	fr: (name) => `Demander à ${name}`,
+	en: (name) => `Ask ${name}`,
+	es: (name) => `Preguntar a ${name}`,
+	de: (name) => `${name} fragen`
+};
+
+/** The label of a button that hands something to the assistant `name`, in `locale`. */
+export function askLabel(name: string, locale: Locale = browserLocale()): string {
+	return ASK[locale](name);
+}
