@@ -1,6 +1,6 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use tronc::mcp::{Answer, Call, RESULT_BUDGET, ToolError, clip};
+use tronc::mcp::{Answer, Call, RESULT_BUDGET, ToolError, clip, encoded_size, fit_count};
 
 use super::page::{Listed, Window, window};
 use super::user;
@@ -121,9 +121,31 @@ pub struct Block {
 pub struct BlocksOut {
     pub version: i64,
     pub blocks: Vec<Block>,
+    /// The result budget cut the list, or the one block it holds; read on with `next_range`.
+    pub truncated: bool,
+    /// The `range` that reads the blocks this answer left out; absent when none were.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub next_range: Option<[usize; 2]>,
 }
 
-/// `docs_read_blocks`: top-level blocks with their ids, for targeted edits.
+/// The blocks of `list`, read from top-level index `start`, cut to the result budget. A single
+/// block past the budget comes back with its markdown clipped.
+fn within_budget(version: i64, list: Vec<Block>, start: usize) -> BlocksOut {
+    let end = start + list.len();
+    let fit = fit_count(list.len(), |n| encoded_size(&list[..n]));
+    let mut blocks = list;
+    let clipped = fit == 0 && !blocks.is_empty();
+    blocks.truncate(fit.max(1));
+    if let Some(block) = blocks.first_mut().filter(|_| clipped) {
+        block.markdown = clip(&block.markdown, RESULT_BUDGET / 2).0.to_owned();
+    }
+    let next = start + blocks.len();
+    let next_range = (next < end).then_some([next, end]);
+    BlocksOut { version, blocks, truncated: clipped || next_range.is_some(), next_range }
+}
+
+/// `docs_read_blocks`: top-level blocks with their ids, for targeted edits, within the result
+/// budget.
 pub async fn read_blocks(state: AppState, call: Call, input: ReadIn) -> Result<Answer<BlocksOut>, ToolError> {
     let (mut doc, _, version) = load(&state, &call, &input.document_id).await?;
     let op = encre::ops::Op::ReadBlocks { range: input.range };
@@ -132,5 +154,30 @@ pub async fn read_blocks(state: AppState, call: Call, input: ReadIn) -> Result<A
         return Err(ToolError("read_blocks answered no blocks".into()));
     };
     let blocks = list.into_iter().map(|b| Block { id: b.id, kind: b.kind, markdown: b.markdown }).collect();
-    Ok(BlocksOut { version, blocks }.into())
+    let start = input.range.map_or(0, |[start, _]| start);
+    Ok(within_budget(version, blocks, start).into())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn blocks(sizes: &[usize]) -> Vec<Block> {
+        sizes
+            .iter()
+            .map(|&n| Block { id: Some(format!("b{n}")), kind: "paragraph".into(), markdown: "x".repeat(n) })
+            .collect()
+    }
+
+    #[test]
+    fn blocks_stop_at_the_result_budget_and_name_the_rest() {
+        let small = within_budget(3, blocks(&[10, 20]), 0);
+        assert_eq!((small.blocks.len(), small.truncated, small.next_range), (2, false, None));
+        let cut = within_budget(3, blocks(&[30_000; 6]), 4);
+        assert_eq!((cut.blocks.len(), cut.truncated, cut.next_range), (2, true, Some([6, 10])));
+        assert!(encoded_size(&cut) <= RESULT_BUDGET + 100);
+        let huge = within_budget(3, blocks(&[200_000, 5]), 0);
+        assert_eq!((huge.blocks.len(), huge.truncated, huge.next_range), (1, true, Some([1, 2])));
+        assert!(encoded_size(&huge) <= RESULT_BUDGET);
+    }
 }

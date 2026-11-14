@@ -20,12 +20,6 @@ services:
       retries: 5
       start_period: 30s
       start_interval: 1s
-    deploy:
-      update_config:
-        order: stop-first
-        parallelism: 1
-      restart_policy:
-        condition: any
   docs-data-owner:
     image: busybox:1.37@sha256:a7dbc319b1438115a207e11930dc4bb3e643dcb3ec0bdd694bb36cd8fad289ec
     restart: "no"
@@ -75,6 +69,7 @@ services:
       OIDC_CLI_AUDIENCE: ${OIDC_CLI_AUDIENCE:-}
       MCP_RESOURCE: ${MCP_RESOURCE:-}
       MCP_STATE_KEY: ${MCP_STATE_KEY:-}
+      BULLE_URL: ${BULLE_URL:-}
     healthcheck:
       test: ["CMD", "/api", "healthcheck"]
       interval: 30s
@@ -89,11 +84,6 @@ services:
         condition: service_completed_successfully
     deploy:
       replicas: 1
-      update_config:
-        order: stop-first
-        parallelism: 1
-      restart_policy:
-        condition: any
 volumes:
   db_data:
     name: docs_db_data

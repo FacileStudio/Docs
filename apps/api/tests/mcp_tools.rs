@@ -98,7 +98,7 @@ async fn docs_list_trash_pages_through_the_trash_with_a_cursor() {
     let cursor = first["next_cursor"].as_str().unwrap();
     let rest: Value = decode(&call(&client, "docs_list_trash", args(json!({"limit": 2, "cursor": cursor}))).await);
     assert_eq!((rest["pages"].as_array().unwrap().len(), rest.get("next_cursor")), (1, None));
-    assert!(refused(&client, "docs_list_trash", json!({"cursor": "zz"})).await.contains("next_cursor"));
+    assert!(refused(&client, "docs_list_trash", json!({"cursor": "zz"})).await.contains("cursor is not valid"));
     assert!(refused(&client, "docs_list_trash", json!({"space_id": "nowhere"})).await.contains("not found"));
 }
 

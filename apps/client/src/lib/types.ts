@@ -76,7 +76,7 @@ export interface ShareInfo {
 	created_at: string;
 }
 
-/** An agent action waiting for the owner's confirmation, as `GET /api/mcp/actions` lists it. */
+/** An agent action waiting for the owner's confirmation, as `GET /api/mcp/pending` lists it in `actions`. */
 export interface PendingAction {
 	id: string;
 	kind: string;

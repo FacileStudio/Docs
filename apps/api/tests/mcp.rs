@@ -72,10 +72,12 @@ async fn confirm_on_the_page(served: &Served, client: &tronc::mcptest::Client, i
     assert_eq!(pending["status"], json!("pending_confirmation"));
     let action = pending["confirm_url"].as_str().unwrap().rsplit('=').next().unwrap().to_owned();
     assert_eq!(version(&served.app, id).await, 2);
-    let list = served.app.call("GET", "/api/mcp/actions", Some(&served.person), None).await.json();
-    assert_eq!(list[0]["id"], json!(action));
-    let path = format!("/api/mcp/actions/{action}/confirm");
-    let done = served.app.call("POST", &path, Some(&served.person), None).await;
+    let login = common::http::browser_login(&served.app.kits.sessions, served.person.user_id).await;
+    let list = common::http::with_cookie(&served.app.router, "GET", "/api/mcp/pending", &login).await.json();
+    assert_eq!(list["actions"][0]["id"], json!(action));
+    assert!(list["actions"][0]["target"].as_str().unwrap().contains(id), "{list}");
+    let path = format!("/api/mcp/pending/{action}/confirm");
+    let done = common::http::with_cookie(&served.app.router, "POST", &path, &login).await;
     assert_eq!(done.json(), json!({"status": "done"}), "{}", done.text());
     let read: Value = decode(&call(client, "docs_read", args(json!({"document_id": id}))).await);
     assert_eq!(read["markdown"], json!("Replaced."));
@@ -99,7 +101,8 @@ async fn agents_get_the_patch_count_and_the_markdown_cap_on_every_write_tool() {
     assert!(refused(&client, "docs_edit", append).await.contains(cap));
     let replace = json!({"document_id": id, "markdown": big, "expect_version": 1});
     assert!(refused(&client, "docs_replace", replace).await.contains(cap));
-    let list = served.app.call("GET", "/api/mcp/actions", Some(&served.person), None).await.json();
-    assert_eq!(list, json!([]));
+    let login = common::http::browser_login(&served.app.kits.sessions, served.person.user_id).await;
+    let list = common::http::with_cookie(&served.app.router, "GET", "/api/mcp/pending", &login).await.json();
+    assert_eq!(list, json!({"actions": []}));
     assert_eq!(version(&served.app, &id).await, 1);
 }

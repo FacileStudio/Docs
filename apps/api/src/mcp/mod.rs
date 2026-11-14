@@ -9,10 +9,8 @@ mod tools;
 mod write;
 
 use std::collections::HashMap;
-use std::sync::Arc;
 
-use axum::Router;
-use tronc::mcp::{Call, ConfirmConfig, Confirmations, Options, PostgresPending, ToolError};
+use tronc::mcp::{App, AppConfig, AppSpec, Call, ToolError};
 
 use crate::state::AppState;
 
@@ -23,46 +21,22 @@ pub fn user(call: &Call) -> Result<i64, ToolError> {
     call.caller.user_id.parse().map_err(|_| ToolError("the token names no local account".to_owned()))
 }
 
-/// The origin of `resource`, `https://docs.facile.studio` for `https://docs.facile.studio/mcp`.
-pub fn origin(resource: &str) -> &str {
-    resource.strip_suffix("/mcp").unwrap_or(resource)
-}
-
-/// The confirmation flow: actions in `mcp_actions`, confirmed on the client's `/pending` page.
-pub fn confirmations(state: &AppState, resource: &str, key: &[u8]) -> Result<Confirmations, String> {
-    Confirmations::new(ConfirmConfig {
-        store: Arc::new(PostgresPending::new(state.pool.clone())),
-        key: key.to_vec(),
-        confirm_url: format!("{}/pending", origin(resource)),
+/// Docs' MCP server from `cfg`: the twelve tools, and `docs_replace` confirmed on the client's
+/// `/pending` page. `cfg.pending` must be set.
+pub fn app(state: &AppState, cfg: AppConfig) -> Result<App, String> {
+    let spec = AppSpec {
+        name: "docs".to_owned(),
+        title: "Docs".to_owned(),
+        instructions: format!(
+            "Docs holds the team's pages, a tree per space. Read before you write: docs_read_blocks gives block ids \
+             for docs_edit.\n\n{}",
+            format::SHORT_FORM
+        ),
         kinds: HashMap::from([(KIND.to_owned(), replace::kind(state))]),
-        pending_ttl: std::time::Duration::ZERO,
-        ask_ttl: std::time::Duration::ZERO,
-    })
-}
-
-/// Mounts `/mcp` and its metadata on `router`, outside `/api` and outside the CSRF rule.
-pub fn mount(
-    router: Router,
-    state: &AppState,
-    options: Options,
-    confirmations: Confirmations,
-) -> Result<Router, String> {
-    let mut options = options;
-    options.title = "Docs".to_owned();
-    options.version = crate::version::VERSION.to_owned();
-    options.instructions = format!(
-        "Docs holds the team's pages, a tree per space. Read before you write: docs_read_blocks gives block ids for \
-         docs_edit.\n\n{}",
-        format::SHORT_FORM
-    );
-    options.tools = tools::all(state, &confirmations);
-    tronc::mcp::mount(router, options)
-}
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn the_origin_drops_the_mcp_path() {
-        assert_eq!(super::origin("https://docs.facile.studio/mcp"), "https://docs.facile.studio");
-    }
+        ..AppSpec::default()
+    };
+    let mut app = App::new(cfg, spec)?;
+    let confirmations = app.confirmations.clone().ok_or("docs: docs_replace needs confirmations")?;
+    app.options.tools = tools::all(state, &confirmations);
+    Ok(app)
 }

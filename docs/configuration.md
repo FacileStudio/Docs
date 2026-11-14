@@ -24,7 +24,7 @@ porte's configuration. A missing required variable, or an inconsistent pair, exi
 | `MCP_RESOURCE` | no | — | `https://<host>/mcp`. Its presence mounts `/mcp` |
 | `MCP_STATE_KEY` | with MCP | — | HMAC key of the confirmation flow; boot fails without it when MCP is on |
 | `ATTACHMENT_MAX_BYTES` | no | `26214400` | The largest attachment that is not an image or a PDF (those stay at 20 MiB). A positive byte count |
-| `BULLE_URL` | no | `https://bulle.facile.studio` | Bulle's origin, for `GET /api/assistant` |
+| `BULLE_URL` | no | `https://bulle.facile.studio` | Bulle's origin: `GET /api/assistant` asks it, the client frames the sidebar from it (`bulle_url` in `GET /api/auth/session`), and the CSP allows it in `frame-src`. An http(s) origin without a path, or the boot fails |
 | `BULLE_CLIENT_ID` | no | `bulle` | Bulle's Registre client id: the audience Docs exchanges the person's token for |
 | `MARKDOWN_MAX_BYTES` | no | `1048576` | The largest markdown body one request, MCP call or imported page may ask the API to parse; above it, 413. A positive byte count. See [API, markdown limits](api.md#markdown-limits) |
 | `TEST_DATABASE_URL` | tests | — | Postgres the integration tests create their schemas in |

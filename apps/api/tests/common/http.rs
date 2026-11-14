@@ -49,3 +49,21 @@ pub async fn raw(router: &Router, request: Request<Body>) -> Answer {
     let bytes = response.into_body().collect().await.unwrap().to_bytes().to_vec();
     Answer { status, headers, bytes }
 }
+
+pub async fn with_cookie(router: &Router, method: &str, path: &str, token: &str) -> Answer {
+    let request = Request::builder()
+        .method(method)
+        .uri(path)
+        .header(header::HOST, "docs.test")
+        .header(header::COOKIE, format!("{}={token}", porte::SESSION_COOKIE_NAME))
+        .header(porte::CSRF_HEADER_NAME, "1")
+        .body(Body::empty())
+        .unwrap();
+    raw(router, request).await
+}
+
+pub async fn browser_login(sessions: &porte::session::Manager, user_id: i64) -> String {
+    let (request, _) = Request::get("/").body(()).unwrap().into_parts();
+    let template = porte::Session { user_id, ..porte::Session::default() };
+    sessions.issue_cookie_for(&request, template).await.unwrap().0
+}

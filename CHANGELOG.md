@@ -4,6 +4,34 @@ All notable changes to Docs. Versions follow SemVer.
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking for the confirm page:** the API moves from `/api/mcp/actions` to tronc-rs
+  `PendingPage` on Go's paths: `GET /api/mcp/pending` answers `{"actions":[...]}` (plus
+  `"truncated":true` past 100) and dismiss answers 200 `{"status":"dismissed"}`. The client page
+  moves in the same change
+- Only the person's own browser sign-in confirms a pending agent action (porte-rs
+  `require_own_session`). A CLI or labelled API token sent as the session cookie, and a cookie
+  minted before this release, get 403; the confirm page then asks the person to sign in again
+  in the browser, since the mobile or desktop app cannot confirm
+- tronc-rs v0.5.1 and porte-rs v0.8.1. The MCP server is built with `tronc::mcp::App`, the
+  erasure deletes pending actions with `erase_pending`, closed actions are pruned hourly, the
+  Bulle client is tronc's pooled, redirect-refusing one with porte's `Exchanger::bound` tokens,
+  and the tool annotations use tronc's presets. The MCP rate limit is the suite default, 120
+  calls a minute per person
+- `BULLE_URL` is validated as an http(s) origin at boot and also drives the Bulle sidebar: the
+  client reads it as `bulle_url` from `GET /api/auth/session` and the CSP's `frame-src` allows
+  it, where both were hard-coded to `https://bulle.facile.studio`
+- `docker-compose.yml` drops the swarm-only `deploy.restart_policy` and `deploy.update_config`;
+  the long-running services keep `restart: unless-stopped`
+
+### Fixed
+
+- `docs_read_blocks` without a `range` stays within the MCP result budget: it stops at about
+  25,000 tokens, sets `truncated` and names `next_range`; a single block too long for one answer
+  comes back clipped. `docs_list_tree` and `docs_list_trash` windows stop at the budget too, and
+  their cursors are tronc's opaque offset cursors
+
 ## [0.10.0] - 2026-11-14
 
 ### Added
