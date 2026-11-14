@@ -17,6 +17,7 @@
 		type UserMenuOptions
 	} from '@facile/muse';
 	import { backend } from '$lib/backend';
+	import { bindLocale, visitorLocale } from '$lib/i18n';
 	import { logoIcon } from '$lib/brand';
 	import { rememberReturn, takeReturn } from '$lib/return';
 	import { session } from '$lib/session.svelte';
@@ -36,7 +37,8 @@
 	const bare = $derived(path.startsWith('/s/'));
 	const onSettings = $derived(path.startsWith('/settings'));
 
-	provideLocale(() => 'fr');
+	const i18n = provideLocale(() => (session.user || bare ? 'fr' : visitorLocale()));
+	bindLocale(() => i18n.locale);
 	restoreTheme();
 
 	$effect(() => {

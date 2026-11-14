@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Icon, Presence, icons, type PresencePeer } from '@facile/muse';
 	import { shareIcon } from '$lib/brand';
+	import { t } from '$lib/i18n';
 
 	let { compact, peers }: { compact: boolean; peers: PresencePeer[] } = $props();
 </script>
@@ -9,8 +10,8 @@
 	<Presence {peers} class="dd-presence" />
 	<span class="dd-actions">
 		{#if !compact}
-			<span class="dd-action"><Icon icon={icons.history} size={16} />Historique</span>
-			<span class="dd-action"><Icon icon={icons.download} size={16} />Exporter</span>
+			<span class="dd-action"><Icon icon={icons.history} size={16} />{t('demo.history')}</span>
+			<span class="dd-action"><Icon icon={icons.download} size={16} />{t('demo.export')}</span>
 		{/if}
 		<span class="dd-icon"><Icon icon={shareIcon} size={18} /></span>
 	</span>

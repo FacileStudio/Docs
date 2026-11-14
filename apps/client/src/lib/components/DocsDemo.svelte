@@ -1,20 +1,17 @@
 <script lang="ts">
 	import { tick } from 'svelte';
-	import { Bar, Cursor, Stage, Window, cursorAt, grow, type Act } from '@facile/mise-en-scene';
+	import { Bar, Cursor, Stage, Window, cursorAt, type Act } from '@facile/mise-en-scene';
 	import { Icon, type PresencePeer } from '@facile/muse';
 	import { logoIcon } from '$lib/brand';
+	import { t } from '$lib/i18n';
 	import DemoToolbar from './DemoToolbar.svelte';
 	import DemoTree from './DemoTree.svelte';
 
 	const LEA: PresencePeer = { id: 'lea', name: 'Léa Martin', color: 'var(--color-fc-chart-1)' };
 	const HUGO: PresencePeer = { id: 'hugo', name: 'Hugo Bernard', color: 'var(--color-fc-chart-2)' };
-	const HEADING = 'Ordre du jour';
-	const HUGO_HEADING = 'Programme de jeudi';
-	const LEA_LINE = 'Valider le budget avec Hugo';
-	const OWN_LINE = 'Réserver la salle';
 
 	let peers = $state<PresencePeer[]>([]);
-	let heading = $state(HEADING);
+	let heading = $state<string | null>(null);
 	let hugoSel = $state(false);
 	let hugoTyping = $state(false);
 	let lea = $state('');
@@ -24,9 +21,13 @@
 	let cursor = $state(cursorAt());
 	let slot = $state<HTMLElement>();
 
+	function start(text: string): string {
+		return text.split(' ').slice(0, -1).join(' ');
+	}
+
 	function reset() {
 		peers = [];
-		heading = HEADING;
+		heading = null;
 		hugoSel = false;
 		hugoTyping = false;
 		lea = '';
@@ -39,12 +40,12 @@
 	function poster() {
 		reset();
 		peers = [LEA, HUGO];
-		heading = 'Programme de';
+		heading = start(t('demo.heading.hugo'));
 		hugoTyping = true;
 		leaTyping = true;
-		lea = 'Valider le budget';
+		lea = start(t('demo.line.lea'));
 		ownTyping = true;
-		own = 'Réserver la';
+		own = start(t('demo.line.own'));
 	}
 
 	async function hugoEdits(act: Act) {
@@ -54,14 +55,14 @@
 		hugoSel = true;
 		await act.wait(800);
 		hugoSel = false;
-		await act.type(HUGO_HEADING, (value) => (heading = value), 110);
+		await act.type(t('demo.heading.hugo'), (value) => (heading = value), 110);
 	}
 
 	async function leaWrites(act: Act) {
 		leaTyping = true;
 		await tick();
 		await act.wait(900);
-		await act.type(LEA_LINE, (value) => (lea = value), 100);
+		await act.type(t('demo.line.lea'), (value) => (lea = value), 100);
 	}
 
 	async function iWrite(act: Act) {
@@ -71,7 +72,7 @@
 		await act.click(cursor, () => (ownTyping = true));
 		await act.wait(200);
 		cursor.visible = false;
-		await act.type(OWN_LINE, (value) => (own = value), 105);
+		await act.type(t('demo.line.own'), (value) => (own = value), 105);
 	}
 
 	async function script(act: Act) {
@@ -94,7 +95,7 @@
 		<DemoToolbar {compact} {peers} />
 		<div class="dd-title">
 			<span class="dd-glyph"><Icon icon={logoIcon} size={compact ? 22 : 26} /></span>
-			<span>Lancement d’automne</span>
+			<span>{t('demo.page')}</span>
 		</div>
 		<div class="dd-lines">
 			<Bar w="96%" h={8} />
@@ -102,28 +103,23 @@
 			<Bar w={compact ? '52%' : '64%'} h={8} />
 		</div>
 		<span class="dd-h2"
-			><span class:encre-caret-selection={hugoSel} style:--encre-caret={HUGO.color}>{heading}</span
+			><span class:encre-caret-selection={hugoSel} style:--encre-caret={HUGO.color}>{heading ?? t('demo.heading')}</span
 			>{#if hugoTyping}{@render caret(HUGO, 'Hugo')}{/if}</span
 		>
 		<ul class="dd-list">
 			<li><Bar w={compact ? '70%' : '46%'} h={8} class="dd-bar" /></li>
 			<li><Bar w={compact ? '58%' : '38%'} h={8} class="dd-bar" /></li>
-			{#if leaTyping || lea}
-				<li transition:grow>
-					<span class="dd-text"
-						>{lea}{#if leaTyping}{@render caret(LEA, 'Léa')}{/if}</span
-					>
-				</li>
-			{/if}
-			{#if ownTyping || own}
-				<li transition:grow>
-					<span class="dd-text"
-						>{own}{#if ownTyping}<span class="dd-own-caret"></span>{/if}</span
-					>
-				</li>
-			{/if}
+			<li class="dd-new" class:dd-shown={leaTyping || lea}>
+				<span class="dd-text"
+					>{lea}{#if leaTyping}{@render caret(LEA, 'Léa')}{/if}</span
+				>
+			</li>
+			<li class="dd-new" class:dd-shown={ownTyping || own} bind:this={slot}>
+				<span class="dd-text"
+					>{own}{#if ownTyping}<span class="dd-own-caret"></span>{/if}</span
+				>
+			</li>
 		</ul>
-		<div class="dd-slot" bind:this={slot}></div>
 		{#if !compact}
 			<div class="dd-lines">
 				<Bar w="92%" h={8} />
@@ -142,7 +138,7 @@
 	{script}
 	{reset}
 	{poster}
-	label="Trois personnes écrivent en même temps dans le même document Docs : Hugo renomme un titre, Léa et vous ajoutez chacun une ligne."
+	label={t('demo.label')}
 >
 	{#snippet children({ compact })}
 		{#if compact}
@@ -222,6 +218,18 @@
 		display: inline-block;
 		vertical-align: middle;
 	}
+	.dd-new {
+		height: 37px;
+		opacity: 0;
+		transform: translateY(4px);
+		transition:
+			opacity 0.3s ease,
+			transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+	}
+	.dd-shown {
+		opacity: 1;
+		transform: none;
+	}
 	.dd-text {
 		white-space: nowrap;
 	}
@@ -232,8 +240,5 @@
 		margin-left: 1px;
 		vertical-align: text-bottom;
 		background: var(--color-fc-fg);
-	}
-	.dd-slot {
-		height: 30px;
 	}
 </style>

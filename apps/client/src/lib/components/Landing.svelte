@@ -1,105 +1,158 @@
 <script lang="ts">
-	import { Icon, LandingFooter, LandingHeader, SignInWithFacile, icons } from '@facile/muse';
+	import {
+		FeatureSplit,
+		ForDevelopers,
+		LANDING_HEADING,
+		LandingCta,
+		LandingFooter,
+		LandingHeader,
+		PricingPlans,
+		SignInWithFacile,
+		WorksWith,
+		icons,
+		signUpUrl,
+		type DeveloperRow,
+		type FeatureItem,
+		type WorksWithApp
+	} from '@facile/muse';
 	import { backend } from '$lib/backend';
-	import { logoIcon } from '$lib/brand';
+	import { logoIcon, shareIcon } from '$lib/brand';
+	import { locale, rememberLocale, t } from '$lib/i18n';
+	import { suiteIcons } from '$lib/suite-icons';
 	import DocsDemo from './DocsDemo.svelte';
+	import EmbedTile from './landing/EmbedTile.svelte';
 	import HistoryTile from './landing/HistoryTile.svelte';
-	import ShareTile from './landing/ShareTile.svelte';
 	import SlashTile from './landing/SlashTile.svelte';
 
 	const signInHref = backend.loginUrl();
+	const FEATURES = [
+		['live', icons.usersGroup],
+		['tree', icons.layers],
+		['share', shareIcon],
+		['export', icons.download],
+		['import', icons.upload],
+		['trash', icons.remove]
+	] as const;
 
-	const features = [
+	const features = $derived<FeatureItem[]>(
+		FEATURES.map(([key, icon]) => ({
+			icon,
+			title: t(`landing.feature.${key}.title`),
+			text: t(`landing.feature.${key}.text`)
+		}))
+	);
+
+	const apps = $derived<WorksWithApp[]>([
 		{
-			icon: icons.usersGroup,
-			title: 'Chacun voit l’autre écrire',
-			body: 'Les curseurs s’affichent en direct. Rien à enregistrer, rien à fusionner.'
+			name: 'Feuilles',
+			icon: suiteIcons.feuilles,
+			line: t('landing.with.feuilles'),
+			href: 'https://feuilles.facile.studio'
 		},
+		{ name: 'Toile', icon: suiteIcons.toile, line: t('landing.with.toile'), href: 'https://toile.facile.studio' },
+		{ name: 'Vision', icon: suiteIcons.vision, line: t('landing.with.vision'), href: 'https://vision.facile.studio' },
+		{ name: 'Bulle', icon: suiteIcons.bulle, line: t('landing.with.bulle'), href: 'https://bulle.facile.studio' }
+	]);
+
+	const rows = $derived<DeveloperRow[]>([
+		{ kind: 'mcp', text: t('landing.dev.mcp') },
+		{ kind: 'api', text: t('landing.dev.api'), href: 'https://docs.facile.studio/docs' },
+		{ kind: 'source', text: t('landing.dev.source'), href: 'https://github.com/FacileStudio/Docs' }
+	]);
+
+	const links = $derived([
+		{ href: '#features', label: t('landing.nav.features') },
+		{ href: '#pricing', label: t('landing.nav.pricing') }
+	]);
+	const columns = $derived([
+		{ title: 'Docs', links },
 		{
-			icon: icons.layers,
-			title: 'Des pages rangées en arbre',
-			body: 'Chaque espace a son arbre. Glissez une page pour la déplacer.'
-		},
-		{
-			icon: icons.history,
-			title: 'Un historique par page',
-			body: 'Revenez à une version passée, exportez en PDF ou en Markdown.'
-		},
-		{
-			icon: icons.plug,
-			title: 'Ouvert à vos agents',
-			body: 'Le serveur MCP de Docs laisse vos agents lire et modifier les pages.'
+			title: 'Facile',
+			links: [
+				{ href: 'https://suite.facile.studio', label: t('landing.nav.suite'), external: true },
+				{ href: signUpUrl(locale()), label: t('landing.nav.signup'), external: true }
+			]
 		}
-	];
+	]);
+
+	$effect(() => {
+		document.querySelector('meta[name="description"]')?.setAttribute('content', t('landing.meta'));
+	});
+
+	const width = 'mx-auto w-full max-w-5xl px-4 sm:px-6';
 </script>
 
-<svelte:head><title>Docs · Des documents écrits à plusieurs</title></svelte:head>
+<svelte:head><title>{t('landing.title')}</title></svelte:head>
 
-<div class="min-h-dvh overflow-x-clip bg-fc-page text-fc-fg">
-	<LandingHeader appName="Docs" icon={logoIcon} skipHref="#main">
+<div class="min-h-dvh overflow-x-clip bg-fc-page text-fc-fg" data-sveltekit-reload>
+	<LandingHeader appName="Docs" icon={logoIcon} {links} skipHref="#main">
 		{#snippet actions()}
-			<SignInWithFacile href={signInHref} data-sveltekit-reload />
+			<SignInWithFacile href={signInHref} size="sm" />
 		{/snippet}
 	</LandingHeader>
 
-	<main id="main">
-		<section class="mx-auto flex max-w-5xl flex-col items-center px-4 pt-16 pb-12 text-center sm:px-6 sm:pt-24">
-			<h1 class="font-fc-title text-fc-3xl leading-tight font-bold tracking-tight sm:text-5xl">
-				Des documents écrits à plusieurs
+	<main id="main" class="flex flex-col gap-20 pb-24 md:gap-28">
+		<section class="{width} flex flex-col items-center pt-16 text-center sm:pt-24">
+			<h1 class="max-w-3xl font-fc-title text-fc-3xl leading-tight font-bold tracking-tight text-balance sm:text-5xl">
+				{t('landing.slogan')}
 			</h1>
-			<p class="mt-5 max-w-lg text-fc-lg text-fc-fg-muted">Votre équipe écrit sur la même page, au même moment.</p>
-			<div class="mt-8 flex justify-center">
-				<SignInWithFacile href={signInHref} size="lg" data-sveltekit-reload />
-			</div>
+			<p class="mt-5 max-w-2xl text-fc-lg text-balance text-fc-fg-muted">{t('landing.subtitle')}</p>
+			<LandingCta {signInHref} align="center" class="mt-8 w-full" />
 			<div class="mt-12 w-full sm:mt-16"><DocsDemo /></div>
 		</section>
 
-		<section class="relative mx-auto max-w-5xl px-4 py-16 sm:px-6 sm:py-20">
-			<h2 class="mb-10 text-center font-fc-title text-2xl font-bold tracking-tight text-fc-fg sm:text-3xl">
-				Une page qui fait plus que du texte
-			</h2>
+		<section aria-labelledby="tiles-title" class={width}>
+			<h2 id="tiles-title" class="mb-10 text-center {LANDING_HEADING}">{t('landing.tiles')}</h2>
 			<div class="grid gap-6 md:grid-cols-3">
 				<SlashTile />
 				<HistoryTile />
-				<ShareTile />
+				<EmbedTile />
 			</div>
 		</section>
 
-		<section class="mx-auto grid max-w-5xl gap-10 px-4 py-16 sm:px-6 sm:py-20 md:grid-cols-[2fr_3fr] md:gap-16">
-			<div>
-				<h2 class="font-fc-title text-fc-2xl font-bold tracking-tight sm:text-fc-3xl">
-					Tout ce qu’il faut pour écrire ensemble
-				</h2>
-				<p class="mt-3 text-fc-fg-muted">Une page, une équipe, et vos agents.</p>
-			</div>
-			<ul class="flex flex-col gap-6">
-				{#each features as feature (feature.title)}
-					<li class="flex gap-4">
-						<span class="flex size-10 shrink-0 items-center justify-center rounded-fc-md bg-fc-component">
-							<Icon icon={feature.icon} size={20} />
-						</span>
-						<div>
-							<h3 class="text-fc-md font-bold">{feature.title}</h3>
-							<p class="mt-1 text-fc-sm text-fc-fg-muted">{feature.body}</p>
-						</div>
-					</li>
-				{/each}
-			</ul>
+		<FeatureSplit
+			id="features"
+			class="{width} scroll-mt-24"
+			title={t('landing.features')}
+			description={t('landing.featuresLine')}
+			{features}
+		/>
+
+		<WorksWith class={width} {apps} description={t('landing.with.line')} />
+
+		<section class="{width} flex flex-col items-center gap-5 text-center">
+			<h2 class={LANDING_HEADING}>{t('landing.cta.title')}</h2>
+			<p class="text-fc-md text-fc-fg-muted">{t('landing.cta.line')}</p>
+			<LandingCta {signInHref} align="center" class="w-full" />
+			<p class="text-fc-sm text-fc-fg-muted">{t('landing.trust')}</p>
 		</section>
 
-		<section class="mx-auto max-w-5xl px-4 py-16 text-center sm:px-6 sm:py-24">
-			<h2 class="font-fc-title text-fc-2xl font-bold tracking-tight sm:text-fc-3xl">Ouvrez votre première page</h2>
-			<p class="mt-3 text-fc-fg-muted">Un compte Facile suffit.</p>
-			<div class="mt-8 flex justify-center">
-				<SignInWithFacile href={signInHref} size="lg" data-sveltekit-reload />
-			</div>
-		</section>
+		<PricingPlans
+			id="pricing"
+			class="{width} scroll-mt-24"
+			title={t('landing.nav.pricing')}
+			headingClass={LANDING_HEADING}
+			highlight={['ai.access']}
+			highlightOnly
+			notes={{ '*': t('landing.plan.paid'), solo: t('landing.plan.included') }}
+			recommended="pro"
+			suiteHref="https://suite.facile.studio/#tarifs"
+		/>
+
+		<div class={width}>
+			<ForDevelopers
+				{rows}
+				description={t('landing.dev.line')}
+				selfHostHref="https://suite.facile.studio/auto-hebergement"
+			/>
+		</div>
 	</main>
 
 	<LandingFooter
 		appName="Docs"
 		icon={logoIcon}
-		tagline="Les documents collaboratifs de la suite Facile."
-		legal={{ hideLocaleSwitch: true }}
+		tagline={t('landing.line')}
+		{columns}
+		legal={{ onLocaleChange: rememberLocale }}
 	/>
 </div>

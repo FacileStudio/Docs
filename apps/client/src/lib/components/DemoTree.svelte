@@ -2,12 +2,13 @@
 	import { Bar } from '@facile/mise-en-scene';
 	import { Icon } from '@facile/muse';
 	import { documentIcon } from '$lib/brand';
+	import { t } from '$lib/i18n';
 
 	const PAGES = [72, 96, 64, 84];
 </script>
 
 <div class="dd-tree">
-	<span class="dd-space">Équipe</span>
+	<span class="dd-space">{t('demo.space')}</span>
 	{#each PAGES as width, i (i)}
 		<span class="dd-row">
 			<Icon icon={documentIcon} size={16} />
@@ -16,7 +17,7 @@
 	{/each}
 	<span class="dd-row dd-active">
 		<Icon icon={documentIcon} size={16} />
-		<span class="dd-row-title">Lancement d’automne</span>
+		<span class="dd-row-title">{t('demo.page')}</span>
 	</span>
 	<span class="dd-row dd-child">
 		<Icon icon={documentIcon} size={16} />
