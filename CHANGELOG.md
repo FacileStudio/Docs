@@ -4,6 +4,19 @@ All notable changes to Docs. Versions follow SemVer.
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-11-14
+
+### Added
+
+- The signed-out landing has a section of three demo tiles: the slash menu inserting a table,
+  restoring a version from the history, and creating a public read-only share link
+
+### Changed
+
+- The hero demo shows three people editing at once: Hugo renames a heading while Léa and the
+  visitor each type a line, with live carets and name labels
+- `@facile/mise-en-scene` v0.2.2
+
 ## [0.11.1] - 2026-11-14
 
 ### Fixed
