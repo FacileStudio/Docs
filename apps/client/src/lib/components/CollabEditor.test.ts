@@ -10,6 +10,7 @@ vi.mock('y-websocket', () => ({
 	WebsocketProvider: class {
 		awareness: Awareness;
 		synced = true;
+		messageHandlers: unknown[] = [];
 		private record: (typeof opened)[number];
 		constructor(url: string, room: string, doc: Y.Doc) {
 			this.awareness = new Awareness(doc);
