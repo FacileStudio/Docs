@@ -8,7 +8,7 @@ use uuid::Uuid;
 
 use crate::auth::Kits;
 use crate::env::Config;
-use crate::modules::rooms::{Command, Hub};
+use crate::modules::rooms::Hub;
 
 type Error = Box<dyn std::error::Error + Send + Sync>;
 
@@ -42,7 +42,7 @@ async fn ops(args: &[String], config: &Config, pool: &PgPool) -> Result<(), Erro
     let hub = Hub::default();
     let kits = Kits::new(config, pool, &hub).await?;
     let state = crate::server::state(config, pool.clone(), &kits, hub.clone());
-    let answer = hub.ask(&state, id, |reply| Command::Ops(list.clone(), 0, reply)).await;
+    let answer = hub.ops(&state, id, list, 0).await;
     hub.shutdown().await;
     println!("{}", serde_json::to_string(&answer?)?);
     Ok(())

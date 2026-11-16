@@ -3,7 +3,7 @@ use sqlx::{PgConnection, PgPool};
 use tronc::mcp::erase_pending;
 use uuid::Uuid;
 
-use crate::modules::rooms::{Command, Hub};
+use crate::modules::rooms::Hub;
 
 /// The app's half of a GDPR erase: personal documents, pending agent actions, memberships, then
 /// the account row. The person's sockets close in every room and their personal pages unload.
@@ -55,7 +55,7 @@ impl PersonDeleted for AppData {
                 .map_err(failed)?;
         let pages = erase(&mut tx, &users, subject).await?;
         tx.commit().await.map_err(failed)?;
-        self.hub.tell_all(|| Command::Evict(users.clone())).await;
+        self.hub.evict(&users).await;
         self.hub.close(&pages).await;
         Ok(())
     }

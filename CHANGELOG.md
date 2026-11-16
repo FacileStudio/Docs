@@ -4,6 +4,12 @@ All notable changes to Docs. Versions follow SemVer.
 
 ## [Unreleased]
 
+## [0.13.5] - 2026-11-16
+
+### Changed
+
+- The live editing rooms now run on [salon](https://github.com/FacileStudio/salon) v0.1.0, the room engine Docs and Toile share. Nothing changes on the wire: sync, presence, close codes and timings are the same. A connection that claims more than 8 presence ids is now closed with 1008; a Docs tab claims one.
+
 ## [0.13.4] - 2026-11-16
 
 ### Changed

@@ -5,7 +5,6 @@ use uuid::Uuid;
 use super::access::{self, Access};
 use super::markdown;
 use super::types::OpsAnswer;
-use crate::modules::rooms::Command;
 use crate::state::AppState;
 
 /// The most operations one request applies.
@@ -39,7 +38,7 @@ pub fn markdown_bytes(list: &[Op]) -> usize {
 pub async fn run(state: &AppState, user_id: i64, id: Uuid, list: &[Op]) -> Result<OpsAnswer> {
     markdown::within(markdown_bytes(list), state.markdown_max)?;
     access::check(state, user_id, id, Access::Editor).await?;
-    state.hub.ask(state, id, |reply| Command::Ops(list.to_vec(), user_id, reply)).await
+    state.hub.ops(state, id, list.to_vec(), user_id).await
 }
 
 #[cfg(test)]
