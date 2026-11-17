@@ -4,6 +4,12 @@ All notable changes to Docs. Versions follow SemVer.
 
 ## [Unreleased]
 
+## [0.13.6] - 2026-11-17
+
+### Fixed
+
+- salon v0.1.1: on a restart the server now waits for every open document's close frame, so editors see 1013 and reconnect cleanly instead of 1006.
+
 ## [0.13.5] - 2026-11-16
 
 ### Changed
